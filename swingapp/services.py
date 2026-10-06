@@ -3,6 +3,7 @@ import hmac
 import math
 import os
 import random
+import re
 import shutil
 import subprocess
 import tempfile
@@ -127,6 +128,35 @@ def start_trial_at_signup(profile):
     profile.trial_ends_at = timezone.now() + timedelta(days=days)
     profile.save(update_fields=["trial_ends_at"])
     return sync_trial(profile)
+
+
+_CONTACT_EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+_CONTACT_HANDLE_RE = re.compile(r"(?<![\w.])@[\w.]{2,}")
+_CONTACT_PHONE_RE = re.compile(r"\+?[\d][\d\s.\-()]{6,}[\d]")
+_CONTACT_DATE_RE = re.compile(r"\d{1,2}[./]\d{1,2}[./]\d{2,4}")
+
+
+def find_contact_info(text):
+    """Détecte un e-mail, un numéro de téléphone ou un pseudo (@) dans un texte.
+
+    Retourne "email", "phone", "handle" ou "" si rien n'est trouvé.
+    Pratique courante des sites de rencontre pour garder les échanges
+    sur la plateforme pendant l'essai gratuit.
+    """
+    if not text:
+        return ""
+    if _CONTACT_EMAIL_RE.search(text):
+        return "email"
+    for match in _CONTACT_PHONE_RE.finditer(text):
+        candidate = match.group(0)
+        if _CONTACT_DATE_RE.search(candidate):
+            continue
+        digits = re.sub(r"\D", "", candidate)
+        if 8 <= len(digits) <= 15:
+            return "phone"
+    if _CONTACT_HANDLE_RE.search(text):
+        return "handle"
+    return ""
 
 
 def can_interact(user):

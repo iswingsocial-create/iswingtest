@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="card" id="thread" data-match="{{ match.id }}" data-after="{{ messages.last.id|default:0 }}">
+<section class="card" id="thread" data-match="{{ match.id }}" data-after="{{ last_msg_id }}">
   <h1>{{ other.display_name }}</h1>
   {% if quota.premium %}<p id="msgs-left" data-premium="1">{{ T.premium }}</p>{% else %}
   <p id="msgs-left" data-left="{{ quota.messages_left }}">{{ T.quota_msgs }} : <strong>{{ quota.messages_left }}</strong></p>
@@ -8,11 +8,16 @@
   {% endif %}
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <div id="log">
-    {% for msg in messages %}
-    <p class="{% if msg.sender_id == user.profile.id %}mine{% endif %}">{{ msg.body }}
-      {% if msg.photo %}<a href="/photos/{{ msg.photo.id }}/">photo</a>{% endif %}
-      {% if msg.read_at and user.profile.read_receipts %} · {{ T.read_mark }}{% endif %}
-    </p>
+    {% for msg in thread_messages %}
+    <div class="msg{% if msg.sender_id == user.profile.id %} mine{% endif %}">
+      {% if msg.avatar_url %}<img class="avatar" src="{{ msg.avatar_url }}" alt="" loading="lazy">{% endif %}
+      <div class="bubble">
+        {% if msg.body %}<p class="body">{{ msg.body }}</p>{% endif %}
+        {% if msg.shared_photo_thumb %}<a class="shared-photo" href="{{ msg.shared_photo_url }}"><img src="{{ msg.shared_photo_thumb }}" alt="" loading="lazy"></a>{% endif %}
+        {% if msg.has_contact and msg.sender_id == user.profile.id %}<p class="contact-note">{{ T.contact_notice }}</p>{% endif %}
+        {% if msg.read_at and user.profile.read_receipts %}<span class="read">{{ T.read_mark }}</span>{% endif %}
+      </div>
+    </div>
     {% endfor %}
   </div>
   {% if locked %}<p class="warn">{{ T.thread_locked }}</p>{% else %}

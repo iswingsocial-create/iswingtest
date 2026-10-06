@@ -61,8 +61,10 @@ from .services import (
     can_view_profile,
     consume_message,
     create_like,
+    find_contact_info,
     haversine_km,
     has_staff_perm,
+    is_premium,
     is_last_superuser,
     maybe_validate,
     notify,
@@ -536,22 +538,33 @@ def thread(request, pk):
             return render(request, "denied.html", {"reason": "thread"}, status=403)
     error = ""
     locked = me.suspended or other.suspended or other.id in blocked_ids(me)
+    lang = getattr(request, "lang", "fr")
     if request.method == "POST" and not locked:
         body = request.POST.get("body", "").strip()
         photo_id = request.POST.get("photo") or None
         photo = Photo.objects.filter(pk=photo_id, profile=me).first() if photo_id else None
         client_key = request.POST.get("client_key", "")[:64]
+        contact = find_contact_info(body)
         if not body and not photo:
-            error = t(getattr(request, "lang", "fr"), "message_label")
+            error = t(lang, "message_label")
         elif client_key and Message.objects.filter(match=match, sender=me, client_key=client_key).exists():
             return redirect("thread", pk=match.id)
         elif me.is_demo and not other.is_demo:
             error = "Un profil fictif ne peut pas écrire à un membre réel."
+        elif contact and not is_premium(request.user):
+            error = t(lang, "contact_blocked")
         else:
             try:
                 with transaction.atomic():
                     consume_message(request.user, match)
-                    Message.objects.create(match=match, sender=me, body=body[:2000], photo=photo, client_key=client_key)
+                    msg = Message.objects.create(match=match, sender=me, body=body[:2000], photo=photo, client_key=client_key)
+                    if photo and photo.is_private:
+                        # Partager une photo privée dans un message donne au destinataire
+                        # l'accès à cette photo précise.
+                        grant, _ = PhotoGrant.objects.get_or_create(photo=photo, grantee=other)
+                        if grant.revoked_at:
+                            grant.revoked_at = None
+                            grant.save(update_fields=["revoked_at"])
             except QuotaError as exc:
                 error = _quota_message(request, exc)
             else:
@@ -559,10 +572,28 @@ def thread(request, pk):
                 return redirect("thread", pk=match.id)
     if other.read_receipts and not locked:
         match.messages.exclude(sender=me).filter(read_at__isnull=True).update(read_at=timezone.now())
+    thread_messages = list(match.messages.select_related("sender", "photo"))
+    avatar_by_profile = {}
+    for participant in {m.sender for m in thread_messages} | {me, other}:
+        avatar = participant.photos.filter(is_primary=True, moderation_status="approved").first()
+        if avatar and can_view_media(request.user, avatar):
+            avatar_by_profile[participant.id] = f"/photos/{avatar.id}/?thumb=1"
+    for msg in thread_messages:
+        msg.avatar_url = avatar_by_profile.get(msg.sender_id, "")
+        msg.shared_photo_url = ""
+        msg.shared_photo_thumb = ""
+        if msg.photo_id and can_view_media(request.user, msg.photo):
+            msg.shared_photo_url = f"/photos/{msg.photo_id}/"
+            if msg.photo.thumb:
+                msg.shared_photo_thumb = f"/photos/{msg.photo_id}/?thumb=1"
+            else:
+                msg.shared_photo_thumb = msg.shared_photo_url
+        msg.has_contact = bool(find_contact_info(msg.body))
     return render(request, "thread.html", {
         "match": match,
         "other": other,
-        "messages": match.messages.select_related("sender", "photo"),
+        "thread_messages": thread_messages,
+        "last_msg_id": thread_messages[-1].id if thread_messages else 0,
         "quota": quota_snapshot(request.user, match),
         "error": error,
         "locked": locked,
@@ -581,19 +612,28 @@ def thread_poll(request, pk):
     except ValueError:
         return JsonResponse({"messages": []}, status=400)
     rows = []
-    for msg in match.messages.filter(id__gt=after).select_related("photo"):
+    avatar_by_profile = {}
+    for msg in match.messages.filter(id__gt=after).select_related("sender", "photo"):
         photo_url = ""
         video_url = ""
         if msg.photo_id and can_view_media(request.user, msg.photo):
             photo_url = f"/photos/{msg.photo_id}/"
             if msg.photo.media_type == "video" and msg.photo.video:
                 video_url = f"/photos/{msg.photo_id}/fichier/"
+        sender_id = msg.sender_id
+        if sender_id not in avatar_by_profile:
+            avatar = msg.sender.photos.filter(is_primary=True, moderation_status="approved").first()
+            avatar_by_profile[sender_id] = (
+                f"/photos/{avatar.id}/?thumb=1"
+                if avatar and can_view_media(request.user, avatar) else ""
+            )
         rows.append({
             "id": msg.id,
-            "mine": msg.sender_id == me.id,
+            "mine": sender_id == me.id,
             "body": msg.body,
             "photo": photo_url,
             "video": video_url,
+            "avatar": avatar_by_profile[sender_id],
         })
     return JsonResponse({"messages": rows})
 

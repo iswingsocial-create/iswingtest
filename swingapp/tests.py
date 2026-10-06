@@ -10,8 +10,8 @@ from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from PIL import Image
 
-from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, DailyUsage, Like, Match, MatchUsage, Notice, OutboundEmail, Partner, Photo, PrivateAccess, Profile, Report, Subscription
-from swingapp.services import QuotaError, consume_like, create_like, in_trial
+from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, DailyUsage, Like, Match, MatchUsage, Message, Notice, OutboundEmail, Partner, Photo, PhotoGrant, PrivateAccess, Profile, Report, Subscription
+from swingapp.services import QuotaError, consume_like, create_like, find_contact_info, in_trial
 
 
 def jpeg():
@@ -293,6 +293,62 @@ class RulesTests(TestCase):
             self.assertEqual(third.status_code, 200)
             self.assertContains(third, "utilisé les messages")
             self.assertEqual(MatchUsage.objects.get(user=user, match=match).messages_sent, 2)
+
+    def test_find_contact_info(self):
+        self.assertEqual(find_contact_info("appelle-moi au 06 12 34 56 78"), "phone")
+        self.assertEqual(find_contact_info("mon num: +1 514-555-1234"), "phone")
+        self.assertEqual(find_contact_info("écris à lea.dupont@example.com"), "email")
+        self.assertEqual(find_contact_info("suis-moi @lea_dupont"), "handle")
+        self.assertEqual(find_contact_info("né le 12.05.1990 à Lyon"), "")
+        self.assertEqual(find_contact_info("j'ai 2 chiens et 3 chats"), "")
+        self.assertEqual(find_contact_info("rdv demain vers 18h"), "")
+        self.assertEqual(find_contact_info("salut, ça va ?"), "")
+
+    def _match_pair(self):
+        user_a, a = self.make("ct-a@example.com", "CtA")
+        user_b, b = self.make("ct-b@example.com", "CtB")
+        create_like(a, b)
+        match, _ = create_like(b, a)
+        return user_a, a, user_b, b, match
+
+    def test_trial_cannot_share_contact_info(self):
+        user_a, a, user_b, b, match = self._match_pair()
+        self.client.force_login(user_a)
+        res = self.client.post(f"/messages/{match.id}/", {"body": "appelle-moi au 06 12 34 56 78", "client_key": "ct-1"})
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "premium")
+        self.assertFalse(Message.objects.filter(match=match, sender=a).exists())
+
+    def test_premium_can_share_contact_info_with_notice(self):
+        user_a, a, user_b, b, match = self._match_pair()
+        Subscription.objects.update_or_create(user=user_a, defaults={"status": "active", "current_period_end": timezone.now() + timedelta(days=10)})
+        self.client.force_login(user_a)
+        res = self.client.post(f"/messages/{match.id}/", {"body": "mon mail: a@example.com", "client_key": "ct-2"})
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(Message.objects.filter(match=match, sender=a).exists())
+        page = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(page, "responsabilit")
+
+    def test_shared_private_photo_grants_access(self):
+        user_a, a, user_b, b, match = self._match_pair()
+        photo = Photo(profile=a, is_primary=False, is_private=True, moderation_status="approved")
+        photo.image.save("priv.jpg", jpeg(), save=True)
+        self.client.force_login(user_a)
+        res = self.client.post(f"/messages/{match.id}/", {"photo": str(photo.id), "client_key": "ct-3"})
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(PhotoGrant.objects.filter(photo=photo, grantee=b, revoked_at__isnull=True).exists())
+        self.client.force_login(user_b)
+        got = self.client.get(f"/photos/{photo.id}/")
+        self.assertEqual(got.status_code, 200)
+
+    def test_thread_renders_avatars_not_message_objects(self):
+        user_a, a, user_b, b, match = self._match_pair()
+        self.client.force_login(user_a)
+        self.client.post(f"/messages/{match.id}/", {"body": "bonjour", "client_key": "ct-4"})
+        page = self.client.get(f"/messages/{match.id}/")
+        self.assertNotContains(page, "Message object")
+        self.assertContains(page, 'class="avatar"')
+        self.assertContains(page, "bonjour")
 
     def test_discover_empty_is_not_the_quota_warning(self):
         user, _ = self.make("empty-deck@example.com", "Empty")

@@ -223,6 +223,15 @@ input[type="checkbox"], input[type="radio"] {
   margin: 0.35rem 0;
 }
 .mine { margin-left: 18%; background: linear-gradient(90deg, rgba(80, 48, 224, 0.55), rgba(144, 96, 240, 0.45)); }
+#log .msg { display: flex; gap: 0.5rem; align-items: flex-end; margin: 0.35rem 0; }
+#log .msg .avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex: none; background: #241a45; }
+#log .msg .bubble { max-width: 85%; min-width: 0; }
+#log .msg .bubble .body { margin: 0; }
+#log .msg.mine { justify-content: flex-end; }
+#log .msg.mine .bubble .body { background: linear-gradient(90deg, rgba(80, 48, 224, 0.55), rgba(144, 96, 240, 0.45)); }
+#log .msg .shared-photo img { max-width: 220px; border-radius: 12px; margin-top: 0.4rem; display: block; }
+#log .msg .contact-note { background: transparent; padding: 0; font-size: 0.78rem; color: var(--muted); margin: 0.3rem 0 0; }
+#log .msg .read { font-size: 0.75rem; color: var(--muted); }
 .install { position: fixed; right: 1rem; bottom: 1rem; z-index: 6; }
 .icon-btn:focus, .main-menu a:focus, .btn:focus, button:focus, a:focus { outline: 2px solid var(--violet); outline-offset: 2px; }
 .staff-row {

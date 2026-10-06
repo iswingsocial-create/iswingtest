@@ -289,6 +289,9 @@ class Message(models.Model):
             )
         ]
 
+    def __str__(self):
+        return (self.body or "")[:40] or f"Message {self.pk}"
+
 
 class Report(models.Model):
     reporter = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reports_made")

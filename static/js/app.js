@@ -127,22 +127,42 @@
           var log = document.getElementById("log");
           (data.messages || []).forEach(function (msg) {
             after = msg.id;
-            var p = document.createElement("p");
-            p.textContent = msg.body || "";
-            if (msg.mine) p.className = "mine";
+            thread.setAttribute("data-after", after);
+            var wrap = document.createElement("div");
+            wrap.className = "msg" + (msg.mine ? " mine" : "");
+            if (msg.avatar) {
+              var av = document.createElement("img");
+              av.className = "avatar";
+              av.src = msg.avatar;
+              av.alt = "";
+              wrap.appendChild(av);
+            }
+            var bubble = document.createElement("div");
+            bubble.className = "bubble";
+            if (msg.body) {
+              var bp = document.createElement("p");
+              bp.className = "body";
+              bp.textContent = msg.body;
+              bubble.appendChild(bp);
+            }
             if (msg.video) {
               var video = document.createElement("video");
               video.controls = true;
               video.src = msg.video;
               if (msg.photo) video.poster = msg.photo;
-              p.appendChild(video);
+              bubble.appendChild(video);
             } else if (msg.photo) {
+              var link = document.createElement("a");
+              link.className = "shared-photo";
+              link.href = msg.photo;
               var img = document.createElement("img");
               img.src = msg.photo;
               img.alt = "";
-              p.appendChild(img);
+              link.appendChild(img);
+              bubble.appendChild(link);
             }
-            log.appendChild(p);
+            wrap.appendChild(bubble);
+            log.appendChild(wrap);
           });
         }).catch(function () {});
     }, 4000);
