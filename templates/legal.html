@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="card legal">
+  <h1>{{ title }}</h1>
+  <div class="legal-body">{{ body|linebreaks }}</div>
+</article>
+{% endblock %}

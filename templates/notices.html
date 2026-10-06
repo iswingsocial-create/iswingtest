@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ T.notices }}</h1>
+  {% for n in notices %}
+  <p>
+    {% if n.kind == "like" %}<a href="{{ n.url }}">{{ n.body }}</a> {{ T.notice_like }}
+    {% elif n.kind == "access_request" %}<a href="{{ n.url }}">{{ n.body }}</a> {{ T.notice_access_request }}
+    {% elif n.kind == "access_ok" %}{{ n.body }} {{ T.notice_access_ok }}
+    {% elif n.kind == "access_no" %}{{ n.body }} {{ T.notice_access_no }}
+    {% else %}{{ n.body }}{% endif %}
+  </p>
+  {% empty %}<p class="empty">{{ T.no_notices }}</p>{% endfor %}
+</section>
+{% endblock %}

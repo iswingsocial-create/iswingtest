@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <img src="/brand/icons/logo.png" alt="" width="120" height="120">
+  <h1>iSwing</h1>
+  <p>{{ T.tagline }}</p>
+  <p class="warn">{{ T.age_gate }}</p>
+  <p class="muted">{{ T.screenshot }}</p>
+  <div class="row" style="justify-content:center">
+    <a class="btn" href="/comptes/inscription/">{{ T.register }}</a>
+    <a class="btn ghost" href="/comptes/connexion/">{{ T.login }}</a>
+  </div>
+</section>
+{% endblock %}

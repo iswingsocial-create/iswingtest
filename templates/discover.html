@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card discover-head">
+  <h1>{{ T.discover }}</h1>
+  <p class="muted">{{ T.one_profile }}</p>
+  {% if quota.premium %}<p>{{ T.premium }}</p>{% else %}
+  <p>{{ T.quota_likes }} : {{ quota.likes_left }} · {{ T.trial_ends }} : {{ quota.period_end|default:"—" }}</p>
+  {% endif %}
+  <div class="cats" aria-label="{{ T.desires_title }}">
+    <a class="cat {% if not active_desire %}on{% endif %}" href="/decouvrir/">
+      <span class="mark">{{ T.all_mark }}</span>
+      <span>{{ T.all_cats }}</span>
+    </a>
+    {% for code, label in desires %}
+    <a class="cat {% if active_desire == code %}on{% endif %}" href="/decouvrir/?desire={{ code }}">
+      <img src="/brand/categories/{{ code }}.png" alt="">
+      <span>{{ label }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% if active_desire %}<p class="muted">{{ T.closer }}</p>{% endif %}
+  <details>
+    <summary>{{ T.filters }}</summary>
+    <form class="filters" method="get">
+      {% if active_desire %}<input type="hidden" name="desire" value="{{ active_desire }}">{% endif %}
+      <label>{{ T.birth }} min <input name="min_age" value="{{ request.GET.min_age|default:'18' }}" inputmode="numeric"></label>
+      <label>{{ T.birth }} max <input name="max_age" value="{{ request.GET.max_age|default:'99' }}" inputmode="numeric"></label>
+      <label>{{ T.kind }}
+        <select name="kind">
+          <option value="">{{ T.all_cats }}</option>
+          <option value="single" {% if request.GET.kind == "single" %}selected{% endif %}>{{ T.single }}</option>
+          <option value="couple" {% if request.GET.kind == "couple" %}selected{% endif %}>{{ T.couple }}</option>
+        </select>
+      </label>
+      <label>{{ T.gender }}
+        <select name="gender">
+          <option value="">{{ T.all_cats }}</option>
+          {% for value, label in genders %}<option value="{{ value }}" {% if request.GET.gender == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="field">
+        <label for="filter-city">{{ T.city }}</label>
+        <input id="filter-city" name="city" data-city="filter" autocomplete="off" value="{{ request.GET.city }}" placeholder="{{ T.city }}">
+        <div class="city-results"></div>
+      </div>
+      <label>{{ T.seeking_title }}
+        <select name="seeking">
+          <option value="">{{ T.all_cats }}</option>
+          {% for value, label in seeking_choices %}<option value="{{ value }}" {% if request.GET.seeking == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>{{ T.tastes_title }}
+        <select name="taste">
+          <option value="">{{ T.all_cats }}</option>
+          {% for value, label in tastes %}<option value="{{ value }}" {% if request.GET.taste == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>{{ T.activities_title }}
+        <select name="activity">
+          <option value="">{{ T.all_cats }}</option>
+          {% for value, label in activities %}<option value="{{ value }}" {% if request.GET.activity == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>{{ T.languages_title }}
+        <select name="language">
+          <option value="">{{ T.all_cats }}</option>
+          {% for value, label in languages_choices %}<option value="{{ value }}" {% if request.GET.language == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>km <input name="max_km" value="{{ request.GET.max_km }}" inputmode="numeric"></label>
+      <label class="check"><input type="checkbox" name="recent" value="1" {% if request.GET.recent == "1" %}checked{% endif %}> 7 j</label>
+      <label class="check"><input type="checkbox" name="fav" value="1" {% if request.GET.fav == "1" %}checked{% endif %}> {{ T.favorite }}</label>
+      <button class="btn" type="submit">{{ T.filters }}</button>
+      <a class="btn ghost" href="/decouvrir/?fav=1">{{ T.favorites_list }}</a>
+    </form>
+  </details>
+</section>
+{% if distance_note == "missing" %}<p class="note">{{ T.distance_missing }}</p>{% endif %}
+{% if access_note == "suspended" %}<p class="warn">{{ T.account_suspended }}</p>{% endif %}
+{% if not cards %}<p class="empty">{{ T.empty_discover }}</p>{% endif %}
+{% if list_mode and cards %}<p class="muted">{{ T.favorites_list }}</p>{% endif %}
+{% for card in cards %}
+<article class="profile-card{% if not list_mode %} tinder-card{% else %} fav-list{% endif %}">
+  <div class="frame">
+    {% if card.photo %}
+      {% if card.photo.media_type == "video" %}<video src="/photos/{{ card.photo.id }}/fichier/" poster="/photos/{{ card.photo.id }}/" controls></video>
+      {% else %}<img src="/photos/{{ card.photo.id }}/" alt="">{% endif %}
+    {% else %}<div class="ph">—</div>{% endif %}
+  </div>
+  <h2>{{ card.profile.display_name }}{% if card.profile.is_demo %} · TEST{% endif %}{% if card.profile.lifetime_member %} · membre a vie{% endif %}, {{ card.age }}</h2>
+  <p class="city-line">{% if card.profile.city %}{{ card.profile.city }}{% else %}{{ T.city_missing }}{% endif %}{% if card.distance %} · {{ T.approx }} {{ card.distance }}{% endif %}</p>
+  <p>{{ card.kind_label }}</p>
+  {% if card.affinity %}<p class="muted">{{ card.affinity|join:" · " }}</p>{% endif %}
+  <p>{{ card.profile.bio|truncatechars:180 }}</p>
+  <div class="row">
+    <button class="btn ghost" type="button" data-action="pass" data-id="{{ card.profile.id }}">{{ T.pass }}</button>
+    <button class="btn" type="button" data-action="like" data-id="{{ card.profile.id }}" data-liked-label="{{ T.liked }}">{{ T.like }}</button>
+    <a class="btn ghost" href="/profil/{{ card.profile.id }}/">{{ T.see_profile }}</a>
+  </div>
+</article>
+{% endfor %}
+{% endblock %}

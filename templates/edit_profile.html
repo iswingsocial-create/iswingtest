@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card profile-form">
+  <h1>{{ T.profile }}</h1>
+  <p class="row">
+    <a class="btn ghost" href="/profil/{{ profile.id }}/">{{ T.see_profile }}</a>
+  </p>
+  <p class="muted">{{ T.age_status }} : {{ user.age_proof_status }}. {{ T.declared_not_proof }}</p>
+  {% if profile.validated_at %}
+  <p>{{ T.profile_ready }} {{ T.trial_ends }} : {{ profile.trial_ends_at }}</p>
+  {% else %}
+  <p>{{ T.profile_need }}</p>
+  {% endif %}
+
+  <div class="ptabs" role="tablist">
+    <button type="button" class="ptab on" data-tab="identite">{{ T.tab_identity }}</button>
+    <button type="button" class="ptab" data-tab="recherche">{{ T.tab_search }}</button>
+    <button type="button" class="ptab" data-tab="rythme">{{ T.tab_pace }}</button>
+    <button type="button" class="ptab" data-tab="visibilite">{{ T.tab_visibility }}</button>
+    <button type="button" class="ptab" data-tab="couple">{{ T.tab_couple }}</button>
+    <button type="button" class="ptab" data-tab="medias">{{ T.tab_media }}</button>
+  </div>
+
+  <form id="profile-form" method="post">{% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ pform.non_field_errors }}
+    {{ form.city_lat }}{{ form.city_lng }}
+
+    <section class="ppanel on" data-panel="identite">
+      <p class="muted">{{ T.tab_identity_help }}</p>
+      <label>{{ form.kind.label }} {{ form.kind }}{{ form.kind.errors }}</label>
+      <label>{{ form.display_name.label }} {{ form.display_name }}{{ form.display_name.errors }}</label>
+      <label>{{ form.gender.label }} {{ form.gender }}{{ form.gender.errors }}</label>
+      <label>{{ form.orientation.label }} {{ form.orientation }}{{ form.orientation.errors }}</label>
+      <div class="field">
+        <label for="id_city">{{ form.city.label }}</label>
+        {{ form.city }}{{ form.city.errors }}
+        <div class="city-results"></div>
+        <p class="muted">{{ T.city_help }}</p>
+      </div>
+      <label>{{ form.bio.label }} {{ form.bio }}{{ form.bio.errors }}</label>
+    </section>
+
+    <section class="ppanel" data-panel="recherche" hidden>
+      <p class="muted">{{ T.tab_search_help }}</p>
+      <fieldset>
+        <legend>{{ form.seeking_list.label }}</legend>
+        <div class="chips">{% for box in form.seeking_list %}<label class="chip"><input type="checkbox" name="{{ form.seeking_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ form.taste_list.label }}</legend>
+        <div class="chips">{% for box in form.taste_list %}<label class="chip"><input type="checkbox" name="{{ form.taste_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ form.activity_list.label }}</legend>
+        <div class="chips">{% for box in form.activity_list %}<label class="chip"><input type="checkbox" name="{{ form.activity_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ form.desire_list.label }}</legend>
+        <p class="muted">{{ T.desires_help }}</p>
+        <div class="checks">{% for box in form.desire_list %}<label class="chip"><input type="checkbox" name="{{ form.desire_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><img src="/brand/categories/{{ box.data.value }}.png" alt=""><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+      </fieldset>
+    </section>
+
+    <section class="ppanel" data-panel="rythme" hidden>
+      <p class="muted">{{ T.tab_pace_help }}</p>
+      <fieldset>
+        <legend>{{ form.language_list.label }}</legend>
+        <div class="chips">{% for box in form.language_list %}<label class="chip"><input type="checkbox" name="{{ form.language_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+        <label>{{ form.language_other.label }} {{ form.language_other }}</label>
+      </fieldset>
+      <fieldset>
+        <legend>{{ form.availability_list.label }}</legend>
+        <div class="chips">{% for box in form.availability_list %}<label class="chip"><input type="checkbox" name="{{ form.availability_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ form.limit_list.label }}</legend>
+        <p class="muted">{{ T.limits_help }}</p>
+        <div class="checks">{% for box in form.limit_list %}<label class="chip"><input type="checkbox" name="{{ form.limit_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+        <label class="check">{{ form.show_prefs }} {{ form.show_prefs.label }}</label>
+      </fieldset>
+    </section>
+
+    <section class="ppanel" data-panel="visibilite" hidden>
+      <p class="muted">{{ T.tab_visibility_help }}</p>
+      <label>{{ form.visibility.label }} {{ form.visibility }}</label>
+      <label class="check">{{ form.hide_orientation }} {{ form.hide_orientation.label }}</label>
+      <label class="check">{{ form.hide_desires }} {{ form.hide_desires.label }}</label>
+      <label class="check">{{ form.show_distance }} {{ form.show_distance.label }}</label>
+      <label class="check">{{ form.show_online }} {{ form.show_online.label }}</label>
+      <label class="check">{{ form.read_receipts }} {{ form.read_receipts.label }}</label>
+    </section>
+
+    <section class="ppanel" data-panel="couple" hidden>
+      <p class="muted">{{ T.partner_help }}</p>
+      <label>{{ pform.display_name.label }} {{ pform.display_name }}{{ pform.display_name.errors }}</label>
+      <label>{{ pform.birth_date.label }} {{ pform.birth_date }}{{ pform.birth_date.errors }}</label>
+      <label>{{ pform.gender.label }} {{ pform.gender }}{{ pform.gender.errors }}</label>
+      <label>{{ pform.consent_email.label }} {{ pform.consent_email }}{{ pform.consent_email.errors }}</label>
+      <label class="check">{{ pform.consent }} {{ pform.consent.label }}</label>
+    </section>
+
+    <button class="btn" type="submit" id="profile-save">{{ T.save }}</button>
+  </form>
+
+  <section class="ppanel" data-panel="medias" hidden>
+    <p class="muted">{{ T.media_public_means }}</p>
+    <p class="muted">Photos : JPEG, PNG, WebP, HEIC, AVIF, TIFF, BMP, GIF. Maximum 50 Mo, réduit à 2 560 pixels. Les PDF et SVG sont refusés. Vidéos : MP4, MOV, M4V, WebM, MKV, AVI, MPEG, WMV, 3GP, MTS, M2TS, jusqu'à 10 minutes et 2 000 000 000 octets. Le poids après conversion est une estimation, le fichier réel peut être plus léger. Une vidéo non convertie n'est jamais publiée.</p>
+    <form method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
+      <h2>{{ T.add_photo }}</h2>
+      <p class="muted">{{ T.photo_type_help }} <a href="/legal/medias/">{{ T.footer_media }}</a></p>
+      <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif,image/*" required data-crop>
+      <input type="hidden" name="masks" id="masks-json" value="[]">
+      <label class="check"><input type="checkbox" name="confirm_gif" value="1"> <span>Conserver l'animation d'un GIF (WebP). Sinon un GIF animé est refusé.</span></label>
+      <div class="photo-choice">
+        <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
+        <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
+      </div>
+      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_rights }}</span></label>
+      <label class="check"><input type="checkbox" name="media_minor" value="1" required> <span>{{ T.media_no_minor }}</span></label>
+      <label class="check"><input type="checkbox" name="media_host" value="1" required> <span>{{ T.media_host }}</span></label>
+      <button class="btn" type="submit">{{ T.add_photo }}</button>
+    </form>
+    <form id="video-upload" method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
+      <h2>{{ T.add_video }}</h2>
+      <input type="hidden" name="kind" value="video">
+      <p class="muted">{{ T.video_help }} L'envoi se fait par morceaux et peut reprendre. Le masquage des visages n'est pas proposé sur la vidéo.</p>
+      <input type="file" name="file" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.mts,.m2ts" required>
+      <div class="photo-choice">
+        <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
+        <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
+      </div>
+      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_rights }}</span></label>
+      <label class="check"><input type="checkbox" name="media_minor" value="1" required> <span>{{ T.media_no_minor }}</span></label>
+      <label class="check"><input type="checkbox" name="media_host" value="1" required> <span>{{ T.media_host }}</span></label>
+      <button class="btn" type="submit">{{ T.add_video }}</button>
+      <div id="video-progress" hidden>
+        <progress id="video-bar" max="100" value="0"></progress>
+        <p id="video-progress-label"></p>
+        <button type="button" class="btn ghost" id="video-cancel">Annuler</button>
+        <button type="button" class="btn ghost" id="video-retry" hidden>Réessayer</button>
+      </div>
+    </form>
+    <div class="gallery">
+      {% for photo in profile.photos.all %}
+      <figure>
+        <div class="frame">
+          {% if photo.media_type == "video" %}
+          <video controls src="/photos/{{ photo.id }}/fichier/?v={{ photo.byte_size }}" poster="/photos/{{ photo.id }}/?v={{ photo.byte_size }}"></video>
+          {% else %}
+          <img src="/photos/{{ photo.id }}/?v={{ photo.byte_size }}" alt="">
+          {% endif %}
+        </div>
+        <figcaption>
+          {% if photo.media_type == "video" %}{{ T.add_video }} · {% endif %}
+          {% if photo.is_private %}{{ T.photo_private }}{% else %}{{ T.photo_public }}{% endif %}
+          · {% if photo.processing_status == "failed" %}Échec{% elif photo.processing_status == "uploading" %}Importation{% elif photo.processing_status == "checking" %}Vérification{% elif photo.processing_status == "converting" or photo.processing_status == "pending" %}Conversion{% elif photo.moderation_status == "pending" %}En modération{% elif photo.moderation_status == "approved" %}Disponible{% else %}{{ photo.moderation_status }}{% endif %}
+          {% if photo.processing_error %} — {{ photo.processing_error }}{% endif %}
+          {% if photo.estimated_bytes %} · estimation {{ photo.estimated_bytes }} octets, réel {{ photo.byte_size }}{% endif %}
+          {% if photo.is_primary %} · {{ T.primary }}{% endif %}
+        </figcaption>
+        <form method="post" action="/moi/photos/{{ photo.id }}/visibilite/">{% csrf_token %}
+          <button type="submit" name="visibility" value="public" class="{% if not photo.is_private %}on{% else %}ghost{% endif %}">{{ T.photo_public }}</button>
+          <button type="submit" name="visibility" value="private" class="{% if photo.is_private %}on{% else %}ghost{% endif %}">{{ T.photo_private }}</button>
+        </form>
+        {% if photo.processing_status == "failed" and photo.source_path %}
+        <form method="post" action="/moi/photos/{{ photo.id }}/relancer/">{% csrf_token %}<button type="submit" class="ghost">Réessayer la conversion</button></form>
+        {% endif %}
+        {% if not photo.is_private and photo.media_type != "video" %}
+        <form method="post" action="/moi/photos/{{ photo.id }}/principale/">{% csrf_token %}<button type="submit" class="ghost">{{ T.primary }}</button></form>
+        {% endif %}
+        <form method="post" action="/moi/photos/{{ photo.id }}/supprimer/">{% csrf_token %}<button type="submit" class="danger" data-confirm="{{ T.delete_photo_confirm }}">{{ T.delete }}</button></form>
+      </figure>
+      {% endfor %}
+    </div>
+    <h2>{{ T.access_requests }}</h2>
+    {% for access in pending_access %}
+    <form class="staff-row" method="post" action="/acces-prive/{{ access.id }}/decider/">{% csrf_token %}
+      <strong>{{ access.grantee.display_name }}</strong>
+      <button name="choice" value="accept" type="submit">{{ T.accept }}</button>
+      <button class="ghost" name="choice" value="refuse" type="submit">{{ T.refuse }}</button>
+    </form>
+    {% empty %}<p class="muted">{{ T.access_none }}</p>{% endfor %}
+    <h2>{{ T.access_list }}</h2>
+    <p class="muted">{{ T.access_all_future }}</p>
+    {% for access in granted_access %}
+    <form class="staff-row" method="post" action="/acces-prive/{{ access.id }}/decider/">{% csrf_token %}
+      <strong>{{ access.grantee.display_name }}</strong>
+      <button class="danger" name="choice" value="revoke" type="submit">{{ T.revoke_access }}</button>
+    </form>
+    {% empty %}<p class="muted">{{ T.access_none }}</p>{% endfor %}
+    <h2>{{ T.likers }}</h2>
+    {% for liker in likers %}
+    <form class="staff-row" method="post" action="/acces-prive/accorder/{{ liker.id }}/">{% csrf_token %}
+      <strong>{{ liker.display_name }}</strong>
+      <button class="ghost" type="submit">{{ T.grant_access }}</button>
+    </form>
+    {% empty %}<p class="muted">{{ T.no_likers }}</p>{% endfor %}
+  </section>
+</div>
+<div id="cropper" class="cropper" hidden>
+  <div class="cropper-card">
+    <h2>{{ T.crop_title }}</h2>
+    <p class="muted">{{ T.crop_help }}</p>
+    <div class="crop-stage"><canvas id="crop-canvas" width="320" height="400"></canvas></div>
+    <label>{{ T.crop_help }} <input id="crop-zoom" type="range" min="1" max="3" step="0.01" value="1"></label>
+    <div class="row">
+      <button type="button" class="btn" id="crop-apply">{{ T.crop_apply }}</button>
+      <button type="button" class="btn ghost" id="crop-full">{{ T.crop_full }}</button>
+    </div>
+    <div id="mask-tools" hidden>
+      <h2>Masquer des visages</h2>
+      <p class="muted">Un flou ne couvre pas comme un autocollant opaque et ne garantit pas l'anonymat. Les masques sont gravés dans le fichier, y compris les miniatures. L'original non masqué n'est pas conservé.</p>
+      <canvas id="mask-canvas" width="320" height="400"></canvas>
+      <div class="row">
+        <button type="button" class="btn ghost" id="mask-add">Autocollant</button>
+        <button type="button" class="btn ghost" id="mask-blur">Flou</button>
+        <button type="button" class="btn ghost" id="mask-undo">Annuler</button>
+        <button type="button" class="btn ghost" id="mask-redo">Rétablir</button>
+        <button type="button" class="btn ghost" id="mask-delete">Supprimer</button>
+      </div>
+      <label>Intensité du flou <input id="mask-strength" type="range" min="4" max="30" value="12"></label>
+      <label>Taille <input id="mask-size" type="range" min="8" max="40" value="18"></label>
+      <label>Rotation <input id="mask-rot" type="range" min="-180" max="180" value="0"></label>
+      <button type="button" class="btn" id="mask-done">Prévisualiser et fermer</button>
+    </div>
+  </div>
+</div>
+<script src="/brand/js/masks.js"></script>
+<script src="/brand/js/upload.js"></script>
+<script>
+document.querySelectorAll(".ptab").forEach((button) => {
+  button.addEventListener("click", () => {
+    const name = button.dataset.tab;
+    document.querySelectorAll(".ptab").forEach((tab) => tab.classList.toggle("on", tab === button));
+    document.querySelectorAll(".ppanel").forEach((panel) => {
+      const show = panel.dataset.panel === name;
+      panel.hidden = !show;
+      panel.classList.toggle("on", show);
+    });
+    const save = document.getElementById("profile-save");
+    const form = document.getElementById("profile-form");
+    if (save) save.hidden = name === "medias";
+    if (form) form.hidden = name === "medias";
+  });
+});
+if (location.search.indexOf("onglet=medias") >= 0 || location.hash === "#medias") {
+  const tab = document.querySelector('[data-tab="medias"]');
+  if (tab) tab.click();
+}
+</script>
+{% endblock %}

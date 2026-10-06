@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ T.settings }}</h1>
+  <p>{{ T.screenshot }}</p>
+  <p>{{ T.settings_visibility }} : {{ visibility_label }}. {{ T.settings_discrete }}</p>
+  <form method="post" action="/moi/position/">{% csrf_token %}
+    <h2>{{ T.location_title }}</h2>
+    <p>{{ T.location_help }}</p>
+    <button type="button" class="btn" id="geo-btn">{{ T.use_gps }}</button>
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lng" id="lng">
+    <div class="field">
+      <label for="settings-city">{{ T.city }}</label>
+      <input id="settings-city" name="city" data-city="1" autocomplete="off" value="{{ profile.city }}">
+      <div class="city-results"></div>
+    </div>
+    <p class="muted">{{ T.city_help }}</p>
+    <button class="btn">{{ T.save_place }}</button>
+  </form>
+  <form method="post" action="/moi/position/effacer/">{% csrf_token %}
+    <button data-confirm="{{ T.clear_place_confirm }}">{{ T.clear_place }}</button>
+  </form>
+  <form method="post" action="/parametres/appareils/">{% csrf_token %}
+    <button>{{ T.logout_others }}</button>
+  </form>
+  <section>
+    <h2>Notifications sur cet appareil</h2>
+    <p>Le navigateur ne demande l'autorisation qu'après le bouton. Rien n'est demandé au chargement de la page. Les avis internes restent disponibles même sans push.</p>
+    <p id="push-diag" class="muted"></p>
+    <div class="checks" id="push-kinds">
+      <label class="chip"><input type="checkbox" value="message" checked> Nouveau message</label>
+      <label class="chip"><input type="checkbox" value="match" checked> Nouveau match</label>
+      <label class="chip"><input type="checkbox" value="access_request" checked> Demande d'accès privé</label>
+      <label class="chip"><input type="checkbox" value="access_ok" checked> Réponse favorable</label>
+      <label class="chip"><input type="checkbox" value="access_no" checked> Réponse défavorable</label>
+      <label class="chip"><input type="checkbox" value="team" checked> Message de l'équipe</label>
+      <label class="chip"><input type="checkbox" value="reminder" checked> Rappel important</label>
+    </div>
+    <p class="muted">Le texte affiché sur l'écran verrouillé reste discret : pas de photo, pas d'extrait de conversation, pas de nom de partenaire.</p>
+    <button type="button" class="btn" id="push-on">Activer les notifications</button>
+    <button type="button" class="btn ghost" id="push-off">Désactiver sur cet appareil</button>
+    <button type="button" class="btn ghost" id="push-save">Enregistrer les types</button>
+    <p class="muted">iPhone : installez iSwing depuis Safari (Partager, puis Sur l'écran d'accueil), ouvrez l'icône installée, puis utilisez le bouton. iOS ne propose le Web Push que pour une application installée, à partir d'iOS 16.4. Ce texte n'est pas une vérification sur un téléphone réel.</p>
+  </section>
+  <p><a href="/parametres/export/">{{ T.export }}</a></p>
+  <form method="post" action="/parametres/supprimer/">{% csrf_token %}
+    <label>{{ T.type_delete }} <input name="confirm"></label>
+    <button class="btn danger" data-confirm="{{ T.delete_confirm }}">{{ T.delete_account }}</button>
+  </form>
+  <form method="post" action="/comptes/deconnexion/">{% csrf_token %}<button>{{ T.logout }}</button></form>
+  <p><a href="/installer/">{{ T.install }}</a></p>
+</section>
+<script>
+(function () {
+  var diag = document.getElementById("push-diag");
+  function say(text) { if (diag) diag.textContent = text; }
+  function kinds() {
+    var out = {};
+    document.querySelectorAll("#push-kinds input").forEach(function (box) { out[box.value] = box.checked; });
+    return out;
+  }
+  function csrf() {
+    var node = document.querySelector("[name=csrfmiddlewaretoken]");
+    return node ? node.value : "";
+  }
+  var ios = /iPad|iPhone|iPod/.test(navigator.userAgent || "");
+  var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    say("Ce navigateur ne prend pas en charge les notifications push.");
+  } else if (ios && !standalone) {
+    say("Sur iPhone, installez d'abord iSwing sur l'écran d'accueil, puis rouvrez-le depuis l'icône.");
+  } else if (window.Notification && Notification.permission === "denied") {
+    say("Le navigateur a refusé les notifications. Vous pouvez les réautoriser dans ses réglages.");
+  } else {
+    say("Les notifications ne sont pas encore activées sur cet appareil.");
+  }
+  var on = document.getElementById("push-on");
+  if (on) on.addEventListener("click", function () {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      say("Ce navigateur ne prend pas en charge les notifications push.");
+      return;
+    }
+    fetch("/push/cle/").then(function (res) { return res.json(); }).then(function (data) {
+      if (!data.publicKey) {
+        say("Le push n'est pas activé par l'équipe. Les avis internes continuent de fonctionner.");
+        return;
+      }
+      return Notification.requestPermission().then(function (permission) {
+        if (permission !== "granted") {
+          say("Autorisation refusée. Aucune notification push ne sera envoyée.");
+          return;
+        }
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(data.publicKey)
+          });
+        }).then(function (sub) {
+          return fetch("/push/enregistrer/", {
+            method: "POST",
+            headers: {"Content-Type": "application/json", "X-CSRFToken": csrf()},
+            body: JSON.stringify(Object.assign({kinds: kinds()}, sub.toJSON()))
+          });
+        }).then(function () { say("Cet appareil est enregistré. Cela ne garantit pas l'affichage sur l'écran verrouillé."); });
+      });
+    }).catch(function () { say("L'enregistrement a échoué. Les avis internes restent disponibles."); });
+  });
+  var off = document.getElementById("push-off");
+  if (off) off.addEventListener("click", function () {
+    fetch("/push/desactiver/", {method: "POST", headers: {"X-CSRFToken": csrf()}}).then(function () {
+      say("Notifications désactivées sur cet appareil.");
+    });
+  });
+  var save = document.getElementById("push-save");
+  if (save) save.addEventListener("click", function () {
+    fetch("/push/preferences/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": csrf()},
+      body: JSON.stringify({kinds: kinds()})
+    }).then(function (res) {
+      say(res.ok ? "Types enregistrés pour cet appareil." : "Activez d'abord les notifications sur cet appareil.");
+    });
+  });
+  function urlBase64ToUint8Array(base64String) {
+    var padding = "=".repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(base64);
+    var output = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
+    return output;
+  }
+})();
+</script>
+{% endblock %}

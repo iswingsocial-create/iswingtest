@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="{{ robots_meta|default:'noindex, nofollow' }}">
+  <title>{% if seo.title %}{{ seo.title }}{% else %}iSwing{% endif %}</title>
+  {% if seo.description %}<meta name="description" content="{{ seo.description }}">{% endif %}
+  {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
+  {% if seo.search_console %}<meta name="google-site-verification" content="{{ seo.search_console }}">{% endif %}
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/brand/icons/icon-192.png">
+  <link rel="stylesheet" href="/brand/css/app.css">
+</head>
+<body data-refused="{{ T.action_refused }}" data-lost="{{ T.connection_lost }}" data-geodenied="{{ T.geo_denied }}" data-match="{{ T.match_sentence }}" data-liked="{{ T.liked }}" data-already="{{ T.already_liked }}" data-citynone="{{ T.city_none }}">
+  <div hidden>{% csrf_token %}</div>
+  <header class="top">
+    <a class="brand" href="{% if user.is_authenticated %}/decouvrir/{% else %}/{% endif %}">
+      <img src="/brand/icons/logo.png" alt="iSwing" width="40" height="40">
+      <span>iSwing</span>
+    </a>
+    <nav class="langs" aria-label="Langue">
+      {% if user.is_authenticated %}<a href="/notifications/">{{ T.notices }}{% if unread_notices %} <span class="badge">{{ unread_notices }}</span>{% endif %}</a>{% endif %}
+      {% for code, label, href in lang_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+    </nav>
+  </header>
+  {% if user.is_authenticated %}
+  <nav class="tabbar" aria-label="Navigation">
+    <a href="/decouvrir/">{{ T.discover }}</a>
+    <a href="/matchs/">{{ T.matches }}</a>
+    <a href="/messages/">{{ T.messages }}</a>
+    <a href="/moi/">{{ T.profile }}</a>
+    <a href="/abonnement/">{{ T.billing }}</a>
+    <a href="/parametres/">{{ T.settings }}</a>
+  </nav>
+  {% endif %}
+  <main>
+    <p id="action-msg" class="warn" hidden></p>
+    {% if messages %}{% for m in messages %}<p class="note">{{ m }}</p>{% endfor %}{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="legal-links">
+    <a href="/legal/conditions/">{{ T.footer_terms }}</a>
+    <a href="/legal/confidentialite/">{{ T.footer_privacy }}</a>
+    <a href="/legal/medias/">{{ T.footer_media }}</a>
+    <a href="/legal/temoins/">{{ T.footer_cookies }}</a>
+    <a href="/legal/abonnements/">{{ T.footer_billing }}</a>
+    <a href="/legal/inactivite/">{{ T.footer_deletion }}</a>
+    <a href="/legal/signalements/">{{ T.footer_reports }}</a>
+  </footer>
+  <button type="button" id="install-btn" class="install" hidden>{{ T.install }}</button>
+  <script src="/brand/js/app.js"></script>
+  {% if stats.ga4 %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ stats.ga4 }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ stats.ga4 }}');</script>{% endif %}
+  {% if stats.gtm %}<script>window.dataLayer=window.dataLayer||[];</script><script async src="https://www.googletagmanager.com/gtm.js?id={{ stats.gtm }}"></script>{% endif %}
+  {% if pixel.meta %}<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','{{ pixel.meta }}');fbq('track','PageView');</script>{% endif %}
+</body>
+</html>

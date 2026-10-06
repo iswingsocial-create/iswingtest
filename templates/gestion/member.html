@@ -1,0 +1,120 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head">
+  <h1>{{ profile.display_name }}</h1>
+  <a class="btn ghost" href="/gestion/membres/{{ profile.id }}/apercu/">Voir la fiche</a>
+</header>
+<nav class="chips" aria-label="Sections">
+  <a href="#resume">Résumé</a>
+  <a href="#profil">Profil</a>
+  <a href="#medias">Médias</a>
+  <a href="#abonnement">Abonnement</a>
+  <a href="#signalements">Signalements</a>
+  <a href="#historique">Historique</a>
+</nav>
+<p>
+  {% if profile.is_demo %}<span class="tag test">PROFIL FICTIF TEST</span>{% else %}<span class="tag real">Compte réel</span>{% endif %}
+  {% if profile.suspended %}<span class="tag warn">Suspendu</span>{% endif %}
+  {% if profile.visibility == "paused" %}<span class="tag">En pause</span>{% endif %}
+</p>
+<section class="card" id="resume">
+  <h2>Résumé</h2>
+  <p>{{ profile.get_kind_display }} · {{ profile.user.email }}</p>
+  <p>{{ profile.city }} {{ profile.country }} · {{ profile.user.age_years }} ans · majorité : {{ profile.user.get_age_proof_status_display }}</p>
+  <p>Conditions acceptées : {% if profile.user.terms_accepted_at %}{{ profile.user.terms_accepted_at }}{% else %}non — l'administrateur ne peut pas les accepter à sa place{% endif %}
+    · majeur déclaré : {% if profile.user.adult_declared %}oui{% else %}non{% endif %}
+    · consentement intime : {% if profile.user.intimate_consent %}oui{% else %}non{% endif %}</p>
+  <p>Invitation du compte : <strong>{{ invite_state }}</strong>
+    {% if partner %} · invitation partenaire : <strong>{% if partner.consent_at %}acceptée{% else %}{{ partner_invite_state }}{% endif %}</strong>{% endif %}</p>
+  {% if partner %}
+  <p>Partenaire : {{ partner.display_name }}, {{ partner.age_years }} ans · {{ partner.consent_email|default:"sans courriel" }}</p>
+  {% endif %}
+  {% if not profile.is_demo %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="invite"><button class="btn" type="submit">Envoyer l'invitation</button></form>
+  {% if invite_link %}<p>Lien local : <a href="{{ invite_link }}">{{ invite_link }}</a></p>{% endif %}
+  {% if partner and not partner.consent_at %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="partner_invite"><button class="btn ghost" type="submit">Inviter le second partenaire</button></form>
+  {% if partner_link %}<p>Lien partenaire : <a href="{{ partner_link }}">{{ partner_link }}</a></p>{% endif %}
+  {% endif %}
+  {% endif %}
+  <p><a href="/gestion/communications/nouveau/?user={{ profile.id }}">Écrire à ce membre</a></p>
+</section>
+<section class="card" id="profil">
+  <h2>Profil</h2>
+  <form method="post" class="stack">{% csrf_token %}
+    <input type="hidden" name="action" value="profile">
+    <label>Pseudonyme <input name="display_name" maxlength="40" value="{{ profile.display_name }}"></label>
+    <label>Ville <input name="city" data-city="admin" autocomplete="off" value="{{ profile.city }}"></label>
+    <input type="hidden" name="city_lat" value="{{ profile.lat|default:'' }}">
+    <input type="hidden" name="city_lng" value="{{ profile.lng|default:'' }}">
+    <input type="hidden" name="city_ref" value="{{ profile.city_ref }}">
+    <label>Pays <input name="country" maxlength="2" value="{{ profile.country }}"></label>
+    <label>Visibilité
+      <select name="visibility">
+        <option value="public" {% if profile.visibility == "public" %}selected{% endif %}>Public</option>
+        <option value="discrete" {% if profile.visibility == "discrete" %}selected{% endif %}>Discret</option>
+        <option value="paused" {% if profile.visibility == "paused" %}selected{% endif %}>En pause</option>
+      </select>
+    </label>
+    <label>Présentation <textarea name="bio" rows="4">{{ profile.bio }}</textarea></label>
+    <button class="btn" type="submit">Enregistrer le profil</button>
+  </form>
+  <p class="muted">Les consentements personnels ne se modifient pas ici.</p>
+</section>
+<section class="card" id="medias">
+  <h2>Médias</h2>
+  {% if upload_error %}<p class="error">{{ upload_error }}</p>{% endif %}
+  <div class="g-media">
+    {% for photo in photos %}
+    <figure>
+      {% if photo.is_private and not can_moderate %}
+      <div class="ph">Privé — permission de modération et double authentification requises</div>
+      {% elif photo.media_type == "video" %}
+      <video controls src="/photos/{{ photo.id }}/fichier/" poster="/photos/{{ photo.id }}/"></video>
+      {% else %}
+      <img src="/photos/{{ photo.id }}/" alt="">
+      {% endif %}
+      <figcaption>#{{ photo.id }} · {{ photo.media_type }} · {% if photo.is_private %}privé{% else %}public{% endif %} · {{ photo.moderation_status }} · {{ photo.processing_status }}</figcaption>
+    </figure>
+    {% empty %}<p>Aucun média.</p>{% endfor %}
+  </div>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    <input type="hidden" name="action" value="upload">
+    <label>Ajouter <input type="file" name="file" accept="image/*,video/mp4,video/webm" required></label>
+    <select name="visibility"><option value="public">Public aux membres autorisés</option><option value="private">Privé</option></select>
+    <button class="btn ghost" type="submit">Ajouter</button>
+  </form>
+</section>
+<section class="card" id="abonnement">
+  <h2>Abonnement</h2>
+  <p>{% if sub %}{{ sub.get_status_display }} · source {{ sub.source|default:"—" }} · prestataire {{ sub.provider|default:"—" }} · {{ sub.external_id|default:"" }} · fin {{ sub.current_period_end|default:"—" }}{% else %}Aucun{% endif %}
+    {% if profile.lifetime_member %} · à vie{% endif %}</p>
+  {% if billed %}<p class="warn">Abonnement facturé. Enregistrer ici ne modifie pas Stripe ni un autre prestataire.</p>{% else %}<p class="muted">Avantage local, distinct d'une facturation externe.</p>{% endif %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="subscription">
+    <select name="sub_status" {% if billed %}disabled{% endif %}>{% for code, label in sub_choices %}<option value="{{ code }}" {% if sub and sub.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    {% if billed %}<input type="hidden" name="sub_status" value="{{ sub.status }}">{% endif %}
+    <label class="check"><input type="checkbox" name="lifetime" value="1" {% if profile.lifetime_member %}checked{% endif %}> Membre à vie (local)</label>
+    <button class="btn" type="submit">Enregistrer l'avantage local</button>
+  </form>
+</section>
+<section class="card" id="signalements">
+  <h2>Signalements</h2>
+  {% for report in reports %}<p><a href="/gestion/signalements/{{ report.id }}/">n°{{ report.id }}</a> {{ report.reason }}</p>{% empty %}<p>Aucun.</p>{% endfor %}
+  <form method="post" action="/gestion/profil/{{ profile.id }}/">{% csrf_token %}
+    {% if profile.suspended %}<button class="btn" name="action" value="restore" type="submit">Réactiver</button>
+    {% else %}<button class="btn ghost" name="action" value="suspend" type="submit" data-confirm="Suspendre ce compte ?">Suspendre</button>{% endif %}
+    <button class="btn ghost" name="action" value="verify_age" type="submit" data-confirm="Marquer la majorité comme vérifiée ?">Majorité vérifiée</button>
+  </form>
+</section>
+<section class="card" id="historique">
+  <h2>Historique</h2>
+  {% for row in history %}<p>{{ row.created_at }} · {{ row.actor.email|default:"—" }} · {{ row.action }} · {{ row.detail }} {% if row.reason %}· {{ row.reason }}{% endif %}</p>{% empty %}<p>Aucune trace.</p>{% endfor %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="delete">
+    <label>Motif <input name="reason" required></label>
+    <label>Supprimer le compte : tapez SUPPRIMER <input name="confirm"></label>
+    <button class="btn danger" type="submit" data-confirm="Supprimer définitivement ce compte ?">Supprimer</button>
+  </form>
+</section>
+{% endblock %}

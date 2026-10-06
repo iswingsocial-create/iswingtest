@@ -1,0 +1,49 @@
+iSwing — installation locale de test
+=================================
+
+Il faut Python 3.10 ou plus recent : https://www.python.org/downloads/
+Cochez "Add python.exe to PATH" pendant l'installation.
+
+1. Extrayez ce ZIP dans un dossier, par exemple C:\iSwing
+   Le fichier Installer.bat doit etre dans ce dossier, pas dans un sous-dossier en double.
+2. Double-cliquez sur Installer.bat et attendez la fin.
+3. Double-cliquez sur Creer-Admin.bat
+   Le mot de passe tape dans la fenetre noire peut rester invisible : c'est normal.
+4. Double-cliquez sur Demarrer.bat et laissez la fenetre ouverte.
+
+Ensuite dans le navigateur :
+- Site :    http://localhost:8000
+- Gestion : http://localhost:8000/gestion/
+- Admin :   http://localhost:8000/admin/
+
+Profils fictifs : double-cliquez sur Importer-Demo.bat
+30 comptes TEST, mot de passe : Test-iSwing-1!
+La ville se choisit en tapant au moins deux lettres (villes du monde de 15 000 habitants et plus).
+Les textes légaux se modifient dans Gestion, section Paramètres.
+Gestion : membres, médiathèque, signalements, abonnements, messages de l'équipe, paramètres.
+Le bouton Bloquer demande une confirmation. Le signalement est proposé ensuite et reste facultatif.
+Un signalement prévient Info@iswing.live sans joindre de média privé. Si le courriel échoue, le dossier reste enregistré.
+Le compte de Creer-Admin.bat peut modérer les médias privés. Les autres comptes staff ont besoin des cases dans Paramètres.
+La double authentification est demandée pour /gestion/ et /admin/.
+En local, la page affiche le code à recopier. En production, utilisez le secret dans une application d'authentification.
+
+Mise à jour d'une installation déjà en place :
+extrayez ce ZIP par-dessus le dossier iSwing et choisissez Remplacer.
+Ne supprimez pas .env, .venv ni le dossier data : ils gardent les comptes, photos et clés.
+Puis relancez Installer.bat, puis Demarrer.bat.
+
+Paiement : lis docs/STRIPE.md. Sans clés dans .env, aucun paiement n'est lancé.
+Les formules restent visibles. Aucun numéro de carte n'est stocké.
+Les photos et videos se gerent dans Mon profil, onglet Photos et videos.
+
+Taches planifiees : Planifier.bat envoie les campagnes et convertit les videos.
+Sans cette fenetre, un message programme reste en attente. Les dates sont converties en UTC.
+ffmpeg est necessaire pour les videos. ffprobe est optionnel.
+Une video convertie perd son fichier source. Un echec le garde 24 heures, sans jamais le publier.
+La limite initiale est 10 minutes et 2 000 000 000 octets. Le detail est dans docs/MEDIAS-ET-INTEGRATIONS.md.
+Celery, Redis et le stockage S3 ne sont pas installes. Stripe n'est pas actif sans cles, et aucun paiement n'est lance ici.
+Les notifications push se demandent dans Parametres, avec un bouton. Pas au chargement de la page.
+La suppression des comptes inactifs (12 mois) se fait dans Gestion, Inactivite, ou avec :
+python manage.py purge_inactive
+python manage.py purge_inactive --apply
+

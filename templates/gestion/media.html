@@ -1,0 +1,43 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Médiathèque</h1>
+  {% if can_moderate %}<a class="btn" href="?audit=1&{{ request.GET.urlencode }}">Audit aléatoire</a>{% endif %}
+</header>
+{% if not can_moderate %}<p class="note">Les médias privés sont réservés à une permission explicite de modération. Le compte superutilisateur l'a déjà.</p>{% endif %}
+{% if audit %}<p class="note">Échantillon aléatoire. Chaque vignette privée est journalisée.</p>{% endif %}
+<form class="filters" method="get">
+  <label>Membre <input name="q" value="{{ request.GET.q }}"></label>
+  <label>Type <select name="type"><option value="">Tous</option><option value="photo" {% if request.GET.type == "photo" %}selected{% endif %}>Photo</option><option value="video" {% if request.GET.type == "video" %}selected{% endif %}>Vidéo</option></select></label>
+  <label>Visibilité <select name="vis"><option value="">Toutes</option><option value="public" {% if request.GET.vis == "public" %}selected{% endif %}>Public</option>{% if can_moderate %}<option value="private" {% if request.GET.vis == "private" %}selected{% endif %}>Privé</option>{% endif %}</select></label>
+  <label>Statut <select name="status"><option value="">Tous</option><option value="pending">En attente</option><option value="approved">Approuvé</option><option value="rejected">Refusé</option><option value="removed">Retiré</option></select></label>
+  <label>Date <input type="date" name="day" value="{{ request.GET.day }}"></label>
+  <button class="btn ghost" type="submit">Filtrer</button>
+</form>
+<p class="muted">{{ pager.total }} média(s)</p>
+<div class="g-media">
+  {% for photo in pager.rows %}
+  <figure class="card">
+    {% if photo.media_type == "video" %}
+    <video controls preload="metadata" src="/photos/{{ photo.id }}/fichier/" poster="/photos/{{ photo.id }}/"></video>
+    {% else %}
+    <img src="/photos/{{ photo.id }}/" alt="">
+    {% endif %}
+    <figcaption>
+      <a href="/gestion/membres/{{ photo.profile_id }}/">{{ photo.profile.display_name }}</a><br>
+      {{ photo.created_at|date:"Y-m-d H:i" }} · {{ photo.media_type }} · {% if photo.is_private %}privé{% else %}public{% endif %} · {{ photo.get_moderation_status_display }}
+      {% if photo.moderation_note %}<br>{{ photo.moderation_note }}{% endif %}
+    </figcaption>
+    {% if can_moderate %}
+    <form method="post" action="/gestion/photo/{{ photo.id }}/">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <label>Motif <input name="reason" maxlength="240" placeholder="Obligatoire pour refuser ou retirer"></label>
+      <button name="status" value="approved" type="submit">Approuver</button>
+      <button class="ghost" name="status" value="rejected" type="submit">Refuser</button>
+      <button class="danger" name="status" value="removed" type="submit" data-confirm="Retirer ce média et prévenir le membre ?">Retirer</button>
+    </form>
+    {% endif %}
+  </figure>
+  {% empty %}<p>Aucun média pour ces filtres.</p>{% endfor %}
+</div>
+{% include "gestion/pager.html" %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head">
+  <h1>Membres</h1>
+  <a class="btn" href="/gestion/membres/ajouter/">Ajouter un membre</a>
+</header>
+<form class="filters" method="get">
+  <label>Recherche <input name="q" value="{{ request.GET.q }}" placeholder="Pseudonyme, courriel, ville"></label>
+  <label>Type
+    <select name="kind">
+      <option value="">Tous</option>
+      <option value="single" {% if request.GET.kind == "single" %}selected{% endif %}>Célibataire</option>
+      <option value="couple" {% if request.GET.kind == "couple" %}selected{% endif %}>Couple</option>
+    </select>
+  </label>
+  <label>Compte
+    <select name="demo">
+      <option value="">Tous</option>
+      <option value="real" {% if request.GET.demo == "real" %}selected{% endif %}>Réels</option>
+      <option value="test" {% if request.GET.demo == "test" %}selected{% endif %}>TEST</option>
+    </select>
+  </label>
+  <label class="check"><input type="checkbox" name="suspended" value="1" {% if request.GET.suspended == "1" %}checked{% endif %}> Suspendus</label>
+  <label>Tri
+    <select name="order">
+      <option value="recent">Plus récents</option>
+      <option value="name" {% if request.GET.order == "name" %}selected{% endif %}>Pseudonyme</option>
+      <option value="city" {% if request.GET.order == "city" %}selected{% endif %}>Ville</option>
+    </select>
+  </label>
+  <button class="btn ghost" type="submit">Filtrer</button>
+</form>
+<p class="muted">{{ pager.total }} membre(s)</p>
+<table class="g-table">
+  <thead><tr><th>Pseudonyme</th><th>Courriel</th><th>Ville</th><th>Type</th><th>État</th></tr></thead>
+  <tbody>
+  {% for profile in pager.rows %}
+  <tr>
+    <td data-label="Pseudonyme"><a href="/gestion/membres/{{ profile.id }}/">{{ profile.display_name }}</a></td>
+    <td data-label="Courriel">{{ profile.user.email }}</td>
+    <td data-label="Ville">{{ profile.city|default:"—" }}</td>
+    <td data-label="Type">{{ profile.get_kind_display }}</td>
+    <td data-label="État">
+      {% if profile.is_demo %}<span class="tag test">TEST</span>{% else %}<span class="tag real">Réel</span>{% endif %}
+      {% if profile.suspended %}<span class="tag warn">Suspendu</span>{% endif %}
+      {% if not profile.user.terms_accepted_at %}<span class="tag">Invitation</span>{% endif %}
+    </td>
+  </tr>
+  {% empty %}<tr><td colspan="5">Aucun membre.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% include "gestion/pager.html" %}
+{% endblock %}

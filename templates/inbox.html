@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ T.messages }}</h1>
+{% if not items %}<p class="empty">{{ T.empty_messages }}</p>{% endif %}
+{% for item in items %}
+<a class="card link" href="/messages/{{ item.match.id }}/">
+  <strong>{{ item.other.display_name }}</strong>
+  <p>{{ item.last.body|default:"—" }}</p>
+</a>
+{% endfor %}
+{% endblock %}
