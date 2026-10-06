@@ -117,6 +117,18 @@ def in_trial(user):
     return sub.status == "trial" and user.profile.trial_ends_at and user.profile.trial_ends_at > timezone.now()
 
 
+def start_trial_at_signup(profile):
+    """Démarre l'essai gratuit dès l'inscription (7 jours par défaut)."""
+    if not profile:
+        return None
+    if profile.trial_ends_at and profile.trial_ends_at > timezone.now():
+        return profile.subscription
+    days = int(SiteSetting.get("trial_days", settings.TRIAL_DAYS))
+    profile.trial_ends_at = timezone.now() + timedelta(days=days)
+    profile.save(update_fields=["trial_ends_at"])
+    return sync_trial(profile)
+
+
 def can_interact(user):
     return is_premium(user) or in_trial(user)
 

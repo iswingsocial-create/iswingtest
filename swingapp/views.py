@@ -73,6 +73,7 @@ from .services import (
     prepare_video,
     quota_snapshot,
     separate_members,
+    start_trial_at_signup,
     sync_trial,
     touch_activity,
     visible_queryset,
@@ -115,11 +116,12 @@ def register(request):
                 reco_consent=bool(form.cleaned_data.get("reco")),
                 promo_consent=bool(form.cleaned_data.get("promo")),
             )
-            Profile.objects.create(
+            profile = Profile.objects.create(
                 user=user,
                 display_name=form.cleaned_data["display_name"],
                 kind=form.cleaned_data["kind"],
             )
+            start_trial_at_signup(profile)
             raw = _send_token(user, "verify")
             login(request, user)
             return render(request, "verify_sent.html", {"dev_link": f"/comptes/verifier/{raw}/" if settings.DEBUG else ""})

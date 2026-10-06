@@ -11,7 +11,7 @@ from django.utils import timezone
 from PIL import Image
 
 from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, DailyUsage, Like, Match, MatchUsage, Notice, OutboundEmail, Partner, Photo, PrivateAccess, Profile, Report, Subscription
-from swingapp.services import QuotaError, consume_like, create_like
+from swingapp.services import QuotaError, consume_like, create_like, in_trial
 
 
 def jpeg():
@@ -45,6 +45,18 @@ class RulesTests(TestCase):
         })
         self.assertEqual(res.status_code, 200)
         self.assertFalse(get_user_model().objects.filter(email="jeune@example.com").exists())
+
+    def test_signup_starts_trial(self):
+        res = self.client.post("/comptes/inscription/", {
+            "email": "nouveau@example.com", "password": "motdepasse10", "birth_date": "1990-05-05",
+            "display_name": "Nouveau", "kind": "single",
+            "age_confirm": "on", "accept": "on", "intimate": "on",
+        })
+        user = get_user_model().objects.get(email="nouveau@example.com")
+        self.assertTrue(in_trial(user))
+        self.assertGreater(user.profile.trial_ends_at, timezone.now())
+        _, b = self.make("b2@example.com", "B2")
+        create_like(user.profile, b)
 
     def test_mutual_like_creates_match(self):
         _, a = self.make("a@example.com", "A")
