@@ -92,6 +92,7 @@ else:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": str(_sqlite),
+            "OPTIONS": {"timeout": 20, "transaction_mode": "IMMEDIATE"},
         }
     }
 

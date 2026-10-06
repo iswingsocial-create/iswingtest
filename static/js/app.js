@@ -26,48 +26,94 @@
       return;
     }
     var actionEl = event.target.closest("[data-action]");
-    if (!actionEl || actionEl.disabled) return;
+    if (!actionEl || actionEl.disabled || actionEl.getAttribute("data-busy") === "1") return;
     event.preventDefault();
     var id = actionEl.getAttribute("data-id");
     var action = actionEl.getAttribute("data-action");
+    var card = actionEl.closest("article.tinder-card");
+    var locked = [];
+    if (action === "like" || action === "pass") {
+      var nodes = card ? card.querySelectorAll("[data-action='like'], [data-action='pass']") : [actionEl];
+      Array.prototype.forEach.call(nodes, function (btn) {
+        btn.disabled = true;
+        btn.setAttribute("data-busy", "1");
+        locked.push(btn);
+      });
+    }
     var tokenInput = document.querySelector("[name=csrfmiddlewaretoken]");
     var token = tokenInput ? tokenInput.value : "";
     if (!token) {
       var row = document.cookie.split("; ").find(function (part) { return part.indexOf("csrftoken=") === 0; });
       token = row ? decodeURIComponent(row.split("=").slice(1).join("=")) : "";
     }
+    if (!window.__iswingKeys) window.__iswingKeys = {};
+    var slot = action + ":" + id;
+    if ((action === "like" || action === "pass") && !window.__iswingKeys[slot]) {
+      window.__iswingKeys[slot] = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+    var body = new URLSearchParams();
+    if (window.__iswingKeys[slot]) body.set("client_key", window.__iswingKeys[slot]);
+    function unlock(keepLike) {
+      locked.forEach(function (btn) {
+        if (keepLike && btn.getAttribute("data-action") === "like") return;
+        btn.disabled = false;
+        btn.removeAttribute("data-busy");
+      });
+    }
     fetch("/actions/" + action + "/" + id + "/", {
       method: "POST",
-      headers: {"X-CSRFToken": token},
+      headers: {"X-CSRFToken": token, "Content-Type": "application/x-www-form-urlencoded"},
+      body: body,
     }).then(function (res) { return res.json().then(function (data) { return {ok: res.ok, data: data}; }); })
       .then(function (result) {
         var ui = document.body.dataset;
         var msg = document.getElementById("action-msg");
         function show(text) {
+          if (!text) return;
           if (!msg) { alert(text); return; }
           msg.hidden = false;
           msg.textContent = text;
         }
-        if (!result.ok) { show(result.data.error || ui.refused || "action refusée"); return; }
-        if (action === "like") {
-          actionEl.textContent = actionEl.getAttribute("data-liked-label") || ui.liked || "OK";
-          actionEl.disabled = true;
-          actionEl.setAttribute("aria-pressed", "true");
-          actionEl.classList.add("on");
-          if (result.data.already) show(ui.already || "");
-          else if (result.data.match) show(ui.match || "Match");
+        if (!result.ok) {
+          var exhausted = action === "like" && result.data.likes_left === 0;
+          unlock(exhausted);
+          show(result.data.error || ui.refused || "");
+          var line = document.getElementById("likes-left");
+          if (line && result.data.likes_left !== undefined && result.data.likes_left !== null) {
+            line.setAttribute("data-left", String(result.data.likes_left));
+          }
+          return;
         }
+        if (window.__iswingKeys[slot]) delete window.__iswingKeys[slot];
+        if (action === "like" && result.data.match && !result.data.already) show(ui.match || "");
         if (action === "favorite") {
           var on = !!result.data.on;
           actionEl.setAttribute("aria-pressed", on ? "true" : "false");
           actionEl.textContent = on ? (actionEl.getAttribute("data-on") || "Favori") : (actionEl.getAttribute("data-off") || actionEl.textContent);
           actionEl.classList.toggle("on", on);
         }
-        var card = actionEl.closest("article");
-        if (card && card.classList.contains("tinder-card") && action !== "favorite") {
-          setTimeout(function () { window.location.reload(); }, 700);
+        if (card && action !== "favorite") {
+          card.classList.add("leaving");
+          card.setAttribute("aria-hidden", "true");
+          window.setTimeout(function () {
+            if (card.parentNode) card.remove();
+            window.location.replace(window.location.pathname + window.location.search);
+          }, 180);
+          return;
         }
-      }).catch(function () { alert(document.body.dataset.lost || "connexion perdue"); });
+        if (action === "like") {
+          actionEl.textContent = actionEl.getAttribute("data-liked-label") || ui.liked || "OK";
+          actionEl.disabled = true;
+          actionEl.setAttribute("aria-pressed", "true");
+          actionEl.classList.add("on");
+        }
+      }).catch(function () {
+        unlock(false);
+        var msg = document.getElementById("action-msg");
+        var text = document.body.dataset.lost || "";
+        if (msg && text) { msg.hidden = false; msg.textContent = text; }
+        else if (text) alert(text);
+      });
   });
   var key = document.getElementById("client-key");
   if (key) key.value = Date.now().toString(36) + Math.random().toString(36).slice(2);

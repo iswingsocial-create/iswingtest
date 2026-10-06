@@ -145,6 +145,10 @@ h1, h2 { letter-spacing: 0.02em; }
 }
 .btn.ghost, button.ghost { background: transparent; border: 1px solid var(--line); }
 .btn.danger, button.danger { background: #7f1d3a; }
+button:disabled, .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.tinder-card { transition: transform 0.18s ease, opacity 0.18s ease; }
+.tinder-card.leaving { transform: translateX(70%); opacity: 0; pointer-events: none; }
+.discover-empty { border: 1px dashed var(--line); border-radius: 16px; padding: 1rem; text-align: center; }
 .row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 label { display: block; margin: 0.55rem 0; font-size: 0.95rem; }
 input, select, textarea {

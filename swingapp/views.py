@@ -451,17 +451,19 @@ def like_view(request, pk):
     target = get_object_or_404(Profile, pk=pk)
     me = request.user.profile
     lang = getattr(request, "lang", "fr")
-    already = Like.objects.filter(actor=me, target=target).exists()
+    client_key = (request.POST.get("client_key") or "")[:64]
     try:
-        match = create_like(me, target)
+        match, already = create_like(me, target, client_key)
     except QuotaError as exc:
-        return JsonResponse({"ok": False, "error": _quota_message(request, exc)}, status=403)
+        snap = quota_snapshot(request.user)
+        return JsonResponse({"ok": False, "error": _quota_message(request, exc), "likes_left": snap["likes_left"]}, status=403)
     except AccessError:
         return JsonResponse({"ok": False, "error": t(lang, "blocked_members")}, status=403)
     if not already:
         notify(target, "like", me.display_name, f"/profil/{me.id}/")
         touch_activity(me)
-    return JsonResponse({"ok": True, "match": bool(match), "already": already, "liked": True})
+    snap = quota_snapshot(request.user)
+    return JsonResponse({"ok": True, "match": bool(match), "already": already, "liked": True, "likes_left": snap["likes_left"]})
 
 
 @login_required
@@ -1267,7 +1269,7 @@ def manifest(request):
 def service_worker(request):
     js = """
 const SHELL = ['/brand/css/app.css', '/brand/js/app.js'];
-const CACHE = 'iswing-shell-v6';
+const CACHE = 'iswing-shell-v7';
 self.addEventListener('install', (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))); });
 self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (event) => {

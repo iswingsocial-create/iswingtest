@@ -3,8 +3,10 @@
 <section class="card discover-head">
   <h1>{{ T.discover }}</h1>
   <p class="muted">{{ T.one_profile }}</p>
-  {% if quota.premium %}<p>{{ T.premium }}</p>{% else %}
-  <p>{{ T.quota_likes }} : {{ quota.likes_left }} · {{ T.trial_ends }} : {{ quota.period_end|default:"—" }}</p>
+  {% if quota.premium %}<p id="likes-left" data-premium="1">{{ T.premium }}</p>{% else %}
+  <p id="likes-left" data-left="{{ quota.likes_left }}">{{ T.quota_likes }} : <strong>{{ quota.likes_left }}</strong></p>
+  <p class="muted">{{ T.trial_ends }} : {{ quota.period_end|default:"—" }}</p>
+  {% if quota.likes_left == 0 %}<p class="warn" id="likes-done">{{ T.quota_likes_done }}</p>{% endif %}
   {% endif %}
   <div class="cats" aria-label="{{ T.desires_title }}">
     <a class="cat {% if not active_desire %}on{% endif %}" href="/decouvrir/">
@@ -77,7 +79,7 @@
 </section>
 {% if distance_note == "missing" %}<p class="note">{{ T.distance_missing }}</p>{% endif %}
 {% if access_note == "suspended" %}<p class="warn">{{ T.account_suspended }}</p>{% endif %}
-{% if not cards %}<p class="empty">{{ T.empty_discover }}</p>{% endif %}
+{% if not cards %}<p class="empty discover-empty">{{ T.empty_discover }}</p>{% endif %}
 {% if list_mode and cards %}<p class="muted">{{ T.favorites_list }}</p>{% endif %}
 {% for card in cards %}
 <article class="profile-card{% if not list_mode %} tinder-card{% else %} fav-list{% endif %}">
@@ -94,7 +96,7 @@
   <p>{{ card.profile.bio|truncatechars:180 }}</p>
   <div class="row">
     <button class="btn ghost" type="button" data-action="pass" data-id="{{ card.profile.id }}">{{ T.pass }}</button>
-    <button class="btn" type="button" data-action="like" data-id="{{ card.profile.id }}" data-liked-label="{{ T.liked }}">{{ T.like }}</button>
+    <button class="btn" type="button" data-action="like" data-id="{{ card.profile.id }}" data-liked-label="{{ T.liked }}" {% if not quota.premium and quota.likes_left == 0 %}disabled{% endif %}>{{ T.like }}</button>
     <a class="btn ghost" href="/profil/{{ card.profile.id }}/">{{ T.see_profile }}</a>
   </div>
 </article>

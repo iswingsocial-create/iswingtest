@@ -2,14 +2,16 @@ import hashlib
 import hmac
 import math
 import os
+import random
 import shutil
 import subprocess
 import tempfile
+import time
 from datetime import datetime, timedelta, timezone as dt_timezone
 from io import BytesIO
 
 from django.conf import settings
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from PIL import Image, ImageDraw
@@ -331,30 +333,52 @@ def can_view_media(user, photo):
     return PhotoGrant.objects.filter(photo=photo, grantee=profile, revoked_at__isnull=True).exists()
 
 
-def create_like(actor, target):
+def create_like(actor, target, client_key=""):
     if actor.id == target.id:
         raise AccessError("self")
     if not can_interact_with(actor, target):
         raise AccessError("blocked")
-    try:
-        with transaction.atomic():
-            if Like.objects.filter(actor=actor, target=target).exists():
-                return open_match_between(actor, target)
-            consume_like(actor.user)
-            Like.objects.create(actor=actor, target=target)
-            Pass.objects.filter(actor=actor, target=target).delete()
-            if Like.objects.filter(actor=target, target=actor).exists():
-                a, b = sorted([actor.id, target.id])
-                pa = actor if actor.id == a else target
-                pb = target if actor.id == a else actor
-                match, _ = Match.objects.get_or_create(profile_a=pa, profile_b=pb)
-                if match.closed_at:
-                    match.closed_at = None
-                    match.save(update_fields=["closed_at"])
-                return match
-    except IntegrityError:
-        return open_match_between(actor, target)
-    return None
+    client_key = (client_key or "").strip()[:64]
+    delay = 0.02
+    last = None
+    for attempt in range(8):
+        try:
+            return _create_like_once(actor, target, client_key)
+        except OperationalError as exc:
+            last = exc
+            if attempt == 7:
+                break
+            time.sleep(delay + random.random() * delay)
+            delay = min(delay * 2, 0.2)
+    raise last
+
+
+def _create_like_once(actor, target, client_key):
+    with transaction.atomic():
+        existing = Like.objects.filter(actor=actor, target=target).first()
+        if existing:
+            return open_match_between(actor, target), True
+        if client_key:
+            keyed = Like.objects.filter(actor=actor, client_key=client_key).first()
+            if keyed:
+                return open_match_between(actor, keyed.target), True
+        try:
+            with transaction.atomic():
+                Like.objects.create(actor=actor, target=target, client_key=client_key)
+                consume_like(actor.user)
+        except IntegrityError:
+            return open_match_between(actor, target), True
+        Pass.objects.filter(actor=actor, target=target).delete()
+        match = None
+        if Like.objects.filter(actor=target, target=actor).exists():
+            a, b = sorted([actor.id, target.id])
+            pa = actor if actor.id == a else target
+            pb = target if actor.id == a else actor
+            match, _ = Match.objects.get_or_create(profile_a=pa, profile_b=pb)
+            if match.closed_at:
+                match.closed_at = None
+                match.save(update_fields=["closed_at"])
+        return match, False
 
 
 def prepare_image(uploaded, crop=None, masks=None, confirm_gif=False):

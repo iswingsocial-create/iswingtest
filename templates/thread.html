@@ -2,7 +2,10 @@
 {% block content %}
 <section class="card" id="thread" data-match="{{ match.id }}" data-after="{{ messages.last.id|default:0 }}">
   <h1>{{ other.display_name }}</h1>
-  {% if quota.premium %}<p>{{ T.premium }}</p>{% else %}<p>{{ T.quota_msgs }} : {{ quota.messages_left }}</p>{% endif %}
+  {% if quota.premium %}<p id="msgs-left" data-premium="1">{{ T.premium }}</p>{% else %}
+  <p id="msgs-left" data-left="{{ quota.messages_left }}">{{ T.quota_msgs }} : <strong>{{ quota.messages_left }}</strong></p>
+  {% if quota.messages_left == 0 %}<p class="warn" id="msgs-done">{{ T.quota_msgs_done }}</p>{% endif %}
+  {% endif %}
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <div id="log">
     {% for msg in messages %}
@@ -21,7 +24,7 @@
         {% for photo in my_photos %}<option value="{{ photo.id }}">{% if photo.is_private %}{{ T.photo_private }}{% else %}{{ T.photo_public }}{% endif %} #{{ photo.id }}</option>{% endfor %}
       </select>
     </label>
-    <button class="btn" type="submit">{{ T.send }}</button>
+    <button class="btn" type="submit" {% if not quota.premium and quota.messages_left == 0 %}disabled{% endif %}>{{ T.send }}</button>
     <p><a href="/moi/?onglet=medias">{{ T.manage_media }}</a></p>
   </form>
   {% endif %}

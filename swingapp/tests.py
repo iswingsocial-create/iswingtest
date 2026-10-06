@@ -1,14 +1,16 @@
 from datetime import date, timedelta
 from io import BytesIO
+import threading
 from urllib.parse import urlparse
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.test import TestCase, override_settings
+from django.db import close_old_connections
+from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from PIL import Image
 
-from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, Like, Match, Notice, OutboundEmail, Partner, Photo, PrivateAccess, Profile, Report, Subscription
+from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, DailyUsage, Like, Match, MatchUsage, Notice, OutboundEmail, Partner, Photo, PrivateAccess, Profile, Report, Subscription
 from swingapp.services import QuotaError, consume_like, create_like
 
 
@@ -47,9 +49,10 @@ class RulesTests(TestCase):
     def test_mutual_like_creates_match(self):
         _, a = self.make("a@example.com", "A")
         _, b = self.make("b@example.com", "B")
-        self.assertIsNone(create_like(a, b))
-        match = create_like(b, a)
+        self.assertIsNone(create_like(a, b)[0])
+        match, already = create_like(b, a)
         self.assertIsNotNone(match)
+        self.assertFalse(already)
         self.assertEqual(Match.objects.count(), 1)
 
     def test_staff_is_unlimited_without_subscription(self):
@@ -228,6 +231,71 @@ class RulesTests(TestCase):
         blocked = self.client.post(f"/actions/like/{extra.id}/")
         self.assertEqual(blocked.status_code, 403)
         self.assertIn("like", blocked.json()["error"].lower())
+
+    def test_ten_distinct_likes_then_eleventh_refused(self):
+        user, me = self.make("ten@example.com", "Ten")
+        self.client.force_login(user)
+        for i in range(10):
+            _, target = self.make(f"ten-{i}@example.com", f"T{i}")
+            res = self.client.post(f"/actions/like/{target.id}/", {"client_key": f"ten-{i}"})
+            self.assertEqual(res.status_code, 200, res.content)
+            self.assertFalse(res.json()["already"])
+        self.assertEqual(Like.objects.filter(actor=me).count(), 10)
+        self.assertEqual(DailyUsage.objects.get(user=user, day=timezone.now().date()).likes, 10)
+        _, extra = self.make("ten-11@example.com", "T11")
+        blocked = self.client.post(f"/actions/like/{extra.id}/", {"client_key": "ten-11"})
+        self.assertEqual(blocked.status_code, 403)
+        self.assertFalse(blocked.json()["ok"])
+        self.assertEqual(blocked.json()["likes_left"], 0)
+        self.assertEqual(Like.objects.filter(actor=me).count(), 10)
+
+    def test_same_client_key_does_not_spend_two_likes(self):
+        user, me = self.make("key@example.com", "Key")
+        _, target = self.make("key-t@example.com", "KeyT")
+        self.client.force_login(user)
+        first = self.client.post(f"/actions/like/{target.id}/", {"client_key": "same-key"})
+        second = self.client.post(f"/actions/like/{target.id}/", {"client_key": "same-key"})
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertTrue(second.json()["already"])
+        self.assertEqual(Like.objects.filter(actor=me, target=target).count(), 1)
+        self.assertEqual(DailyUsage.objects.get(user=user, day=timezone.now().date()).likes, 1)
+
+    def test_new_day_resets_like_quota(self):
+        user, _ = self.make("day@example.com", "Day")
+        DailyUsage.objects.create(user=user, day=timezone.now().date() - timedelta(days=1), likes=10)
+        consume_like(user)
+        self.assertEqual(DailyUsage.objects.get(user=user, day=timezone.now().date()).likes, 1)
+
+    def test_two_messages_per_side_then_third_refused(self):
+        user_a, a = self.make("msg-a@example.com", "MsgA")
+        user_b, b = self.make("msg-b@example.com", "MsgB")
+        create_like(a, b)
+        match, _ = create_like(b, a)
+        for user, prefix in ((user_a, "a"), (user_b, "b")):
+            self.client.force_login(user)
+            for n in range(2):
+                res = self.client.post(f"/messages/{match.id}/", {"body": f"{prefix}-{n}", "client_key": f"{prefix}-{n}"})
+                self.assertEqual(res.status_code, 302)
+            third = self.client.post(f"/messages/{match.id}/", {"body": f"{prefix}-2", "client_key": f"{prefix}-2"})
+            self.assertEqual(third.status_code, 200)
+            self.assertContains(third, "utilisé les messages")
+            self.assertEqual(MatchUsage.objects.get(user=user, match=match).messages_sent, 2)
+
+    def test_discover_empty_is_not_the_quota_warning(self):
+        user, _ = self.make("empty-deck@example.com", "Empty")
+        self.client.force_login(user)
+        page = self.client.get("/decouvrir/")
+        self.assertContains(page, "Aucun nouveau profil pour le moment")
+        self.assertContains(page, "Likes restants aujourd")
+        self.assertContains(page, "discover-empty")
+        self.assertNotContains(page, "id=\"likes-done\"")
+        self.assertContains(page, 'data-left="10"')
+        js = __import__("pathlib").Path("static/js/app.js").read_text(encoding="utf-8")
+        self.assertIn("data-busy", js)
+        self.assertIn("client_key", js)
+        self.assertIn("leaving", js)
+        self.assertNotIn("location.reload()", js)
 
     def test_plans_are_visible_without_stripe(self):
         user, _ = self.make("bill@example.com", "Bill")
@@ -619,5 +687,48 @@ class AccessCorrectionTests(TestCase):
         page = self.client.get("/gestion/2fa/")
         self.assertContains(page, "Code actuel")
         self.assertContains(page, "Secret")
+
+
+class LikeRaceTests(TransactionTestCase):
+    def test_parallel_posts_count_one_like(self):
+        user = get_user_model().objects.create_user(
+            email="race@example.com", password="motdepasse10", birth_date=date(1990, 1, 1),
+            terms_accepted_at=timezone.now(), adult_declared=True, email_verified_at=timezone.now(),
+        )
+        me = Profile.objects.create(user=user, display_name="Race", city="Lyon", bio="bio", validated_at=timezone.now(), trial_ends_at=timezone.now() + timedelta(days=7))
+        other_user = get_user_model().objects.create_user(
+            email="race-t@example.com", password="motdepasse10", birth_date=date(1991, 1, 1),
+            terms_accepted_at=timezone.now(), adult_declared=True, email_verified_at=timezone.now(),
+        )
+        target = Profile.objects.create(user=other_user, display_name="RaceT", city="Lyon", bio="bio", validated_at=timezone.now(), trial_ends_at=timezone.now() + timedelta(days=7))
+        results = []
+        errors = []
+        barrier = threading.Barrier(2)
+        clients = []
+        for _ in range(2):
+            client = Client()
+            client.force_login(user)
+            clients.append(client)
+
+        def go(client):
+            try:
+                close_old_connections()
+                barrier.wait(timeout=5)
+                results.append(client.post(f"/actions/like/{target.id}/", {"client_key": "race-key"}))
+            except Exception as exc:
+                errors.append(repr(exc))
+            finally:
+                close_old_connections()
+
+        threads = [threading.Thread(target=go, args=(client,)) for client in clients]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(15)
+        self.assertEqual(errors, [])
+        self.assertEqual(len(results), 2)
+        self.assertEqual(Like.objects.filter(actor=me, target=target).count(), 1)
+        self.assertEqual(DailyUsage.objects.get(user=user, day=timezone.now().date()).likes, 1)
+        self.assertTrue(all(item.status_code == 200 for item in results))
 
 

@@ -62,3 +62,19 @@ Non exécutés, donc non annoncés comme réussis :
 
 - lecture sur un ordinateur, un iPhone ou un Android réels (fichiers fabriqués par ffmpeg seulement)
 - Stripe, SMTP, S3 et Celery réels
+
+# Rapport de tests — likes et quotas, 2026-10-06
+
+87 tests Django OK (`python manage.py test swingapp`).
+
+Exécutés ici :
+
+- 10 likes distincts comptés, le 11e refusé (`likes_exhausted`)
+- deux POST simultanés avec la même `client_key` : 1 like, quota +1
+- re-like : `already:true`, quota inchangé
+- 2 messages par participant, le 3e refusé des deux côtés
+- nouveau jour : quota likes remis
+- Découvrir vide distinct du bandeau de quota
+- Chromium headless 360×640 (pas un téléphone) : double tap, un seul POST avec `client_key`, carte retirée en 68 ms, compteur 10 puis 9
+
+Non exécutés : tap sur un téléphone physique. Stripe, S3 et Celery toujours non raccordés.

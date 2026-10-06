@@ -216,9 +216,13 @@ class Like(models.Model):
     actor = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="likes_sent")
     target = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="likes_received")
     created_at = models.DateTimeField(auto_now_add=True)
+    client_key = models.CharField(max_length=64, blank=True, default="")
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["actor", "target"], name="uniq_like")]
+        constraints = [
+            models.UniqueConstraint(fields=["actor", "target"], name="uniq_like"),
+            models.UniqueConstraint(fields=["actor", "client_key"], condition=~models.Q(client_key=""), name="uniq_like_client_key"),
+        ]
 
 
 class Pass(models.Model):
