@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from swingapp.choices import CITIES
 from swingapp.models import Match, Message, Partner, Photo, Profile, User
+from swingapp.services import sync_trial
 
 
 # 5 profils d'origine + 25 supplémentaires. Tous fictifs, marqués TEST.
@@ -118,6 +119,7 @@ class Command(BaseCommand):
             profile.show_online = True
             profile.last_active = timezone.now()
             profile.save()
+            sync_trial(profile)
             if kind == "couple" and partner_name:
                 Partner.objects.update_or_create(
                     profile=profile,
