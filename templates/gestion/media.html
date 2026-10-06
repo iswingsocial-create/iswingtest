@@ -18,7 +18,7 @@
   {% for photo in pager.rows %}
   <figure class="card">
     {% if photo.media_type == "video" %}
-    <video controls preload="metadata" src="/photos/{{ photo.id }}/fichier/" poster="/photos/{{ photo.id }}/"></video>
+    {% include "player.html" %}
     {% else %}
     <img src="/photos/{{ photo.id }}/" alt="">
     {% endif %}

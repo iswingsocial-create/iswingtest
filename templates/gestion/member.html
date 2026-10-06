@@ -70,7 +70,7 @@
       {% if photo.is_private and not can_moderate %}
       <div class="ph">Privé — permission de modération et double authentification requises</div>
       {% elif photo.media_type == "video" %}
-      <video controls src="/photos/{{ photo.id }}/fichier/" poster="/photos/{{ photo.id }}/"></video>
+      {% include "player.html" %}
       {% else %}
       <img src="/photos/{{ photo.id }}/" alt="">
       {% endif %}

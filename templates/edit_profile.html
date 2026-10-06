@@ -58,7 +58,7 @@
       <fieldset>
         <legend>{{ form.desire_list.label }}</legend>
         <p class="muted">{{ T.desires_help }}</p>
-        <div class="checks">{% for box in form.desire_list %}<label class="chip"><input type="checkbox" name="{{ form.desire_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><img src="/brand/categories/{{ box.data.value }}.png" alt=""><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
+        <div class="checks">{% for box in form.desire_list %}<label class="chip"><input type="checkbox" name="{{ form.desire_list.html_name }}" value="{{ box.data.value }}" {% if box.data.selected %}checked{% endif %}><img src="/brand/categories/{{ box.data.value }}.png?v={{ brand_stamp }}" alt=""><span>{{ box.choice_label }}</span></label>{% endfor %}</div>
       </fieldset>
     </section>
 
@@ -146,7 +146,7 @@
       <figure>
         <div class="frame">
           {% if photo.media_type == "video" %}
-          <video controls src="/photos/{{ photo.id }}/fichier/?v={{ photo.byte_size }}" poster="/photos/{{ photo.id }}/?v={{ photo.byte_size }}"></video>
+          {% include "player.html" %}
           {% else %}
           <img src="/photos/{{ photo.id }}/?v={{ photo.byte_size }}" alt="">
           {% endif %}
@@ -200,29 +200,31 @@
 </div>
 <div id="cropper" class="cropper" hidden>
   <div class="cropper-card">
-    <h2>{{ T.crop_title }}</h2>
-    <p class="muted">{{ T.crop_help }}</p>
-    <div class="crop-stage"><canvas id="crop-canvas" width="320" height="400"></canvas></div>
-    <label>{{ T.crop_help }} <input id="crop-zoom" type="range" min="1" max="3" step="0.01" value="1"></label>
-    <div class="row">
+    <div class="crop-body">
+      <h2>{{ T.crop_title }}</h2>
+      <p class="muted">{{ T.crop_help }}</p>
+      <div class="crop-stage"><canvas id="crop-canvas" width="320" height="400"></canvas></div>
+      <label>{{ T.crop_help }} <input id="crop-zoom" type="range" min="1" max="3" step="0.01" value="1"></label>
+      <div id="mask-tools" hidden>
+        <h2>Masquer des visages</h2>
+        <p class="muted">Un flou ne couvre pas comme un autocollant opaque et ne garantit pas l'anonymat. Les masques sont gravés dans le fichier, y compris les miniatures. L'original non masqué n'est pas conservé.</p>
+        <canvas id="mask-canvas" width="320" height="400"></canvas>
+        <div class="row">
+          <button type="button" class="btn ghost" id="mask-add">Autocollant</button>
+          <button type="button" class="btn ghost" id="mask-blur">Flou</button>
+          <button type="button" class="btn ghost" id="mask-undo">Annuler</button>
+          <button type="button" class="btn ghost" id="mask-redo">Rétablir</button>
+          <button type="button" class="btn ghost" id="mask-delete">Supprimer</button>
+        </div>
+        <label>Intensité du flou <input id="mask-strength" type="range" min="4" max="30" value="12"></label>
+        <label>Taille <input id="mask-size" type="range" min="8" max="40" value="18"></label>
+        <label>Rotation <input id="mask-rot" type="range" min="-180" max="180" value="0"></label>
+        <button type="button" class="btn" id="mask-done">Prévisualiser et fermer</button>
+      </div>
+    </div>
+    <div class="row crop-actions">
       <button type="button" class="btn" id="crop-apply">{{ T.crop_apply }}</button>
       <button type="button" class="btn ghost" id="crop-full">{{ T.crop_full }}</button>
-    </div>
-    <div id="mask-tools" hidden>
-      <h2>Masquer des visages</h2>
-      <p class="muted">Un flou ne couvre pas comme un autocollant opaque et ne garantit pas l'anonymat. Les masques sont gravés dans le fichier, y compris les miniatures. L'original non masqué n'est pas conservé.</p>
-      <canvas id="mask-canvas" width="320" height="400"></canvas>
-      <div class="row">
-        <button type="button" class="btn ghost" id="mask-add">Autocollant</button>
-        <button type="button" class="btn ghost" id="mask-blur">Flou</button>
-        <button type="button" class="btn ghost" id="mask-undo">Annuler</button>
-        <button type="button" class="btn ghost" id="mask-redo">Rétablir</button>
-        <button type="button" class="btn ghost" id="mask-delete">Supprimer</button>
-      </div>
-      <label>Intensité du flou <input id="mask-strength" type="range" min="4" max="30" value="12"></label>
-      <label>Taille <input id="mask-size" type="range" min="8" max="40" value="18"></label>
-      <label>Rotation <input id="mask-rot" type="range" min="-180" max="180" value="0"></label>
-      <button type="button" class="btn" id="mask-done">Prévisualiser et fermer</button>
     </div>
   </div>
 </div>

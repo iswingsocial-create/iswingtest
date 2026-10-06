@@ -12,11 +12,17 @@ Ce guide décrit ce qui fonctionne dans cette livraison, et ce qui n'est pas bra
 - États : Importation, Vérification, Conversion, En modération, Disponible, Échec.
 - L'envoi navigateur se fait par morceaux de 1 Mo, avec reprise, annulation et nouvel essai. Un envoi simple de plus de 60 Mo est refusé par Django : il faut le formulaire vidéo, qui découpe le fichier.
 - Après une conversion réussie, la source dans `data/private_media/incoming` est supprimée. En cas d'échec, elle reste 24 heures pour le bouton Réessayer, puis `Planifier.bat` l'efface. Rien d'illisible n'est publié.
-- La lecture passe par `/photos/<id>/fichier/` après contrôle des droits, avec les requêtes `Range`.
+- La lecture passe par `/photos/<id>/fichier/` seulement quand la conversion est terminée. Avant cela, la page montre l'affiche et le lecteur n'est pas branché. La réponse vidéo est en H.264 Main, yuv420p, AAC-LC si le fichier a du son, `+faststart`, avec `Accept-Ranges` et des réponses 206. Le cache de lecture est privé, une heure, sans `no-store` (Safari refuse souvent `no-store`). `playsinline` est posé pour l'iPhone.
+- Ces essais utilisent des fichiers fabriqués par ffmpeg. La lecture n'a pas été faite sur un iPhone, un Android, ni un navigateur de bureau ici.
 - Le masquage des visages n'existe pas pour la vidéo.
 - FFmpeg est obligatoire. FFprobe est optionnel. Espace temporaire : une source plus un MP4 par conversion. Le nombre simultané se règle (1 par défaut). Un verrou évite de convertir deux fois le même fichier. Un verrou abandonné est repris après 3 heures.
 
 Les essais automatiques fabriquent des fichiers HEVC, WebM, portrait, paysage, HDR et rotation avec ffmpeg. Ce ne sont pas des captures iPhone ou Android.
+
+## Apparence
+
+- Gestion → Configuration → Apparence : thème (Violet, Nuit, Clair), logo, et les dix vignettes de catégories. Le bouton Tout reste du texte, pas une image.
+- Les fichiers choisis sont dans `data/brand`. Un remplacement du ZIP ne les efface pas si le dossier `data` est conservé. « Remettre d'origine » retire seulement ces copies.
 
 ## Photos
 
@@ -36,7 +42,7 @@ Les essais automatiques fabriquent des fichiers HEVC, WebM, portrait, paysage, H
 ## Intégrations
 
 - Les secrets sont chiffrés avec `ISWING_DATA_KEY` si elle existe, sinon avec `SECRET_KEY`. Un champ vide conserve l'ancien secret. Il n'est pas renvoyé au navigateur.
-- Stripe peut être enregistré en test ou en production. Le test appelle le solde et ne crée pas de paiement. Sans clés, aucun paiement n'est lancé. CCBill, Segpay et Epoch ne sont pas implémentés. L'admissibilité auprès du prestataire n'est pas acquise.
+- Stripe s'enregistre dans Gestion → Configuration → Paiements, champ **Clé API secrète de test** (`sk_test_`). Le fichier `.env` n'est qu'un repli. Le test appelle le solde et ne crée pas de paiement. Sans clés, aucun paiement n'est lancé. CCBill, Segpay et Epoch ne sont pas implémentés. L'admissibilité auprès du prestataire n'est pas acquise.
 - SMTP transactionnel et SMTP de campagne sont séparés. Sans SMTP, les courriels partent vers la console locale. SPF, DKIM et DMARC sont expliqués, pas créés.
 - Les campagnes se programment avec un fuseau, se mettent en pause et peuvent annuler le reste. « Accepté par le serveur » n'est pas une preuve de délivrance.
 - Web Push : bouton explicite dans Paramètres. Pas de demande au chargement. Charge utile discrète. La déconnexion ou le changement de compte retire l'appareil de la session. iPhone exige une PWA installée ; ce n'est pas vérifié sur un téléphone ici.

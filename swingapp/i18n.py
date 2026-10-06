@@ -42,6 +42,8 @@ STRINGS = {
         "unmatch": "Retirer le match",
         "read_receipts": "Confirmations de lecture",
         "admin": "Administration",
+        "menu": "Menu",
+        "language": "Langue",
     },
     "en": {
         "lang_name": "English",
@@ -85,6 +87,8 @@ STRINGS = {
         "unmatch": "Remove match",
         "read_receipts": "Read receipts",
         "admin": "Administration",
+        "menu": "Menu",
+        "language": "Language",
     },
     "es": {
         "lang_name": "Español",
@@ -128,6 +132,8 @@ STRINGS = {
         "unmatch": "Quitar match",
         "read_receipts": "Confirmaciones de lectura",
         "admin": "Administración",
+        "menu": "Menú",
+        "language": "Idioma",
     },
 }
 

@@ -8,12 +8,12 @@
   {% endif %}
   <div class="cats" aria-label="{{ T.desires_title }}">
     <a class="cat {% if not active_desire %}on{% endif %}" href="/decouvrir/">
-      <span class="mark">{{ T.all_mark }}</span>
+      <img src="/brand/categories/toutes.png?v={{ brand_stamp }}" alt="">
       <span>{{ T.all_cats }}</span>
     </a>
     {% for code, label in desires %}
     <a class="cat {% if active_desire == code %}on{% endif %}" href="/decouvrir/?desire={{ code }}">
-      <img src="/brand/categories/{{ code }}.png" alt="">
+      <img src="/brand/categories/{{ code }}.png?v={{ brand_stamp }}" alt="">
       <span>{{ label }}</span>
     </a>
     {% endfor %}
@@ -83,7 +83,7 @@
 <article class="profile-card{% if not list_mode %} tinder-card{% else %} fav-list{% endif %}">
   <div class="frame">
     {% if card.photo %}
-      {% if card.photo.media_type == "video" %}<video src="/photos/{{ card.photo.id }}/fichier/" poster="/photos/{{ card.photo.id }}/" controls></video>
+      {% if card.photo.media_type == "video" %}{% include "player.html" with photo=card.photo %}
       {% else %}<img src="/photos/{{ card.photo.id }}/" alt="">{% endif %}
     {% else %}<div class="ph">—</div>{% endif %}
   </div>

@@ -9,37 +9,48 @@
   {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
   {% if seo.search_console %}<meta name="google-site-verification" content="{{ seo.search_console }}">{% endif %}
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="icon" href="/brand/icons/icon-192.png">
+  <link rel="icon" href="/brand/icons/icon-192.png?v={{ brand_stamp }}">
   <link rel="stylesheet" href="/brand/css/app.css">
 </head>
-<body data-refused="{{ T.action_refused }}" data-lost="{{ T.connection_lost }}" data-geodenied="{{ T.geo_denied }}" data-match="{{ T.match_sentence }}" data-liked="{{ T.liked }}" data-already="{{ T.already_liked }}" data-citynone="{{ T.city_none }}">
+<body data-theme="{{ theme|default:'violet' }}" data-refused="{{ T.action_refused }}" data-lost="{{ T.connection_lost }}" data-geodenied="{{ T.geo_denied }}" data-match="{{ T.match_sentence }}" data-liked="{{ T.liked }}" data-already="{{ T.already_liked }}" data-citynone="{{ T.city_none }}">
   <div hidden>{% csrf_token %}</div>
   <header class="top">
+    {% if user.is_authenticated %}
+    <button type="button" class="icon-btn" id="menu-btn" aria-expanded="false" aria-controls="main-menu" aria-label="{{ T.menu }}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    {% endif %}
     <a class="brand" href="{% if user.is_authenticated %}/decouvrir/{% else %}/{% endif %}">
-      <img src="/brand/icons/logo.png" alt="iSwing" width="40" height="40">
+      <img src="/brand/icons/logo.png?v={{ brand_stamp }}" alt="iSwing" width="40" height="40">
       <span>iSwing</span>
     </a>
-    <nav class="langs" aria-label="Langue">
-      {% if user.is_authenticated %}<a href="/notifications/">{{ T.notices }}{% if unread_notices %} <span class="badge">{{ unread_notices }}</span>{% endif %}</a>{% endif %}
-      {% for code, label, href in lang_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+    {% if user.is_authenticated %}
+    <a class="icon-btn bell" href="/notifications/" aria-label="{{ T.notices }}{% if unread_notices %} ({{ unread_notices }}){% endif %}"{% if request.resolver_match.url_name == "notices" %} aria-current="page"{% endif %}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 0 1-6 0"/></svg>
+      {% if unread_notices %}<span class="badge">{{ unread_notices }}</span>{% endif %}
+    </a>
+    <nav id="main-menu" class="main-menu" hidden aria-label="{{ T.menu }}">
+      {% with name=request.resolver_match.url_name %}
+      <a href="/decouvrir/"{% if name == "discover" %} aria-current="page"{% endif %}>{{ T.discover }}</a>
+      <a href="/matchs/"{% if name == "matches" or name == "unmatch" %} aria-current="page"{% endif %}>{{ T.matches }}</a>
+      <a href="/messages/"{% if name == "inbox" or name == "thread" %} aria-current="page"{% endif %}>{{ T.messages }}</a>
+      <a href="/moi/"{% if name == "edit_profile" %} aria-current="page"{% endif %}>{{ T.profile }}</a>
+      <a href="/abonnement/"{% if name == "billing" or name == "subscribe" or name == "stripe_checkout" or name == "cancel_subscription" %} aria-current="page"{% endif %}>{{ T.billing }}</a>
+      <a href="/parametres/"{% if name == "settings" or name == "export" or name == "delete_account" or name == "logout_others" %} aria-current="page"{% endif %}>{{ T.settings }}</a>
+      {% endwith %}
     </nav>
+    {% endif %}
   </header>
-  {% if user.is_authenticated %}
-  <nav class="tabbar" aria-label="Navigation">
-    <a href="/decouvrir/">{{ T.discover }}</a>
-    <a href="/matchs/">{{ T.matches }}</a>
-    <a href="/messages/">{{ T.messages }}</a>
-    <a href="/moi/">{{ T.profile }}</a>
-    <a href="/abonnement/">{{ T.billing }}</a>
-    <a href="/parametres/">{{ T.settings }}</a>
-  </nav>
-  {% endif %}
   <main>
     <p id="action-msg" class="warn" hidden></p>
     {% if messages %}{% for m in messages %}<p class="note">{{ m }}</p>{% endfor %}{% endif %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="legal-links">
+  <footer class="site-foot">
+    <nav class="langs" aria-label="{{ T.language }}">
+      {% for code, label, href in lang_links %}<a href="{{ href }}" hreflang="{{ code }}" lang="{{ code }}"{% if lang == code %} aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+    </nav>
+    <div class="legal-links">
     <a href="/legal/conditions/">{{ T.footer_terms }}</a>
     <a href="/legal/confidentialite/">{{ T.footer_privacy }}</a>
     <a href="/legal/medias/">{{ T.footer_media }}</a>
@@ -47,6 +58,7 @@
     <a href="/legal/abonnements/">{{ T.footer_billing }}</a>
     <a href="/legal/inactivite/">{{ T.footer_deletion }}</a>
     <a href="/legal/signalements/">{{ T.footer_reports }}</a>
+    </div>
   </footer>
   <button type="button" id="install-btn" class="install" hidden>{{ T.install }}</button>
   <script src="/brand/js/app.js"></script>

@@ -315,14 +315,14 @@ def convert_video_file(src, dst):
     timeout = min(3600, int(info["duration"] * 30) + 90)
     extra = ["-an"]
     if info.get("audio"):
-        extra = ["-c:a", "aac", "-b:a", "128k", "-ac", "2"]
+        extra = ["-c:a", "aac", "-profile:a", "aac_low", "-b:a", "128k", "-ac", "2", "-ar", "48000"]
     if info.get("hdr"):
         extra += ["-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
     cmd = [
         _ffmpeg(), "-y", "-i", src,
         "-vf", _vf(info),
-        "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p",
-        "-preset", "veryfast",
+        "-c:v", "libx264", "-profile:v", "main", "-level", "4.1", "-pix_fmt", "yuv420p",
+        "-preset", "veryfast", "-tag:v", "avc1",
         "-b:v", str(bitrate), "-maxrate", str(min(8_000_000, bitrate)), "-bufsize", str(bitrate * 2),
         "-movflags", "+faststart",
         *extra,
@@ -340,6 +340,7 @@ def convert_video_file(src, dst):
         head = handle.read(64)
     if b"ftyp" not in head:
         raise MediaError("convert", "Le fichier converti n'est pas un MP4 lisible. Rien n'a été publié.")
+    _ensure_faststart(dst)
     info["estimate"] = estimate
     info["output_bytes"] = os.path.getsize(dst)
     info["out_width"] = out_w
@@ -878,30 +879,51 @@ def storage_snapshot():
     }
 
 
-def ranged_response(request, path, content_type):
+def _ensure_faststart(path):
+    """Le téléphone a besoin du descriptif au début du fichier pour démarrer la lecture."""
+    with open(path, "rb") as handle:
+        head = handle.read(2_000_000)
+    moov = head.find(b"moov")
+    mdat = head.find(b"mdat")
+    if moov != -1 and (mdat == -1 or moov < mdat):
+        return
+    fixed = path + ".fast.mp4"
+    proc = _run([_ffmpeg(), "-y", "-i", path, "-c", "copy", "-movflags", "+faststart", fixed], 180)
+    if proc.returncode == 0 and os.path.isfile(fixed) and os.path.getsize(fixed) > 32:
+        os.replace(fixed, path)
+    elif os.path.isfile(fixed):
+        os.remove(fixed)
+
+
+def ranged_response(request, path, content_type, playback=False):
     from django.http import HttpResponse, StreamingHttpResponse
 
     size = os.path.getsize(path)
-    header = request.META.get("HTTP_RANGE", "")
-    if not header:
-        handle = open(path, "rb")
-        response = StreamingHttpResponse(handle, content_type=content_type)
-        response["Content-Length"] = str(size)
-        response["Accept-Ranges"] = "bytes"
-        response["Cache-Control"] = "private, no-store"
-        return response
-    match = re.match(r"bytes=(\d+)-(\d*)$", header.strip())
-    if not match:
-        response = HttpResponse(status=416)
-        response["Content-Range"] = f"bytes */{size}"
-        return response
-    start = int(match.group(1))
-    end = int(match.group(2)) if match.group(2) else size - 1
-    end = min(end, size - 1)
-    if start >= size or start > end:
-        response = HttpResponse(status=416)
-        response["Content-Range"] = f"bytes */{size}"
-        return response
+    cache = "private, max-age=3600" if playback else "private, no-store"
+    header = (request.META.get("HTTP_RANGE") or "").strip()
+    if "," in header:
+        header = ""
+    start, end, status = 0, size - 1, 200
+    if header:
+        match = re.match(r"bytes=(\d*)-(\d*)$", header, re.I)
+        if not match or (match.group(1) == "" and match.group(2) == ""):
+            response = HttpResponse(status=416)
+            response["Content-Range"] = f"bytes */{size}"
+            response["Accept-Ranges"] = "bytes"
+            return response
+        if match.group(1) == "":
+            suffix = int(match.group(2) or 0)
+            start = max(0, size - suffix)
+        else:
+            start = int(match.group(1))
+            end = int(match.group(2)) if match.group(2) else size - 1
+        end = min(end, size - 1)
+        if start >= size or start > end:
+            response = HttpResponse(status=416)
+            response["Content-Range"] = f"bytes */{size}"
+            response["Accept-Ranges"] = "bytes"
+            return response
+        status = 206
     length = end - start + 1
 
     def chunks():
@@ -915,9 +937,11 @@ def ranged_response(request, path, content_type):
                 remaining -= len(data)
                 yield data
 
-    response = StreamingHttpResponse(chunks(), status=206, content_type=content_type)
-    response["Content-Range"] = f"bytes {start}-{end}/{size}"
+    response = StreamingHttpResponse(chunks(), status=status, content_type=content_type)
     response["Content-Length"] = str(length)
     response["Accept-Ranges"] = "bytes"
-    response["Cache-Control"] = "private, no-store"
+    response["Cache-Control"] = cache
+    response["Content-Disposition"] = "inline"
+    if status == 206:
+        response["Content-Range"] = f"bytes {start}-{end}/{size}"
     return response

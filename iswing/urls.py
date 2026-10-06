@@ -7,11 +7,10 @@ import mimetypes
 
 
 def brand_file(request, asset):
-    root = (settings.BASE_DIR / "static").resolve()
-    full = (root / asset).resolve()
-    if root != full and root not in full.parents:
-        raise Http404()
-    if not full.is_file():
+    from swingapp.branding import brand_path
+
+    full = brand_path(asset)
+    if full is None:
         raise Http404(asset)
     content_type = mimetypes.guess_type(full.name)[0] or "application/octet-stream"
     response = FileResponse(full.open("rb"), content_type=content_type)

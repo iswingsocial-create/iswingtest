@@ -32,7 +32,8 @@ extrayez ce ZIP par-dessus le dossier iSwing et choisissez Remplacer.
 Ne supprimez pas .env, .venv ni le dossier data : ils gardent les comptes, photos et clés.
 Puis relancez Installer.bat, puis Demarrer.bat.
 
-Paiement : lis docs/STRIPE.md. Sans clés dans .env, aucun paiement n'est lancé.
+Paiement : Gestion, Configuration, onglet Paiements. Collez sk_test_ dans « Clé API secrète de test ». Le détail est dans docs/STRIPE.md. Sans cette clé, aucun paiement n'est lancé. Les paiements ne sont pas actifs tant que Stripe n'a pas accepté le site.
+Apparence : Gestion, Configuration, onglet Apparence. Thème, logo et vignettes des catégories. Le bouton Tout reste du texte. Vos images sont gardées dans data/brand.
 Les formules restent visibles. Aucun numéro de carte n'est stocké.
 Les photos et videos se gerent dans Mon profil, onglet Photos et videos.
 

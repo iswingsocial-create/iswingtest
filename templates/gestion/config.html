@@ -6,7 +6,57 @@
   <a href="/gestion/configuration/?onglet={{ code }}" {% if tab == code %}class="on" aria-current="page"{% endif %}>{{ label }}</a>
   {% endfor %}
 </nav>
-{% if tab == "medias" %}
+{% if tab == "apparence" %}
+<section class="card">
+  <h2>Thème, logo et vignettes</h2>
+  <p>Choisissez un thème, puis le logo. Pour une vignette, choisissez une image et enregistrez. Toutes est la première vignette de Découvrir.</p>
+  <form method="post" enctype="multipart/form-data" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="save">
+    <fieldset>
+      <legend>Thème du site</legend>
+      {% for code, label, help in themes %}
+      <label class="check"><input type="radio" name="theme" value="{{ code }}" {% if theme == code %}checked{% endif %}> <span><strong>{{ label }}</strong> — {{ help }}</span></label>
+      {% endfor %}
+    </fieldset>
+    <p><img src="/brand/icons/logo.png?v={{ brand_stamp }}" alt="" width="72" height="72">{% if logo_custom %} Image personnalisée{% else %} Image d'origine{% endif %}</p>
+    <label>Nouveau logo (PNG, JPEG ou WebP, carré de préférence) <input type="file" name="logo" accept="image/png,image/jpeg,image/webp"></label>
+    <div class="look-grid">
+      {% for row in categories %}
+      <label>
+        <img src="/brand/categories/{{ row.code }}.png?v={{ brand_stamp }}" alt="" width="72" height="72">
+        <span>{{ row.label }}{% if row.custom %} · personnalisée{% endif %}</span>
+        <input type="file" name="cat_{{ row.code }}" accept="image/png,image/jpeg,image/webp">
+      </label>
+      {% endfor %}
+    </div>
+    <button class="btn" type="submit">Enregistrer l'apparence</button>
+  </form>
+  <h2>Remettre une image d'origine</h2>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="reset">
+    <input type="hidden" name="reset" value="logo">
+    <button class="btn ghost" type="submit">Logo d'origine</button>
+  </form>
+  {% for row in categories %}
+  {% if row.custom %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="reset">
+    <input type="hidden" name="reset" value="{{ row.code }}">
+    <button class="btn ghost" type="submit">{{ row.label }} d'origine</button>
+  </form>
+  {% endif %}
+  {% endfor %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="reset">
+    <input type="hidden" name="reset" value="all">
+    <button class="btn ghost" type="submit">Tout remettre d'origine</button>
+  </form>
+</section>
+{% elif tab == "medias" %}
 <section class="card cfg-grid">
   <h2>Médias et stockage <span class="muted">· local</span></h2>
   <p>Stockage objet compatible S3 : non installé, non opérationnel. Les fichiers restent dans le dossier privé du serveur. Les URL publiques ne contournent pas les permissions.</p>
@@ -29,8 +79,22 @@
 {% elif tab == "paiements" %}
 <section class="card cfg-grid">
   <h2>Stripe · {{ labels.stripe }}</h2>
-  <p>Mode actuel : {{ stripe_mode|default:"off" }}. Le test de connexion lit le solde du compte et ne crée aucun paiement.</p>
-  <p>URL de webhook à copier : <code>{{ webhook_url }}</code></p>
+  <div class="note">
+    <p><strong>La clé API se colle ici, pas ailleurs.</strong></p>
+    <ol class="steps">
+      <li>Ouvrez le tableau Stripe, menu Développeurs, puis Clés API.</li>
+      <li>Pour essayer sans argent réel, laissez le mode Test chez Stripe.</li>
+      <li>Copiez la clé secrète qui commence par <code>sk_test_</code> et collez-la dans le champ « Clé API secrète de test ».</li>
+      <li>Copiez la clé publique <code>pk_test_</code> dans « Clé publique de test ».</li>
+      <li>Créez un prix d'abonnement. Son identifiant commence par <code>price_</code>. Collez-le dans « Identifiant de prix, test ».</li>
+      <li>Dans Développeurs, Webhooks, ajoutez l'adresse indiquée plus bas. Copiez le secret qui commence par <code>whsec_</code> dans « Secret de webhook, test ».</li>
+    </ol>
+    <p>Un champ laissé vide ne supprime pas la clé déjà enregistrée. Ne mettez pas cette clé dans un message ni dans le code du site.</p>
+    <p>Le fichier <code>.env</code> (<code>STRIPE_SECRET_KEY</code>) n'est utile que si vous ne remplissez pas cet écran. Cet écran est l'endroit prévu.</p>
+    <p>Coller une clé ne rend pas les paiements actifs. Stripe doit avoir accepté le site. Le bouton Tester ne crée aucun paiement. Les clés <code>sk_live_</code> sont pour plus tard, seulement après cet accord.</p>
+  </div>
+  <p>Mode enregistré : {{ stripe_mode|default:"off" }}.</p>
+  <p>Adresse à donner à Stripe pour le webhook : <code>{{ webhook_url }}</code></p>
   {% if rows.stripe.last_test_at %}<p>Dernier test : {{ rows.stripe.last_test_at }} · {{ rows.stripe.last_test_message }}</p>{% endif %}
   <form method="post" class="cfg-grid">{% csrf_token %}
     <input type="hidden" name="onglet" value="paiements">
@@ -40,15 +104,16 @@
         <option value="production">Production</option>
       </select>
     </label>
-    <label>Clé publique de test <input name="publishable_test" value="{{ public.stripe.publishable_test }}" autocomplete="off"></label>
-    <label>Clé publique de production <input name="publishable_live" value="{{ public.stripe.publishable_live }}" autocomplete="off"></label>
-    <label>Identifiant de prix, test <input name="price_test" value="{{ public.stripe.price_test }}" autocomplete="off"></label>
+    <label>Clé API secrète de test — collez sk_test_ ici {% if secret_flags.stripe.secret_test %}(déjà enregistrée){% endif %} <input type="password" name="secret_test" autocomplete="new-password" placeholder="sk_test_… inchangé si vide"></label>
+    <label>Clé publique de test — pk_test_ <input name="publishable_test" value="{{ public.stripe.publishable_test }}" autocomplete="off" placeholder="pk_test_…"></label>
+    <label>Identifiant de prix, test — price_ <input name="price_test" value="{{ public.stripe.price_test }}" autocomplete="off" placeholder="price_…"></label>
+    <label>Secret de webhook, test — whsec_ {% if secret_flags.stripe.webhook_test %}(déjà enregistré){% endif %} <input type="password" name="webhook_test" autocomplete="new-password" placeholder="whsec_… inchangé si vide"></label>
+    <h2>Production, seulement après accord de Stripe</h2>
+    <label>Clé API secrète de production — sk_live_ {% if secret_flags.stripe.secret_live %}(déjà enregistrée){% endif %} <input type="password" name="secret_live" autocomplete="new-password" placeholder="sk_live_… inchangé si vide"></label>
+    <label>Clé publique de production — pk_live_ <input name="publishable_live" value="{{ public.stripe.publishable_live }}" autocomplete="off"></label>
     <label>Identifiant de prix, production <input name="price_live" value="{{ public.stripe.price_live }}" autocomplete="off"></label>
-    <label>Devise <input name="currency" value="{{ public.stripe.currency|default:'usd' }}"></label>
-    <label>Clé secrète de test {% if secret_flags.stripe.secret_test %}(déjà enregistrée){% endif %} <input type="password" name="secret_test" autocomplete="new-password" placeholder="inchangé si vide"></label>
-    <label>Clé secrète de production {% if secret_flags.stripe.secret_live %}(déjà enregistrée){% endif %} <input type="password" name="secret_live" autocomplete="new-password" placeholder="inchangé si vide"></label>
-    <label>Secret de webhook, test {% if secret_flags.stripe.webhook_test %}(déjà enregistré){% endif %} <input type="password" name="webhook_test" autocomplete="new-password" placeholder="inchangé si vide"></label>
     <label>Secret de webhook, production {% if secret_flags.stripe.webhook_live %}(déjà enregistré){% endif %} <input type="password" name="webhook_live" autocomplete="new-password" placeholder="inchangé si vide"></label>
+    <label>Devise <input name="currency" value="{{ public.stripe.currency|default:'usd' }}"></label>
     <p class="muted">L'admissibilité du modèle iSwing auprès de Stripe n'est pas vérifiée par ce formulaire. N'activez la production qu'après accord du prestataire. Aucun numéro de carte n'est stocké ici.</p>
     <div class="row">
       <button class="btn" name="action" value="save">Enregistrer</button>

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import sqlite3
 import unicodedata
 from datetime import timedelta
@@ -1207,9 +1208,13 @@ def _serve_media(request, pk, force_image):
     photo = get_object_or_404(Photo, pk=pk)
     if not can_view_media(request.user, photo):
         return HttpResponseForbidden("photo")
-    if not force_image and photo.media_type == "video" and photo.video and photo.processing_status in ("", "ready"):
+    if not force_image and photo.media_type == "video":
+        if photo.processing_status not in ("", "ready") or not photo.video:
+            return HttpResponse("Cette vidéo n'est pas encore lisible.", status=409, content_type="text/plain; charset=utf-8")
         path = photo.video.path
-        return ranged_response(request, path, "video/mp4")
+        if not os.path.isfile(path):
+            return HttpResponse("Fichier vidéo manquant.", status=404, content_type="text/plain; charset=utf-8")
+        return ranged_response(request, path, "video/mp4", playback=True)
     field = photo.thumb if force_image and request.GET.get("thumb") == "1" and photo.thumb else photo.image
     if not field:
         return HttpResponseForbidden("photo")
@@ -1261,8 +1266,8 @@ def manifest(request):
 
 def service_worker(request):
     js = """
-const SHELL = ['/brand/css/app.css', '/brand/js/app.js', '/brand/icons/icon-192.png'];
-const CACHE = 'iswing-shell-v4';
+const SHELL = ['/brand/css/app.css', '/brand/js/app.js'];
+const CACHE = 'iswing-shell-v6';
 self.addEventListener('install', (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))); });
 self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (event) => {

@@ -153,6 +153,35 @@
       }, 200);
     });
   });
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    var menu = document.getElementById("main-menu");
+    var menuBtn = document.getElementById("menu-btn");
+    if (!menu || menu.hidden || !menuBtn) return;
+    menu.hidden = true;
+    menuBtn.setAttribute("aria-expanded", "false");
+    menuBtn.focus();
+  });
+  var menuBtn = document.getElementById("menu-btn");
+  var menu = document.getElementById("main-menu");
+  if (menuBtn && menu) {
+    menuBtn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      var open = menu.hidden;
+      menu.hidden = !open;
+      menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) {
+        var current = menu.querySelector("[aria-current='page']") || menu.querySelector("a");
+        if (current) current.focus();
+      }
+    });
+    document.addEventListener("click", function (event) {
+      if (menu.hidden) return;
+      if (menu.contains(event.target) || menuBtn.contains(event.target)) return;
+      menu.hidden = true;
+      menuBtn.setAttribute("aria-expanded", "false");
+    });
+  }
   var cropInput = document.querySelector("[data-crop]");
   var modal = document.getElementById("cropper");
   var canvas = document.getElementById("crop-canvas");

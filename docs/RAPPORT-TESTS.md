@@ -45,3 +45,20 @@ Non exécutés, donc non annoncés comme réussis :
 - SMTP, Stripe live, Analytics, Search Console, Meta Pixel
 - réception push sur un téléphone
 - Celery, Redis, S3 : non installés
+
+# Rapport de tests — apparence, lecture vidéo et clé Stripe, 2026-10-06
+
+74 tests Django OK (suites `swingapp.tests`, `swingapp.test_testlots`, `swingapp.test_media_stack`).
+
+Exécutés ici :
+
+- onglet Apparence : thème Clair enregistré, logo et vignette BDSM remplacés par un PNG servi depuis `data/brand`, remise d'origine d'une vignette, remise de toutes les images sans perdre le thème
+- la page Paiements indique le champ « Clé API secrète de test » et `sk_test_`
+- une vidéo convertie est H.264 yuv420p, `moov` avant `mdat`, réponse 206 sans `no-store`, et la page membre contient `playsinline`
+- une vidéo non prête répond 409 sur `/fichier/` au lieu d'envoyer l'affiche JPEG à la place du fichier vidéo
+- une photo JPEG avec orientation EXIF 6 est enregistrée plus haute que large
+
+Non exécutés, donc non annoncés comme réussis :
+
+- lecture sur un ordinateur, un iPhone ou un Android réels (fichiers fabriqués par ffmpeg seulement)
+- Stripe, SMTP, S3 et Celery réels

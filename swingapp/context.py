@@ -1,3 +1,4 @@
+from .branding import brand_stamp, theme_choice
 from .choices import REPORT_REASONS
 from .i18n import STRINGS, t
 from .integrations import pixel_config, seo_config, stats_config, tracking_allowed
@@ -34,4 +35,6 @@ def ui(request):
         "stats": stats_config() if indexable else {},
         "pixel": pixel_config() if indexable else {"meta": ""},
         "canonical": ((seo.get("canonical") or "").rstrip("/") + path) if indexable and seo.get("canonical") else "",
+        "theme": theme_choice(),
+        "brand_stamp": brand_stamp(),
     }

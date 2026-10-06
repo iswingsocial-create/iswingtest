@@ -167,11 +167,47 @@ class MediaStackTests(TestCase):
         self.assertContains(page, "non opérationnel")
         payments = self.client.get("/gestion/configuration/?onglet=paiements")
         self.assertContains(payments, "CCBill")
+        self.assertContains(payments, "sk_test_")
+        self.assertContains(payments, "Clé API secrète de test")
+        look = self.client.get("/gestion/configuration/?onglet=apparence")
+        self.assertContains(look, "Thème du site")
         self.assertNotContains(page, "sk_live")
         self.assertEqual(OutboundEmail.objects.count(), before)
         camp.refresh_from_db()
         self.assertEqual(camp.status, "scheduled")
         self.assertEqual(profile.display_name, "Membre")
+
+    def test_appearance_tab_replaces_logo_theme_and_category(self):
+        self.staff()
+        before = OutboundEmail.objects.count()
+        upload = SimpleUploadedFile("logo.png", jpeg_bytes((10, 20, 200), (64, 64)), content_type="image/jpeg")
+        category = SimpleUploadedFile("bdsm.png", jpeg_bytes((200, 40, 40), (48, 48)), content_type="image/jpeg")
+        res = self.client.post("/gestion/configuration/?onglet=apparence", {
+            "onglet": "apparence",
+            "action": "save",
+            "theme": "clair",
+            "logo": upload,
+            "cat_bdsm": category,
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(SiteSetting.get("theme", ""), "clair")
+        self.assertEqual(OutboundEmail.objects.count(), before)
+        look = self.client.get("/gestion/configuration/?onglet=apparence")
+        self.assertContains(look, 'data-theme="clair"')
+        logo = b"".join(self.client.get("/brand/icons/logo.png").streaming_content)
+        tile = b"".join(self.client.get("/brand/categories/bdsm.png").streaming_content)
+        self.assertTrue(logo.startswith(b"\x89PNG"))
+        self.assertTrue(tile.startswith(b"\x89PNG"))
+        reset = self.client.post("/gestion/configuration/?onglet=apparence", {
+            "onglet": "apparence", "action": "reset", "reset": "bdsm",
+        })
+        self.assertEqual(reset.status_code, 302)
+        original = b"".join(self.client.get("/brand/categories/bdsm.png").streaming_content)
+        self.assertNotEqual(original, tile)
+        self.client.post("/gestion/configuration/?onglet=apparence", {
+            "onglet": "apparence", "action": "reset", "reset": "all",
+        })
+        self.assertEqual(SiteSetting.get("theme", ""), "clair")
 
     def test_robots_hide_profiles(self):
         res = self.client.get("/robots.txt")
@@ -303,6 +339,18 @@ class VideoConversionTests(TestCase):
         self.client.force_login(self.user)
         owned = self.client.get(f"/photos/{published['land'].id}/fichier/", HTTP_RANGE="bytes=0-16")
         self.assertEqual(owned.status_code, 206)
+        self.assertNotIn("no-store", owned["Cache-Control"])
+        self.assertIn("bytes", owned["Accept-Ranges"])
+        self.assertEqual(len(b"".join(owned.streaming_content)), 17)
+        with open(published["land"].video.path, "rb") as handle:
+            head = handle.read(2_000_000)
+        self.assertGreaterEqual(head.find(b"moov"), 0)
+        self.assertLess(head.find(b"moov"), head.find(b"mdat") if b"mdat" in head else len(head))
+        page = self.client.get("/moi/?onglet=medias")
+        self.assertContains(page, "playsinline")
+        probe_land = subprocess.run([_ffmpeg(), "-hide_banner", "-i", published["land"].video.path], capture_output=True, timeout=20)
+        self.assertIn(b"h264", probe_land.stderr)
+        self.assertIn(b"yuv420p", probe_land.stderr)
         MediaStackTests.make(self, "stranger-video@example.com")
         self.client.logout()
         stranger = get_user_model().objects.get(email="stranger-video@example.com")
@@ -320,6 +368,8 @@ class VideoConversionTests(TestCase):
         self.assertTrue(copy.exists())
         self.client.force_login(self.user)
         res = self.client.get(f"/photos/{photo.id}/fichier/")
-        body = b"".join(res.streaming_content)
-        self.assertNotEqual(body, copy.read_bytes())
-        self.assertIn(res["Content-Type"], ("image/jpeg", "image/webp"))
+        self.assertEqual(res.status_code, 409)
+        self.assertNotIn(copy.read_bytes()[:24], res.content)
+        poster = self.client.get(f"/photos/{photo.id}/")
+        self.assertIn("image/jpeg", poster["Content-Type"])
+        self.assertNotEqual(b"".join(poster.streaming_content), copy.read_bytes())

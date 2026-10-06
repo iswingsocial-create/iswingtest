@@ -9,11 +9,11 @@
   <link rel="stylesheet" href="/brand/css/app.css">
   <link rel="stylesheet" href="/brand/css/gestion.css">
 </head>
-<body>
+<body data-theme="{{ theme|default:'violet' }}">
   <input id="g-nav" type="checkbox">
   <div class="g-app">
     <aside class="g-side">
-      <a class="g-brand" href="/gestion/"><img src="/brand/icons/logo.png" alt="" width="36" height="36"> iSwing</a>
+      <a class="g-brand" href="/gestion/"><img src="/brand/icons/logo.png?v={{ brand_stamp }}" alt="" width="36" height="36"> iSwing</a>
       <nav>
         <a href="/gestion/" {% if section == "dash" %}aria-current="page"{% endif %}>Tableau de bord</a>
         <a href="/gestion/membres/" {% if section == "members" %}aria-current="page"{% endif %}>Membres</a>

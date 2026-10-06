@@ -1,5 +1,8 @@
 """Onglets de configuration. Les secrets vides conservent la valeur déjà chiffrée."""
 
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect, render
@@ -23,10 +26,12 @@ from .integrations import (
     test_stripe,
     TRANSACTIONAL,
 )
+from .branding import THEMES, category_rows, remove_custom, save_png, theme_choice
 from .media_pipeline import storage_snapshot
 from .models import AuditLog, PushDevice, SiteSetting
 
 TABS = (
+    ("apparence", "Apparence"),
     ("medias", "Médias et stockage"),
     ("paiements", "Paiements"),
     ("courriels", "Courriels transactionnels"),
@@ -55,6 +60,7 @@ def configuration(request):
         action = request.POST.get("action") or "save"
         handler = {
             "medias": _save_media,
+            "apparence": _save_look,
             "paiements": _save_stripe,
             "courriels": _save_smtp,
             "campagnes": _save_campaign,
@@ -85,7 +91,57 @@ def configuration(request):
         "health_rows": [(code, status_label(row), row) for code, row in rows.items()],
         "campaign_hour": SiteSetting.get("campaign_per_hour", "100"),
         "campaign_day": SiteSetting.get("campaign_per_day", "1000"),
+        "themes": THEMES,
+        "theme": theme_choice(),
+        "categories": category_rows(),
+        "logo_custom": (Path(settings.BASE_DIR) / "data" / "brand" / "icons" / "logo.png").is_file(),
     })
+
+
+def _save_look(request, action):
+    from .choices import CATEGORY_CODES
+
+    if action == "reset":
+        target = (request.POST.get("reset") or "").strip()
+        if target == "logo":
+            remove_custom("icons/logo.png")
+            remove_custom("icons/icon-192.png")
+            remove_custom("icons/icon-512.png")
+        elif target == "all":
+            root = Path(settings.BASE_DIR) / "data" / "brand"
+            if root.is_dir():
+                for path in root.rglob("*"):
+                    if path.is_file():
+                        path.unlink()
+        elif target in ("toutes", *CATEGORY_CODES):
+            remove_custom(f"categories/{target}.png")
+        else:
+            messages.error(request, "Rien à remettre d'origine.")
+            return
+        AuditLog.objects.create(actor=request.user, action="brand_reset", detail=target[:80])
+        messages.success(request, "Image d'origine rétablie.")
+        return
+    theme = request.POST.get("theme") or "violet"
+    if theme not in {code for code, _label, _help in THEMES}:
+        messages.error(request, "Thème inconnu.")
+        return
+    _set("theme", theme)
+    try:
+        if request.FILES.get("logo"):
+            save_png("icons/logo.png", request.FILES["logo"], 512)
+            request.FILES["logo"].seek(0)
+            save_png("icons/icon-192.png", request.FILES["logo"], 192)
+            request.FILES["logo"].seek(0)
+            save_png("icons/icon-512.png", request.FILES["logo"], 512)
+        for code in ("toutes", *CATEGORY_CODES):
+            upload = request.FILES.get(f"cat_{code}")
+            if upload:
+                save_png(f"categories/{code}.png", upload, 512)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return
+    AuditLog.objects.create(actor=request.user, action="brand_update", detail=theme)
+    messages.success(request, "Apparence enregistrée. Rechargez le site si une image ne change pas tout de suite.")
 
 
 def _set(key, value):
