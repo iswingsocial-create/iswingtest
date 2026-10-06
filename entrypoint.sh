@@ -3,7 +3,8 @@
 # 1. applique les migrations
 # 2. cree ou met a jour le compte admin (mot de passe pris de ADMIN_PASSWORD)
 # 3. collecte les fichiers statiques
-# 4. lance gunicorn
+# 4. importe les 30 profils demo si SEED_DEMO_PROFILES=1
+# 5. lance gunicorn
 set -e
 
 python manage.py migrate --noinput
@@ -91,5 +92,11 @@ if os.environ.get("SEED_TEST_ACCOUNTS") == "1":
         m.save(update_fields=["closed_at"])
     print("test match ready:", m.id, "created:", mcreated)
 PYEOF
+
+# 30 profils de demo avec essai actif (actif si SEED_DEMO_PROFILES=1).
+# Alternative gratuite au Shell Render (payant): l'import tourne au demarrage.
+if [ "$SEED_DEMO_PROFILES" = "1" ]; then
+  python manage.py import_demo || echo "import_demo: echec (voir logs ci-dessus)"
+fi
 
 exec gunicorn iswing.wsgi:application --bind "0.0.0.0:${PORT:-8000}" --workers 2
