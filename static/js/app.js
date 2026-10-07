@@ -148,18 +148,26 @@
             if (msg.video) {
               var video = document.createElement("video");
               video.controls = true;
+              video.playsInline = true;
+              video.setAttribute("playsinline", "");
               video.src = msg.video;
-              if (msg.photo) video.poster = msg.photo;
+              if (msg.thumb || msg.photo) video.poster = msg.thumb || msg.photo;
               bubble.appendChild(video);
             } else if (msg.photo) {
               var link = document.createElement("a");
               link.className = "shared-photo";
               link.href = msg.photo;
               var img = document.createElement("img");
-              img.src = msg.photo;
+              img.src = msg.thumb || msg.photo;
               img.alt = "";
               link.appendChild(img);
               bubble.appendChild(link);
+            }
+            if (msg.mine && msg.contact) {
+              var note = document.createElement("p");
+              note.className = "contact-note";
+              note.textContent = thread.getAttribute("data-contact-notice") || "";
+              if (note.textContent) bubble.appendChild(note);
             }
             wrap.appendChild(bubble);
             log.appendChild(wrap);

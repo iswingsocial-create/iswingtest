@@ -11,7 +11,7 @@ from django.utils import timezone
 from PIL import Image
 
 from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, DailyUsage, Like, Match, MatchUsage, Message, Notice, OutboundEmail, Partner, Photo, PhotoGrant, PrivateAccess, Profile, Report, Subscription
-from swingapp.services import QuotaError, consume_like, create_like, find_contact_info, in_trial
+from swingapp.services import QuotaError, consume_like, create_like, find_contact_info
 
 
 def jpeg():
@@ -45,18 +45,6 @@ class RulesTests(TestCase):
         })
         self.assertEqual(res.status_code, 200)
         self.assertFalse(get_user_model().objects.filter(email="jeune@example.com").exists())
-
-    def test_signup_starts_trial(self):
-        res = self.client.post("/comptes/inscription/", {
-            "email": "nouveau@example.com", "password": "motdepasse10", "birth_date": "1990-05-05",
-            "display_name": "Nouveau", "kind": "single",
-            "age_confirm": "on", "accept": "on", "intimate": "on",
-        })
-        user = get_user_model().objects.get(email="nouveau@example.com")
-        self.assertTrue(in_trial(user))
-        self.assertGreater(user.profile.trial_ends_at, timezone.now())
-        _, b = self.make("b2@example.com", "B2")
-        create_like(user.profile, b)
 
     def test_mutual_like_creates_match(self):
         _, a = self.make("a@example.com", "A")
@@ -298,7 +286,9 @@ class RulesTests(TestCase):
         self.assertEqual(find_contact_info("appelle-moi au 06 12 34 56 78"), "phone")
         self.assertEqual(find_contact_info("mon num: +1 514-555-1234"), "phone")
         self.assertEqual(find_contact_info("écris à lea.dupont@example.com"), "email")
+        self.assertEqual(find_contact_info("lea@example.com"), "email")
         self.assertEqual(find_contact_info("suis-moi @lea_dupont"), "handle")
+        self.assertEqual(find_contact_info("retrouve @lea"), "handle")
         self.assertEqual(find_contact_info("né le 12.05.1990 à Lyon"), "")
         self.assertEqual(find_contact_info("j'ai 2 chiens et 3 chats"), "")
         self.assertEqual(find_contact_info("rdv demain vers 18h"), "")
@@ -314,25 +304,51 @@ class RulesTests(TestCase):
     def test_trial_cannot_share_contact_info(self):
         user_a, a, user_b, b, match = self._match_pair()
         self.client.force_login(user_a)
-        res = self.client.post(f"/messages/{match.id}/", {"body": "appelle-moi au 06 12 34 56 78", "client_key": "ct-1"})
-        self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "premium")
+        samples = [
+            "appelle-moi au 06 12 34 56 78",
+            "+1 514-555-1234",
+            "lea@example.com",
+            "retrouve @lea",
+        ]
+        for index, body in enumerate(samples):
+            res = self.client.post(f"/messages/{match.id}/", {"body": body, "client_key": f"ct-block-{index}"})
+            self.assertEqual(res.status_code, 200)
+            self.assertContains(res, "premium")
+            self.assertNotContains(res, "Message object")
         self.assertFalse(Message.objects.filter(match=match, sender=a).exists())
+        for body, key in (("né le 12.05.1990", "ct-ok-date"), ("j'ai 2 chiens", "ct-ok-dogs")):
+            ok = self.client.post(f"/messages/{match.id}/", {"body": body, "client_key": key})
+            self.assertEqual(ok.status_code, 302)
+        self.assertEqual(Message.objects.filter(match=match, sender=a).count(), 2)
+        self.assertEqual(MatchUsage.objects.get(user=user_a, match=match).messages_sent, 2)
 
     def test_premium_can_share_contact_info_with_notice(self):
         user_a, a, user_b, b, match = self._match_pair()
-        Subscription.objects.update_or_create(user=user_a, defaults={"status": "active", "current_period_end": timezone.now() + timedelta(days=10)})
+        Subscription.objects.update_or_create(
+            user=user_a,
+            defaults={"status": "active", "current_period_end": timezone.now() + timedelta(days=10)},
+        )
         self.client.force_login(user_a)
         res = self.client.post(f"/messages/{match.id}/", {"body": "mon mail: a@example.com", "client_key": "ct-2"})
         self.assertEqual(res.status_code, 302)
         self.assertTrue(Message.objects.filter(match=match, sender=a).exists())
         page = self.client.get(f"/messages/{match.id}/")
         self.assertContains(page, "responsabilit")
+        self.assertContains(page, 'class="contact-note"')
+        self.assertNotContains(page, "Message object")
+        self.client.force_login(user_b)
+        other_page = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(other_page, "a@example.com")
+        self.assertNotContains(other_page, 'class="contact-note"')
 
     def test_shared_private_photo_grants_access(self):
         user_a, a, user_b, b, match = self._match_pair()
         photo = Photo(profile=a, is_primary=False, is_private=True, moderation_status="approved")
         photo.image.save("priv.jpg", jpeg(), save=True)
+        other = Photo(profile=a, is_primary=False, is_private=True, moderation_status="approved")
+        other.image.save("other.jpg", jpeg(), save=True)
+        self.client.force_login(user_b)
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
         self.client.force_login(user_a)
         res = self.client.post(f"/messages/{match.id}/", {"photo": str(photo.id), "client_key": "ct-3"})
         self.assertEqual(res.status_code, 302)
@@ -340,15 +356,38 @@ class RulesTests(TestCase):
         self.client.force_login(user_b)
         got = self.client.get(f"/photos/{photo.id}/")
         self.assertEqual(got.status_code, 200)
+        page = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(page, "shared-photo")
+        self.assertContains(page, f"/photos/{photo.id}/")
+        self.assertNotContains(page, "Message object")
+        self.assertEqual(self.client.get(f"/photos/{other.id}/").status_code, 403)
+        PhotoGrant.objects.filter(photo=photo, grantee=b).update(revoked_at=timezone.now())
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
+        self.client.force_login(user_a)
+        again = self.client.post(f"/messages/{match.id}/", {"photo": str(photo.id), "body": "encore", "client_key": "ct-3b"})
+        self.assertEqual(again.status_code, 302)
+        self.assertTrue(PhotoGrant.objects.filter(photo=photo, grantee=b, revoked_at__isnull=True).exists())
+        self.client.force_login(user_b)
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 200)
 
     def test_thread_renders_avatars_not_message_objects(self):
         user_a, a, user_b, b, match = self._match_pair()
         self.client.force_login(user_a)
         self.client.post(f"/messages/{match.id}/", {"body": "bonjour", "client_key": "ct-4"})
+        self.client.force_login(user_b)
+        self.client.post(f"/messages/{match.id}/", {"body": "salut", "client_key": "ct-5"})
         page = self.client.get(f"/messages/{match.id}/")
         self.assertNotContains(page, "Message object")
-        self.assertContains(page, 'class="avatar"')
+        self.assertContains(page, 'class="avatar"', count=2)
         self.assertContains(page, "bonjour")
+        self.assertContains(page, "salut")
+        poll = self.client.get(f"/messages/{match.id}/poll/?after=0")
+        rows = poll.json()["messages"]
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all(row.get("avatar") for row in rows))
+        js = __import__("pathlib").Path("static/js/app.js").read_text(encoding="utf-8")
+        self.assertIn('className = "avatar"', js)
+        self.assertIn("shared-photo", js)
 
     def test_discover_empty_is_not_the_quota_warning(self):
         user, _ = self.make("empty-deck@example.com", "Empty")

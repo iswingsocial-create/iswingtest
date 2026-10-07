@@ -227,7 +227,7 @@ input[type="checkbox"], input[type="radio"] {
 #log .msg .avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex: none; background: #241a45; }
 #log .msg .bubble { max-width: 85%; min-width: 0; }
 #log .msg .bubble .body { margin: 0; }
-#log .msg.mine { justify-content: flex-end; }
+#log .msg.mine { justify-content: flex-end; margin-left: 0; background: transparent; }
 #log .msg.mine .bubble .body { background: linear-gradient(90deg, rgba(80, 48, 224, 0.55), rgba(144, 96, 240, 0.45)); }
 #log .msg .shared-photo img { max-width: 220px; border-radius: 12px; margin-top: 0.4rem; display: block; }
 #log .msg .contact-note { background: transparent; padding: 0; font-size: 0.78rem; color: var(--muted); margin: 0.3rem 0 0; }

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="card" id="thread" data-match="{{ match.id }}" data-after="{{ last_msg_id }}">
+<section class="card" id="thread" data-match="{{ match.id }}" data-after="{{ last_msg_id }}" data-contact-notice="{{ T.contact_notice }}">
   <h1>{{ other.display_name }}</h1>
   {% if quota.premium %}<p id="msgs-left" data-premium="1">{{ T.premium }}</p>{% else %}
   <p id="msgs-left" data-left="{{ quota.messages_left }}">{{ T.quota_msgs }} : <strong>{{ quota.messages_left }}</strong></p>

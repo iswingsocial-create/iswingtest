@@ -64,8 +64,8 @@ from .services import (
     find_contact_info,
     haversine_km,
     has_staff_perm,
-    is_premium,
     is_last_superuser,
+    is_premium,
     maybe_validate,
     notify,
     notify_report_inbox,
@@ -557,10 +557,8 @@ def thread(request, pk):
             try:
                 with transaction.atomic():
                     consume_message(request.user, match)
-                    msg = Message.objects.create(match=match, sender=me, body=body[:2000], photo=photo, client_key=client_key)
+                    Message.objects.create(match=match, sender=me, body=body[:2000], photo=photo, client_key=client_key)
                     if photo and photo.is_private:
-                        # Partager une photo privée dans un message donne au destinataire
-                        # l'accès à cette photo précise.
                         grant, _ = PhotoGrant.objects.get_or_create(photo=photo, grantee=other)
                         if grant.revoked_at:
                             grant.revoked_at = None
@@ -584,10 +582,7 @@ def thread(request, pk):
         msg.shared_photo_thumb = ""
         if msg.photo_id and can_view_media(request.user, msg.photo):
             msg.shared_photo_url = f"/photos/{msg.photo_id}/"
-            if msg.photo.thumb:
-                msg.shared_photo_thumb = f"/photos/{msg.photo_id}/?thumb=1"
-            else:
-                msg.shared_photo_thumb = msg.shared_photo_url
+            msg.shared_photo_thumb = f"/photos/{msg.photo_id}/?thumb=1" if msg.photo.thumb else msg.shared_photo_url
         msg.has_contact = bool(find_contact_info(msg.body))
     return render(request, "thread.html", {
         "match": match,
@@ -615,25 +610,28 @@ def thread_poll(request, pk):
     avatar_by_profile = {}
     for msg in match.messages.filter(id__gt=after).select_related("sender", "photo"):
         photo_url = ""
+        thumb_url = ""
         video_url = ""
         if msg.photo_id and can_view_media(request.user, msg.photo):
             photo_url = f"/photos/{msg.photo_id}/"
+            thumb_url = f"/photos/{msg.photo_id}/?thumb=1" if msg.photo.thumb else photo_url
             if msg.photo.media_type == "video" and msg.photo.video:
                 video_url = f"/photos/{msg.photo_id}/fichier/"
         sender_id = msg.sender_id
         if sender_id not in avatar_by_profile:
             avatar = msg.sender.photos.filter(is_primary=True, moderation_status="approved").first()
             avatar_by_profile[sender_id] = (
-                f"/photos/{avatar.id}/?thumb=1"
-                if avatar and can_view_media(request.user, avatar) else ""
+                f"/photos/{avatar.id}/?thumb=1" if avatar and can_view_media(request.user, avatar) else ""
             )
         rows.append({
             "id": msg.id,
             "mine": sender_id == me.id,
             "body": msg.body,
             "photo": photo_url,
+            "thumb": thumb_url,
             "video": video_url,
             "avatar": avatar_by_profile[sender_id],
+            "contact": bool(find_contact_info(msg.body)),
         })
     return JsonResponse({"messages": rows})
 
@@ -1311,7 +1309,7 @@ def manifest(request):
 def service_worker(request):
     js = """
 const SHELL = ['/brand/css/app.css', '/brand/js/app.js'];
-const CACHE = 'iswing-shell-v7';
+const CACHE = 'iswing-shell-v8';
 self.addEventListener('install', (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))); });
 self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (event) => {

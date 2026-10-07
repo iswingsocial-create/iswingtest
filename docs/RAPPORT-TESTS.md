@@ -63,6 +63,21 @@ Non exécutés, donc non annoncés comme réussis :
 - lecture sur un ordinateur, un iPhone ou un Android réels (fichiers fabriqués par ffmpeg seulement)
 - Stripe, SMTP, S3 et Celery réels
 
+# Rapport de tests — messagerie, 2026-10-06
+
+97 tests Django OK (`python manage.py test swingapp`).
+
+Exécutés ici :
+
+- le fil n'affiche plus « Message object » : le contexte s'appelle `thread_messages`
+- les deux participants voient l'avatar public approuvé de l'auteur, y compris dans le poll
+- une photo privée jointe crée un PhotoGrant pour l'autre participant ; il ouvre la photo (200) et voit la miniature ; une autre photo privée reste en 403 ; un droit révoqué est rouvert au nouvel envoi
+- essai : téléphone, e-mail et @pseudo sont refusés et non enregistrés ; « né le 12.05.1990 » et « j'ai 2 chiens » passent
+- premium : l'e-mail est envoyé et l'avis de responsabilité s'affiche pour l'expéditeur seulement
+- le quota reste à 2 messages par match et par côté
+
+Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.
+
 # Rapport de tests — likes et quotas, 2026-10-06
 
 87 tests Django OK (`python manage.py test swingapp`).
