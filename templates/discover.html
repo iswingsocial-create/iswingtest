@@ -90,6 +90,7 @@
     {% else %}<div class="ph">—</div>{% endif %}
   </div>
   <h2>{{ card.profile.display_name }}{% if card.profile.is_demo %} · TEST{% endif %}{% if card.profile.lifetime_member %} · membre a vie{% endif %}, {{ card.age }}</h2>
+  {% if card.badges %}<p class="badges">{% for label in card.badges %}<span class="status-badge">{{ label }}</span>{% endfor %}</p>{% endif %}
   <p class="city-line">{% if card.profile.city %}{{ card.profile.city }}{% else %}{{ T.city_missing }}{% endif %}{% if card.distance %} · {{ T.approx }} {{ card.distance }}{% endif %}</p>
   <p>{{ card.kind_label }}</p>
   {% if card.affinity %}<p class="muted">{{ card.affinity|join:" · " }}</p>{% endif %}

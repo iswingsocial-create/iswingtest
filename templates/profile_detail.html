@@ -3,6 +3,7 @@
 <article class="card">
   {% if own %}<p class="note">{{ T.preview_note }}</p>{% endif %}
   <h1>{{ profile.display_name }}{% if profile.is_demo %} · TEST{% endif %}{% if profile.lifetime_member %} · membre a vie{% endif %}, {{ profile.public_age }}</h1>
+  {% if badges %}<p class="badges">{% for label in badges %}<span class="status-badge">{{ label }}</span>{% endfor %}</p>{% endif %}
   <p class="city-line">{% if profile.city %}{{ profile.city }}{% else %}{{ T.city_missing }}{% endif %}{% if distance %} · {{ T.approx }} {{ distance }}{% endif %}</p>
   <p>{{ kind_label }}{% if gender_label %} · {{ gender_label }}{% endif %}</p>
   {% if orientation_label %}<p>{{ orientation_label }}</p>{% endif %}

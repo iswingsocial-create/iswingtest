@@ -454,6 +454,9 @@ def _composite(base, layer, ox, oy):
 
 
 def _sticker_layer(box_w, box_h, code):
+    glyph = _emoji_sticker(box_w, box_h, code)
+    if glyph is not None:
+        return glyph
     sticker = Image.new("RGBA", (box_w, box_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(sticker)
     code = (code or "●")[:16]
@@ -487,6 +490,27 @@ def _sticker_layer(box_w, box_h, code):
         draw.rounded_rectangle((0, 0, box_w - 1, box_h - 1), radius=max(4, box_w // 6), fill=(12, 8, 24, 255))
         draw.text((box_w // 4, box_h // 3), code[:4], fill=(255, 255, 255, 255))
     return sticker
+
+
+_STICKER_FILES = {
+    "happy": "1f60a.png",
+    "😊": "1f60a.png",
+    "devil": "1f608.png",
+    "😈": "1f608.png",
+    "pineapple": "1f34d.png",
+    "🍍": "1f34d.png",
+}
+
+
+def _emoji_sticker(box_w, box_h, code):
+    name = _STICKER_FILES.get((code or "").strip())
+    if not name:
+        return None
+    path = Path(__file__).resolve().parent / "stickers" / name
+    if not path.is_file():
+        return None
+    glyph = Image.open(path).convert("RGBA")
+    return glyph.resize((max(8, box_w), max(8, box_h)), Image.Resampling.LANCZOS)
 
 
 def _eyes(draw, box_w, box_h, top):

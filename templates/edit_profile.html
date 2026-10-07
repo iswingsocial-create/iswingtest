@@ -136,8 +136,20 @@
         <button type="button" class="btn ghost" id="video-retry" hidden>Réessayer</button>
       </div>
     </form>
+    <form class="card media-block" method="post" action="/moi/certification/" enctype="multipart/form-data">{% csrf_token %}
+      <h2>{{ T.cert_title }}</h2>
+      <p class="muted">{{ T.cert_help }}</p>
+      {% if badges %}<p class="badges">{% for label in badges %}<span class="status-badge">{{ label }}</span>{% endfor %}</p>{% endif %}
+      {% if cert_status == "pending" %}<p class="note">{{ T.cert_pending }}</p>
+      {% elif cert_status == "approved" %}<p class="note">{{ T.cert_approved }}</p>
+      {% elif cert_status == "refused" %}<p class="note">{{ T.cert_refused }}</p>{% endif %}
+      <input type="file" name="image" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif" required>
+      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
+      <button class="btn" type="submit">{{ T.cert_send }}</button>
+    </form>
     <div class="gallery">
       {% for photo in profile.photos.all %}
+      {% if photo.role != "certification" %}
       <figure>
         <div class="frame">
           {% if photo.media_type == "video" %}
@@ -166,6 +178,7 @@
         {% endif %}
         <form method="post" action="/moi/photos/{{ photo.id }}/supprimer/">{% csrf_token %}<button type="submit" class="danger" data-confirm="{{ T.delete_photo_confirm }}">{{ T.delete }}</button></form>
       </figure>
+      {% endif %}
       {% endfor %}
     </div>
     <h2>{{ T.access_requests }}</h2>
@@ -205,9 +218,9 @@
         <p class="muted">Un flou ne couvre pas comme un autocollant opaque et ne garantit pas l'anonymat. Les masques sont gravés dans le fichier, y compris les miniatures. L'original non masqué n'est pas conservé.</p>
         <canvas id="mask-canvas" width="320" height="400"></canvas>
         <div class="row">
-          <button type="button" class="btn ghost" data-sticker="happy">{{ T.sticker_happy }}</button>
-          <button type="button" class="btn ghost" data-sticker="devil">{{ T.sticker_devil }}</button>
-          <button type="button" class="btn ghost" data-sticker="pineapple">{{ T.sticker_pineapple }}</button>
+          <button type="button" class="btn ghost" data-sticker="😊">😊 {{ T.sticker_happy }}</button>
+          <button type="button" class="btn ghost" data-sticker="😈">😈 {{ T.sticker_devil }}</button>
+          <button type="button" class="btn ghost" data-sticker="🍍">🍍 {{ T.sticker_pineapple }}</button>
           <button type="button" class="btn ghost" id="mask-blur">{{ T.mask_blur }}</button>
           <button type="button" class="btn ghost" id="mask-undo">Annuler</button>
           <button type="button" class="btn ghost" id="mask-redo">Rétablir</button>

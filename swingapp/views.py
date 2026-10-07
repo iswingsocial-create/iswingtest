@@ -27,6 +27,7 @@ from .legal_seed import ensure_legal_pages
 from .models import (
     AuditLog,
     Block,
+    CertificationRequest,
     EmailToken,
     Favorite,
     LegalPage,
@@ -68,6 +69,7 @@ from .services import (
     is_last_superuser,
     is_premium,
     author_label_for,
+    badge_labels,
     maybe_validate,
     notify,
     notify_report_inbox,
@@ -76,6 +78,7 @@ from .services import (
     prepare_image,
     prepare_video,
     quota_snapshot,
+    notice_text,
     separate_members,
     start_trial_at_signup,
     sync_trial,
@@ -347,7 +350,7 @@ def discover(request):
     elif max_km:
         qs = qs.exclude(lat__isnull=True)
     photos = {}
-    for row in Photo.objects.filter(profile__in=qs, is_private=False, moderation_status="approved").order_by("-is_primary", "position", "id"):
+    for row in Photo.objects.filter(profile__in=qs, is_private=False, moderation_status="approved").exclude(role="certification").order_by("-is_primary", "position", "id"):
         photos.setdefault(row.profile_id, row)
     cards = []
     limit = 100 if fav else 1
@@ -377,6 +380,7 @@ def discover(request):
             "age": profile.public_age,
             "affinity": [t(lang, "cat_" + code) for code in _codes(profile.desires)],
             "kind_label": t(lang, profile.kind),
+            "badges": badge_labels(profile, lang),
             "faved": Favorite.objects.filter(owner=me, target=profile).exists() if fav else False,
         })
         if len(cards) >= limit:
@@ -409,7 +413,7 @@ def profile_detail(request, pk):
     own = profile.id == me.id
     access = None if own else PrivateAccess.objects.filter(owner=profile, grantee=me).first()
     has_access = bool(access and access.status == "accepted")
-    for photo in profile.photos.all():
+    for photo in profile.photos.exclude(role="certification"):
         if not own and photo.moderation_status != "approved":
             continue
         if photo.media_type == "video" and photo.processing_status not in ("", "ready") and not own:
@@ -437,7 +441,7 @@ def profile_detail(request, pk):
         "faved": faved,
         "access": access,
         "has_access": has_access,
-        "private_count": profile.photos.filter(is_private=True).exclude(moderation_status="rejected").count(),
+        "private_count": profile.photos.filter(is_private=True).exclude(moderation_status="rejected").exclude(role="certification").count(),
         "kind_label": t(lang, profile.kind),
         "gender_label": t(lang, profile.gender) if profile.gender else "",
         "orientation_label": t(lang, profile.orientation) if profile.orientation and not profile.hide_orientation else "",
@@ -448,6 +452,7 @@ def profile_detail(request, pk):
         "desire_labels": [t(lang, "cat_" + code) for code in _codes(profile.desires)] if show_intimate else [],
         "limit_labels": [t(lang, "lim_" + code) for code in _codes(profile.limits)] if show_intimate else [],
         "language_labels": [profile.language_other if code == "autre" and profile.language_other else t(lang, "lang_" + code) for code in _codes(profile.languages)],
+        "badges": badge_labels(profile, lang),
     })
 
 
@@ -570,8 +575,6 @@ def thread(request, pk):
             error = t(lang, "message_label")
         elif client_key and Message.objects.filter(match=match, sender=me, client_key=client_key).exists():
             return redirect("thread", pk=match.id)
-        elif me.is_demo and not other.is_demo:
-            error = "Un profil fictif ne peut pas écrire à un membre réel."
         elif contact and not is_premium(request.user):
             error = t(lang, "contact_blocked")
         else:
@@ -709,11 +712,54 @@ def edit_profile(request):
         "pending_access": PrivateAccess.objects.filter(owner=profile, status="pending").select_related("grantee"),
         "granted_access": PrivateAccess.objects.filter(owner=profile, status="accepted").select_related("grantee"),
         "likers": [row.actor for row in Like.objects.filter(target=profile).select_related("actor")[:40]],
+        "cert_status": (profile.certifications.order_by("-id").values_list("status", flat=True).first() or ""),
+        "badges": badge_labels(profile, getattr(request, "lang", "fr")),
     })
 
 
 def _media_redirect():
     return redirect("/moi/?onglet=medias")
+
+
+@login_required
+@require_POST
+def upload_certification(request):
+    from .media_pipeline import MediaError, assert_member_room, prepare_image, save_photo_files
+
+    profile = request.user.profile
+    lang = getattr(request, "lang", "fr")
+    upload = request.FILES.get("image")
+    if not upload:
+        messages.error(request, t(lang, "upload_missing"))
+        return _media_redirect()
+    if request.POST.get("media_rights") != "1":
+        messages.error(request, t(lang, "upload_rights"))
+        return _media_redirect()
+    try:
+        assert_member_room(profile, getattr(upload, "size", 0) or 0)
+        prepared = prepare_image(upload)
+        photo = Photo(profile=profile, position=9000, role="certification", is_private=True)
+        save_photo_files(photo, prepared, True, False)
+        photo.role = "certification"
+        photo.is_primary = False
+        photo.is_private = True
+        photo.save(update_fields=["role", "is_primary", "is_private"])
+    except MediaError as exc:
+        messages.error(request, str(exc))
+        return _media_redirect()
+    pending = CertificationRequest.objects.filter(profile=profile, status="pending").first()
+    if pending:
+        old = pending.photo
+        pending.photo = photo
+        pending.save(update_fields=["photo"])
+        if old and old.id != photo.id:
+            old.delete()
+    else:
+        CertificationRequest.objects.create(profile=profile, photo=photo, status="pending")
+    messages.success(request, t(lang, "cert_pending"))
+    return _media_redirect()
+
+
 
 
 @login_required
@@ -725,7 +771,7 @@ def upload_photo(request):
 
     profile = request.user.profile
     lang = getattr(request, "lang", "fr")
-    if profile.photos.count() >= settings.MAX_PHOTOS:
+    if profile.photos.exclude(role="certification").count() >= settings.MAX_PHOTOS:
         messages.error(request, t(lang, "upload_limit"))
         return _media_redirect()
     kind = "video" if request.POST.get("kind") == "video" else "photo"
@@ -1339,7 +1385,7 @@ def manifest(request):
 def service_worker(request):
     js = """
 const SHELL = ['/brand/css/app.css', '/brand/js/app.js'];
-const CACHE = 'iswing-shell-v10';
+const CACHE = 'iswing-shell-v11';
 self.addEventListener('install', (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))); });
 self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (event) => {
@@ -1673,8 +1719,15 @@ def moderate_photo(request, pk):
         photo.is_primary = False
     photo.save(update_fields=["moderation_status", "moderation_note", "is_primary"])
     if status in ("rejected", "removed"):
-        label = "retiré" if status == "removed" else "refusé"
-        notify(photo.profile, "team", f"Équipe iSwing.live — un média a été {label}. {reason}", "/moi/?onglet=medias")
+        code = "notice_media_removed" if status == "removed" else "notice_media_refused"
+        notify(
+            photo.profile,
+            "team",
+            t("fr", code).format(reason=reason),
+            "/moi/?onglet=medias",
+            code=code,
+            params={"reason": reason},
+        )
     AuditLog.objects.create(actor=request.user, action="photo_moderation", target=str(photo.id), detail=status)
     maybe_validate(photo.profile)
     nxt = request.POST.get("next") or ""
@@ -1773,4 +1826,7 @@ def notices(request):
     profile = request.user.profile
     rows = list(profile.notices.all()[:40])
     Notice.objects.filter(id__in=[row.id for row in rows], read_at__isnull=True).update(read_at=timezone.now())
+    lang = getattr(request, "lang", "fr")
+    for row in rows:
+        row.text = notice_text(row, lang)
     return render(request, "notices.html", {"notices": rows})

@@ -121,6 +121,7 @@ class Profile(models.Model):
     read_receipts = models.BooleanField(default=False)
     is_demo = models.BooleanField(default=False)
     lifetime_member = models.BooleanField(default=False)
+    certified = models.BooleanField(default=False)
     origins = models.CharField(max_length=160, blank=True)
     city_ref = models.CharField(max_length=180, blank=True)
     external_key = models.CharField(max_length=80, unique=True, null=True, blank=True)
@@ -174,10 +175,23 @@ class Photo(models.Model):
     height = models.PositiveIntegerField(default=0)
     duration_s = models.FloatField(null=True, blank=True)
     source_path = models.CharField(max_length=500, blank=True, default="")
+    role = models.CharField(max_length=16, default="gallery")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["position", "id"]
+
+
+class CertificationRequest(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="certifications")
+    photo = models.ForeignKey(Photo, null=True, blank=True, on_delete=models.SET_NULL)
+    status = models.CharField(max_length=16, default="pending")
+    note = models.CharField(max_length=240, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-id"]
 
 
 class PhotoGrant(models.Model):
@@ -207,6 +221,8 @@ class Notice(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="notices")
     kind = models.CharField(max_length=40)
     body = models.TextField(blank=True)
+    code = models.CharField(max_length=40, blank=True, default="")
+    params = models.TextField(blank=True, default="")
     url = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)

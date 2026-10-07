@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import math
 import os
 import random
@@ -234,8 +235,15 @@ def open_match_between(a, b):
     ).first()
 
 
-def notify(profile, kind, body, url=""):
-    Notice.objects.create(profile=profile, kind=kind, body=(body or "")[:4000], url=(url or "")[:200])
+def notify(profile, kind, body, url="", code="", params=None):
+    Notice.objects.create(
+        profile=profile,
+        kind=kind,
+        body=(body or "")[:4000],
+        url=(url or "")[:200],
+        code=(code or "")[:40],
+        params=json.dumps(params or {}, ensure_ascii=False)[:4000],
+    )
     if kind in ("message", "match", "access_request", "access_ok", "access_no", "team", "reminder"):
         try:
             from .integrations import send_push
@@ -243,6 +251,60 @@ def notify(profile, kind, body, url=""):
             send_push(profile.user, kind, url or "/notifications/")
         except Exception:
             pass
+
+
+def badge_codes(profile):
+    sub = sync_trial(profile)
+    now = timezone.now()
+    paid = bool(profile.lifetime_member) or (
+        sub.status == "active" and sub.current_period_end and sub.current_period_end > now
+    )
+    codes = []
+    if paid:
+        codes.append("badge_member")
+    elif sub.status == "trial" and profile.trial_ends_at and profile.trial_ends_at > now:
+        codes.append("badge_trial")
+    if paid and profile.certified:
+        codes.append("badge_certified")
+    return codes
+
+
+def badge_labels(profile, lang):
+    from .i18n import t
+
+    return [t(lang, code) for code in badge_codes(profile)]
+
+
+def notice_text(notice, lang):
+    from .i18n import t
+
+    lang = lang if lang in ("fr", "en", "es") else "fr"
+    if not notice.code:
+        return notice.body
+    try:
+        data = json.loads(notice.params or "{}")
+    except json.JSONDecodeError:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    if notice.code == "team_text":
+        return data.get(lang) or data.get("fr") or notice.body
+    template = t(lang, notice.code)
+    safe = {key: "" if value is None else value for key, value in data.items()}
+    try:
+        return template.format(**safe)
+    except (KeyError, IndexError, ValueError):
+        return template
+
+
+def team_code_for_body(body):
+    from .i18n import t
+
+    raw = (body or "").strip()
+    for code in ("team_individual", "team_incomplete", "team_verify", "team_warning", "team_account", "team_announce"):
+        if raw == t("fr", code).strip():
+            return code
+    return ""
 
 
 def separate_members(a, b):
@@ -362,6 +424,8 @@ def can_view_media(user, photo):
     if photo.moderation_status != "approved":
         return False
     if photo.media_type == "video" and photo.processing_status not in ("", "ready"):
+        return False
+    if getattr(photo, "role", "gallery") == "certification":
         return False
     if not photo.is_private:
         return True
@@ -670,7 +734,21 @@ def deliver_campaign_row(campaign, delivery):
         text += "\n\nPour ne plus recevoir les messages promotionnels : " + unsub_link(user)
     subject = "iSwing.live — " + personalize(campaign.subject, profile).replace("iSwing.live — ", "")
     if campaign.channel in ("notice", "both") and not delivery.notice_id:
-        delivery.notice = Notice.objects.create(profile=profile, kind="team", body=text[:4000], url="/notifications/")
+        code = team_code_for_body(campaign.body)
+        if code:
+            from .i18n import t
+
+            params = {"display_name": profile.display_name}
+            delivery.notice = Notice.objects.create(
+                profile=profile,
+                kind="team",
+                body=t("fr", code).format(**params)[:4000],
+                url="/notifications/",
+                code=code,
+                params=json.dumps(params, ensure_ascii=False),
+            )
+        else:
+            delivery.notice = Notice.objects.create(profile=profile, kind="team", body=text[:4000], url="/notifications/")
     email_failed = False
     if campaign.channel in ("email", "both"):
         if delivery.email_id and delivery.email.status != "sent":

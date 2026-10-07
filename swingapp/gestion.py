@@ -21,6 +21,7 @@ from .models import (
     AuditLog,
     Campaign,
     CampaignDelivery,
+    CertificationRequest,
     EmailToken,
     InactivityRun,
     LegalPage,
@@ -751,6 +752,52 @@ def _recipients(data):
         return [], label[:300], excluded, True, False
     users = list(qs.distinct().select_related("profile"))
     return users, label[:300], excluded, False, ambiguous
+
+
+@staff_only
+def certifications(request):
+    rows = CertificationRequest.objects.select_related("profile", "profile__user", "photo").order_by("-id")
+    return render(request, "gestion/certifications.html", {"section": "cert", "rows": rows[:80]})
+
+
+@staff_only
+@require_POST
+def certification_decide(request, pk):
+    denied = _forbid(request, "can_moderate")
+    if denied:
+        return denied
+    row = get_object_or_404(CertificationRequest.objects.select_related("profile", "photo"), pk=pk)
+    action = request.POST.get("action")
+    note = (request.POST.get("note") or "").strip()[:240]
+    if action == "approve":
+        row.status = "approved"
+        row.profile.certified = True
+        row.profile.save(update_fields=["certified"])
+        if row.photo_id:
+            row.photo.moderation_status = "approved"
+            row.photo.is_private = True
+            row.photo.is_primary = False
+            row.photo.role = "certification"
+            row.photo.save(update_fields=["moderation_status", "is_private", "is_primary", "role"])
+        notify(row.profile, "team", "", "/moi/?onglet=medias", code="notice_certified")
+    elif action == "refuse":
+        row.status = "refused"
+        if row.photo_id:
+            row.photo.moderation_status = "rejected"
+            row.photo.is_private = True
+            row.photo.role = "certification"
+            row.photo.save(update_fields=["moderation_status", "is_private", "role"])
+        still = CertificationRequest.objects.filter(profile=row.profile, status="approved").exclude(pk=row.pk).exists()
+        row.profile.certified = still
+        row.profile.save(update_fields=["certified"])
+        notify(row.profile, "team", "", "/moi/?onglet=medias", code="notice_cert_refused", params={"reason": note})
+    else:
+        return redirect("gestion_certifications")
+    row.note = note
+    row.decided_at = timezone.now()
+    row.save(update_fields=["status", "note", "decided_at"])
+    AuditLog.objects.create(actor=request.user, action="certification", target=str(row.profile_id), detail=action or "", reason=note)
+    return redirect("gestion_certifications")
 
 
 @staff_only

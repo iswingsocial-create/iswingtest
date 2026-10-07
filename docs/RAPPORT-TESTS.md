@@ -119,3 +119,8 @@ Exécutés ici :
 - /legal/medias/ décrit les limites (poids, 2 560 pixels, 10 minutes, formats) en français, anglais et espagnol
 
 Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.
+
+# Rapport de tests — badges, certification, avis, 2026-10-07
+
+Exécutés : emojis 😊 😈 🍍 gravés, badges essai/membre/certifié, certification privée revue en gestion, profil test peut écrire à un membre réel, avis en cartes séparées et traduits fr/en/es à l’ouverture.
+Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.

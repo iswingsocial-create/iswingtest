@@ -86,60 +86,12 @@
     if (strength) strength.value = String(mask.strength || 12);
   }
   function drawSticker(code, bw, bh) {
-    var x = -bw / 2;
-    var y = -bh / 2;
-    if (code === "devil") {
-      ctx.fillStyle = "#c42030";
-      ctx.beginPath();
-      ctx.moveTo(x + bw * 0.22, y + bh * 0.30);
-      ctx.lineTo(x + bw * 0.32, y + bh * 0.02);
-      ctx.lineTo(x + bw * 0.42, y + bh * 0.30);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(x + bw * 0.58, y + bh * 0.30);
-      ctx.lineTo(x + bw * 0.68, y + bh * 0.02);
-      ctx.lineTo(x + bw * 0.78, y + bh * 0.30);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(0, y + bh * 0.58, bw * 0.38, bh * 0.38, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#1a1020";
-      ctx.beginPath();
-      ctx.ellipse(x + bw * 0.36, y + bh * 0.50, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
-      ctx.ellipse(x + bw * 0.64, y + bh * 0.50, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (code === "pineapple") {
-      ctx.fillStyle = "#2e8b3a";
-      ctx.beginPath();
-      ctx.moveTo(0, y + bh * 0.02);
-      ctx.lineTo(x + bw * 0.30, y + bh * 0.32);
-      ctx.lineTo(x + bw * 0.48, y + bh * 0.18);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(0, y + bh * 0.02);
-      ctx.lineTo(x + bw * 0.70, y + bh * 0.32);
-      ctx.lineTo(x + bw * 0.52, y + bh * 0.18);
-      ctx.fill();
-      ctx.fillStyle = "#f0c428";
-      ctx.beginPath();
-      ctx.ellipse(0, y + bh * 0.58, bw * 0.28, bh * 0.36, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.fillStyle = "#ffd628";
-      ctx.beginPath();
-      ctx.ellipse(0, 0, bw * 0.46, bh * 0.46, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#1a1020";
-      ctx.beginPath();
-      ctx.ellipse(x + bw * 0.36, y + bh * 0.40, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
-      ctx.ellipse(x + bw * 0.64, y + bh * 0.40, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.strokeStyle = "#1a1020";
-      ctx.lineWidth = Math.max(2, bw / 16);
-      ctx.arc(0, y + bh * 0.52, Math.min(bw, bh) * 0.22, 0.25, Math.PI - 0.25);
-      ctx.stroke();
-    }
+    var glyphs = {happy: "😊", devil: "😈", pineapple: "🍍"};
+    var glyph = glyphs[code] || code || "😊";
+    ctx.font = Math.floor(Math.min(bw, bh) * 0.92) + "px \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Noto Color Emoji\", sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(glyph, 0, 0);
   }
   function add(type, code) {
     snapshot();
@@ -151,7 +103,10 @@
       h: 0.2,
       rotation: 0,
       strength: 12,
-      emoji: code || (type === "sticker" ? "happy" : "")
+      emoji: (function (value) {
+        var glyphs = {happy: "😊", devil: "😈", pineapple: "🍍"};
+        return glyphs[value] || value || (type === "sticker" ? "😊" : "");
+      })(code)
     });
     selected = masks.length - 1;
     syncSliders();

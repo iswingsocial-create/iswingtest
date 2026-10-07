@@ -463,7 +463,7 @@ class RulesTests(TestCase):
         self.assertTrue(created.reco_consent)
         self.assertTrue(created.promo_consent)
         media = __import__("pathlib").Path("templates/edit_profile.html").read_text(encoding="utf-8")
-        self.assertEqual(media.count('name="media_rights"'), 2)
+        self.assertEqual(media.count('name="media_rights"'), 3)
         self.assertNotIn('name="media_minor"', media)
         self.assertNotIn('name="media_host"', media)
         invite = __import__("pathlib").Path("templates/invitation.html").read_text(encoding="utf-8")
@@ -957,5 +957,135 @@ class LikeRaceTests(TransactionTestCase):
         self.assertEqual(Like.objects.filter(actor=me, target=target).count(), 1)
         self.assertEqual(DailyUsage.objects.get(user=user, day=timezone.now().date()).likes, 1)
         self.assertTrue(all(item.status_code == 200 for item in results))
+
+
+class V4CorrectionTests(TestCase):
+    make = RulesTests.make
+    as_staff = RulesTests.as_staff
+
+    def test_demo_profile_can_like_match_and_message(self):
+        demo, actor = self.make("lea@iswing.test", "Lea")
+        demo.is_demo = True
+        demo.save(update_fields=["is_demo"])
+        actor.is_demo = True
+        actor.save(update_fields=["is_demo"])
+        _, target = self.make("reel@example.com", "Reel")
+        self.assertFalse(target.is_demo)
+        self.assertIsNone(create_like(actor, target)[0])
+        match, already = create_like(target, actor)
+        self.assertIsNotNone(match)
+        self.assertFalse(already)
+        self.client.force_login(demo)
+        sent = self.client.post(f"/messages/{match.id}/", {"body": "bonjour du profil test"})
+        self.assertEqual(sent.status_code, 302)
+        self.assertTrue(Message.objects.filter(match=match, body="bonjour du profil test").exists())
+        page = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(page, "bonjour du profil test")
+        self.assertNotContains(page, "fictif")
+
+    def test_badges_match_trial_paid_and_certified(self):
+        viewer, _ = self.make("voir-badge@example.com", "Voir")
+        user, profile = self.make("cible-badge@example.com", "Cible")
+        self.client.force_login(viewer)
+        trial = self.client.get(f"/profil/{profile.id}/")
+        self.assertContains(trial, 'class="status-badge">Membre essai')
+        discover = self.client.get("/decouvrir/")
+        self.assertContains(discover, 'class="status-badge">Membre essai')
+        sub = Subscription.objects.get(user=user)
+        sub.status = "active"
+        sub.current_period_end = timezone.now() + timedelta(days=20)
+        sub.save()
+        profile.certified = True
+        profile.save(update_fields=["certified"])
+        paid = self.client.get(f"/profil/{profile.id}/")
+        self.assertContains(paid, 'class="status-badge">Membre<')
+        self.assertContains(paid, "Profil certifié")
+        self.assertNotContains(paid, "Membre essai")
+        sub.status = "past_due"
+        sub.save(update_fields=["status"])
+        unpaid = self.client.get(f"/profil/{profile.id}/")
+        self.assertNotContains(unpaid, "Profil certifié")
+        self.assertNotContains(unpaid, 'class="status-badge">Membre<')
+        sub.status = "canceled"
+        sub.save(update_fields=["status"])
+        self.assertNotContains(self.client.get(f"/profil/{profile.id}/"), "Profil certifié")
+        sub.status = "active"
+        sub.save(update_fields=["status"])
+        self.assertContains(self.client.get(f"/profil/{profile.id}/"), "Profil certifié")
+
+    def test_certification_photo_stays_private_until_paid_badge(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        user, profile = self.make("certif@example.com", "Certif")
+        other, _ = self.make("spectateur@example.com", "Spectateur")
+        self.client.force_login(user)
+        raw = jpeg()
+        raw.seek(0)
+        res = self.client.post("/moi/certification/", {"image": SimpleUploadedFile("feuille.jpg", raw.read(), content_type="image/jpeg"), "media_rights": "1"})
+        self.assertEqual(res.status_code, 302)
+        photo = Photo.objects.get(profile=profile, role="certification")
+        self.assertTrue(photo.is_private)
+        self.assertNotEqual(photo.moderation_status, "approved")
+        own = self.client.get("/moi/?onglet=medias")
+        self.assertNotContains(own, f"/photos/{photo.id}/")
+        self.assertContains(own, "Demander la certification")
+        self.client.force_login(other)
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
+        self.assertNotContains(self.client.get(f"/profil/{profile.id}/"), f"/photos/{photo.id}/")
+        self.assertNotContains(self.client.get(f"/profil/{profile.id}/"), "Profil certifié")
+        admin, _ = self.make("root-certif@example.com", "RootCert")
+        admin.is_staff = True
+        admin.is_superuser = True
+        admin.save()
+        self.as_staff(admin)
+        req = profile.certifications.get()
+        decided = self.client.post(f"/gestion/certifications/{req.id}/", {"action": "approve"})
+        self.assertEqual(decided.status_code, 302)
+        profile.refresh_from_db()
+        photo.refresh_from_db()
+        self.assertTrue(profile.certified)
+        self.assertEqual(photo.moderation_status, "approved")
+        self.assertTrue(photo.is_private)
+        self.client.force_login(other)
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
+        self.assertNotContains(self.client.get(f"/profil/{profile.id}/"), "Profil certifié")
+        sub = Subscription.objects.get(user=user)
+        sub.status = "active"
+        sub.current_period_end = timezone.now() + timedelta(days=12)
+        sub.save()
+        self.assertContains(self.client.get(f"/profil/{profile.id}/"), "Profil certifié")
+        sub.status = "canceled"
+        sub.save(update_fields=["status"])
+        self.assertNotContains(self.client.get(f"/profil/{profile.id}/"), "Profil certifié")
+
+    def test_notices_are_separate_and_follow_the_member_language(self):
+        from swingapp.i18n import t
+        from swingapp.services import notice_text, team_code_for_body
+
+        user, profile = self.make("avis-lang@example.com", "Avis")
+        long = ("Texte complet de l'avis. " * 40).strip()
+        Notice.objects.create(profile=profile, kind="like", body=long, url="/decouvrir/")
+        Notice.objects.create(profile=profile, kind="message", body="salut membre", url="/messages/1/")
+        note = Notice.objects.create(profile=profile, kind="team", body="texte figé en français", code="notice_certified", url="/notifications/")
+        self.client.force_login(user)
+        fr = self.client.get("/notifications/?lang=fr")
+        self.assertContains(fr, "notice-card", count=3)
+        self.assertEqual(fr.content.decode().count("Texte complet de l"), 40)
+        self.assertContains(fr, "Votre profil est certifié")
+        en = self.client.get("/notifications/?lang=en")
+        self.assertContains(en, "Your profile is certified")
+        self.assertNotContains(en, "certifié")
+        self.assertContains(en, "salut membre")
+        self.assertEqual(en.content.decode().count("Texte complet de l"), 40)
+        es = self.client.get("/notifications/?lang=es")
+        self.assertContains(es, "Su perfil está certificado")
+        self.assertEqual(team_code_for_body(t("fr", "team_warning")), "team_warning")
+        warning = Notice(kind="team", code="team_warning", params='{"display_name": "Cible"}', body="")
+        self.assertIn("Cible", notice_text(warning, "en"))
+        self.assertIn("warning", notice_text(warning, "en"))
+        self.assertIn("avertissement", notice_text(warning, "fr"))
+        self.assertIn("aviso", notice_text(warning, "es"))
+        self.assertIn("certified", notice_text(note, "en"))
+
 
 
