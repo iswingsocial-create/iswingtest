@@ -65,13 +65,34 @@ def approximate_distance(km):
 
 
 def ensure_profile(user):
-    from .models import Profile
+    from .models import Partner, Profile
 
+    seat = Partner.objects.select_related("profile__user").filter(user=user).first()
+    if seat is not None:
+        Profile._meta.get_field("user").remote_field.set_cached_value(user, seat.profile)
+        return seat.profile
     profile, _ = Profile.objects.get_or_create(
         user=user,
         defaults={"display_name": (user.email or "membre").split("@")[0][:40]},
     )
     return profile
+
+
+def acting_user(user):
+    """Titulaire du profil : le partenaire connecté partage le même compte."""
+    profile = getattr(user, "profile", None)
+    if profile is not None and profile.user_id and profile.user_id != user.id:
+        return profile.user
+    return user
+
+
+def author_label_for(profile, user):
+    from .models import Partner
+
+    seat = Partner.objects.filter(user_id=getattr(user, "id", None), profile=profile).first()
+    if seat:
+        return f"{profile.display_name} ({seat.display_name})"[:90]
+    return (profile.display_name or "")[:90]
 
 
 def ensure_subscription(user):
@@ -135,6 +156,7 @@ def can_interact(user):
 
 
 def quota_snapshot(user, match=None):
+    user = acting_user(user)
     sub = sync_trial(user.profile)
     premium = is_premium(user)
     likes_left = None
@@ -170,6 +192,7 @@ def setting_int(key, default, low, high):
 
 
 def consume_like(user):
+    user = acting_user(user)
     if is_premium(user):
         return
     if not in_trial(user):
@@ -185,6 +208,7 @@ def consume_like(user):
 
 
 def consume_message(user, match):
+    user = acting_user(user)
     if is_premium(user):
         return
     if not in_trial(user):
@@ -340,6 +364,8 @@ def can_view_media(user, photo):
     if photo.media_type == "video" and photo.processing_status not in ("", "ready"):
         return False
     if not photo.is_private:
+        return True
+    if open_match_between(profile, photo.profile):
         return True
     if PrivateAccess.objects.filter(owner_id=photo.profile_id, grantee=profile, status="accepted").exists():
         return True

@@ -139,6 +139,12 @@
             }
             var bubble = document.createElement("div");
             bubble.className = "bubble";
+            if (msg.author) {
+              var who = document.createElement("span");
+              who.className = "who";
+              who.textContent = msg.author;
+              bubble.appendChild(who);
+            }
             if (msg.body) {
               var bp = document.createElement("p");
               bp.className = "body";

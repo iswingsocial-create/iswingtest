@@ -232,6 +232,16 @@ input[type="checkbox"], input[type="radio"] {
 #log .msg .shared-photo img { max-width: 220px; border-radius: 12px; margin-top: 0.4rem; display: block; }
 #log .msg .contact-note { background: transparent; padding: 0; font-size: 0.78rem; color: var(--muted); margin: 0.3rem 0 0; }
 #log .msg .read { font-size: 0.75rem; color: var(--muted); }
+#log .msg .who { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.15rem; }
+a.inbox-item { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
+a.inbox-item .avatar, a.inbox-item .avatar-fallback { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex: none; background: #241a45; }
+a.inbox-item .inbox-main { flex: 1; min-width: 0; }
+a.inbox-item .inbox-top { display: flex; justify-content: space-between; gap: 0.6rem; align-items: baseline; }
+a.inbox-item .inbox-top strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.inbox-item time { flex: none; color: var(--muted); font-size: 0.75rem; }
+a.inbox-item .inbox-preview { display: block; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.inbox-item.unread { border-color: var(--violet); box-shadow: 0 0 0 1px var(--violet); }
+a.inbox-item.unread .inbox-preview { color: var(--text); }
 .install { position: fixed; right: 1rem; bottom: 1rem; z-index: 6; }
 .icon-btn:focus, .main-menu a:focus, .btn:focus, button:focus, a:focus { outline: 2px solid var(--violet); outline-offset: 2px; }
 .staff-row {

@@ -12,6 +12,7 @@
     <div class="msg{% if msg.sender_id == user.profile.id %} mine{% endif %}">
       {% if msg.avatar_url %}<img class="avatar" src="{{ msg.avatar_url }}" alt="" loading="lazy">{% endif %}
       <div class="bubble">
+        <span class="who">{{ msg.author_label|default:msg.sender.display_name }}</span>
         {% if msg.body %}<p class="body">{{ msg.body }}</p>{% endif %}
         {% if msg.shared_photo_thumb %}<a class="shared-photo" href="{{ msg.shared_photo_url }}"><img src="{{ msg.shared_photo_thumb }}" alt="" loading="lazy"></a>{% endif %}
         {% if msg.has_contact and msg.sender_id == user.profile.id %}<p class="contact-note">{{ T.contact_notice }}</p>{% endif %}

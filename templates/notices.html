@@ -8,6 +8,7 @@
     {% elif n.kind == "access_request" %}<a href="{{ n.url }}">{{ n.body }}</a> {{ T.notice_access_request }}
     {% elif n.kind == "access_ok" %}{{ n.body }} {{ T.notice_access_ok }}
     {% elif n.kind == "access_no" %}{{ n.body }} {{ T.notice_access_no }}
+    {% elif n.kind == "message" %}<a href="{{ n.url }}">{{ n.body }}</a> {{ T.notice_message }}
     {% else %}{{ n.body }}{% endif %}
   </p>
   {% empty %}<p class="empty">{{ T.no_notices }}</p>{% endfor %}

@@ -3,9 +3,16 @@
 <h1>{{ T.messages }}</h1>
 {% if not items %}<p class="empty">{{ T.empty_messages }}</p>{% endif %}
 {% for item in items %}
-<a class="card link" href="/messages/{{ item.match.id }}/">
-  <strong>{{ item.other.display_name }}</strong>
-  <p>{{ item.last.body|default:"—" }}</p>
+<a class="card link inbox-item{% if item.unread %} unread{% endif %}" href="/messages/{{ item.match.id }}/">
+  {% if item.avatar %}<img class="avatar" src="{{ item.avatar }}" alt="">{% else %}<span class="avatar avatar-fallback" aria-hidden="true"></span>{% endif %}
+  <span class="inbox-main">
+    <span class="inbox-top">
+      <strong>{{ item.other.display_name }}</strong>
+      {% if item.when %}<time>{{ item.when }}</time>{% endif %}
+    </span>
+    <span class="inbox-preview">{{ item.preview|default:"—" }}</span>
+  </span>
+  {% if item.unread %}<span class="badge">{{ item.unread }}</span>{% endif %}
 </a>
 {% endfor %}
 {% endblock %}

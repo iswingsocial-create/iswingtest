@@ -416,26 +416,85 @@ def apply_masks(img, masks):
         kind = raw.get("type") or "sticker"
         if kind == "blur":
             strength = min(40, max(2, int(float(raw.get("strength") or 12))))
-            crop = base.crop((left, top, min(width, left + box_w), min(height, top + box_h))).filter(ImageFilter.GaussianBlur(radius=strength))
+            crop = base.crop((left, top, min(width, left + box_w), min(height, top + box_h)))
+            if crop.width < 2 or crop.height < 2:
+                continue
+            blurred = crop.filter(ImageFilter.GaussianBlur(radius=strength)).convert("RGBA")
+            mask = Image.new("L", blurred.size, 0)
+            ImageDraw.Draw(mask).ellipse((0, 0, blurred.width - 1, blurred.height - 1), fill=255)
+            blurred.putalpha(mask)
             ox, oy = left, top
             if rotation:
-                crop = crop.rotate(-rotation, expand=True, resample=Image.Resampling.BICUBIC)
-                ox = left - (crop.width - box_w) // 2
-                oy = top - (crop.height - box_h) // 2
-            base.paste(crop, (ox, oy), crop)
+                blurred = blurred.rotate(-rotation, expand=True, resample=Image.Resampling.BICUBIC)
+                ox = left - (blurred.width - box_w) // 2
+                oy = top - (blurred.height - box_h) // 2
+            _composite(base, blurred, ox, oy)
             continue
-        sticker = Image.new("RGBA", (box_w, box_h), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(sticker)
-        draw.rounded_rectangle((0, 0, box_w - 1, box_h - 1), radius=max(4, box_w // 6), fill=(12, 8, 24, 255))
-        label = (raw.get("emoji") or "●")[:4]
-        draw.text((box_w // 4, box_h // 3), label, fill=(255, 255, 255, 255))
+        sticker = _sticker_layer(box_w, box_h, raw.get("emoji") or "●")
         ox, oy = left, top
         if rotation:
             sticker = sticker.rotate(-rotation, expand=True, resample=Image.Resampling.BICUBIC)
             ox = left - (sticker.width - box_w) // 2
             oy = top - (sticker.height - box_h) // 2
-        base.alpha_composite(sticker, (ox, oy))
+        _composite(base, sticker, ox, oy)
     return base.convert("RGB")
+
+
+def _composite(base, layer, ox, oy):
+    if ox >= base.width or oy >= base.height or layer.width < 1 or layer.height < 1:
+        return
+    if ox < 0 or oy < 0:
+        layer = layer.crop((max(0, -ox), max(0, -oy), layer.width, layer.height))
+        ox, oy = max(0, ox), max(0, oy)
+    if ox + layer.width > base.width or oy + layer.height > base.height:
+        layer = layer.crop((0, 0, max(0, base.width - ox), max(0, base.height - oy)))
+    if layer.width < 1 or layer.height < 1:
+        return
+    base.alpha_composite(layer, (ox, oy))
+
+
+def _sticker_layer(box_w, box_h, code):
+    sticker = Image.new("RGBA", (box_w, box_h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(sticker)
+    code = (code or "●")[:16]
+    if code == "happy":
+        draw.ellipse((1, 1, box_w - 2, box_h - 2), fill=(255, 214, 40, 255))
+        _eyes(draw, box_w, box_h, 0.35)
+        draw.arc(
+            (box_w * 0.22, box_h * 0.42, box_w * 0.78, box_h * 0.82),
+            20, 160, fill=(20, 16, 32, 255), width=max(2, box_w // 16),
+        )
+    elif code == "devil":
+        draw.polygon(
+            [(box_w * 0.22, box_h * 0.30), (box_w * 0.32, box_h * 0.02), (box_w * 0.42, box_h * 0.30)],
+            fill=(180, 24, 40, 255),
+        )
+        draw.polygon(
+            [(box_w * 0.58, box_h * 0.30), (box_w * 0.68, box_h * 0.02), (box_w * 0.78, box_h * 0.30)],
+            fill=(180, 24, 40, 255),
+        )
+        draw.ellipse((box_w * 0.12, box_h * 0.18, box_w * 0.88, box_h * 0.96), fill=(196, 32, 48, 255))
+        _eyes(draw, box_w, box_h, 0.48)
+        draw.arc(
+            (box_w * 0.28, box_h * 0.55, box_w * 0.72, box_h * 0.86),
+            10, 170, fill=(20, 16, 32, 255), width=max(2, box_w // 18),
+        )
+    elif code == "pineapple":
+        draw.polygon([(box_w * 0.50, box_h * 0.02), (box_w * 0.30, box_h * 0.32), (box_w * 0.48, box_h * 0.18)], fill=(36, 140, 52, 255))
+        draw.polygon([(box_w * 0.50, box_h * 0.02), (box_w * 0.70, box_h * 0.32), (box_w * 0.52, box_h * 0.18)], fill=(24, 110, 40, 255))
+        draw.ellipse((box_w * 0.22, box_h * 0.22, box_w * 0.78, box_h * 0.96), fill=(240, 196, 40, 255))
+    else:
+        draw.rounded_rectangle((0, 0, box_w - 1, box_h - 1), radius=max(4, box_w // 6), fill=(12, 8, 24, 255))
+        draw.text((box_w // 4, box_h // 3), code[:4], fill=(255, 255, 255, 255))
+    return sticker
+
+
+def _eyes(draw, box_w, box_h, top):
+    ew, eh = max(2, box_w // 12), max(2, box_h // 10)
+    for origin in (0.30, 0.62):
+        x = box_w * origin
+        y = box_h * top
+        draw.ellipse((x, y, x + ew, y + eh), fill=(20, 16, 32, 255))
 
 
 def prepare_image(uploaded, crop=None, masks=None, confirm_gif=False):

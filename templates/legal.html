@@ -2,6 +2,6 @@
 {% block content %}
 <article class="card legal">
   <h1>{{ title }}</h1>
-  <div class="legal-body">{{ body|linebreaks }}</div>
+  <div class="legal-body">{{ body|cut:"MEDIA-LIMITS"|linebreaks }}</div>
 </article>
 {% endblock %}

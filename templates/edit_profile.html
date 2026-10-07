@@ -104,35 +104,30 @@
   </form>
 
   <section class="ppanel" data-panel="medias" hidden>
-    <p class="muted">{{ T.media_public_means }}</p>
-    <p class="muted">Photos : JPEG, PNG, WebP, HEIC, AVIF, TIFF, BMP, GIF. Maximum 50 Mo, réduit à 2 560 pixels. Les PDF et SVG sont refusés. Vidéos : MP4, MOV, M4V, WebM, MKV, AVI, MPEG, WMV, 3GP, MTS, M2TS, jusqu'à 10 minutes et 2 000 000 000 octets. Le poids après conversion est une estimation, le fichier réel peut être plus léger. Une vidéo non convertie n'est jamais publiée.</p>
-    <form method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
+    <p class="muted">{{ T.media_public_means }} <a href="/legal/medias/">{{ T.footer_media }}</a></p>
+    <form class="card media-block" method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
       <h2>{{ T.add_photo }}</h2>
-      <p class="muted">{{ T.photo_type_help }} <a href="/legal/medias/">{{ T.footer_media }}</a></p>
+      <p class="muted">{{ T.photo_type_help }}</p>
       <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif,image/*" required data-crop>
       <input type="hidden" name="masks" id="masks-json" value="[]">
-      <label class="check"><input type="checkbox" name="confirm_gif" value="1"> <span>Conserver l'animation d'un GIF (WebP). Sinon un GIF animé est refusé.</span></label>
+      <label class="check"><input type="checkbox" name="confirm_gif" value="1"> <span>{{ T.gif_keep }}</span></label>
       <div class="photo-choice">
         <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
         <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
       </div>
-      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_rights }}</span></label>
-      <label class="check"><input type="checkbox" name="media_minor" value="1" required> <span>{{ T.media_no_minor }}</span></label>
-      <label class="check"><input type="checkbox" name="media_host" value="1" required> <span>{{ T.media_host }}</span></label>
+      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
       <button class="btn" type="submit">{{ T.add_photo }}</button>
     </form>
-    <form id="video-upload" method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
+    <form class="card media-block" id="video-upload" method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
       <h2>{{ T.add_video }}</h2>
       <input type="hidden" name="kind" value="video">
-      <p class="muted">{{ T.video_help }} L'envoi se fait par morceaux et peut reprendre. Le masquage des visages n'est pas proposé sur la vidéo.</p>
+      <p class="muted">{{ T.video_help }} {{ T.video_chunks }}</p>
       <input type="file" name="file" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.mts,.m2ts" required>
       <div class="photo-choice">
         <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
         <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
       </div>
-      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_rights }}</span></label>
-      <label class="check"><input type="checkbox" name="media_minor" value="1" required> <span>{{ T.media_no_minor }}</span></label>
-      <label class="check"><input type="checkbox" name="media_host" value="1" required> <span>{{ T.media_host }}</span></label>
+      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
       <button class="btn" type="submit">{{ T.add_video }}</button>
       <div id="video-progress" hidden>
         <progress id="video-bar" max="100" value="0"></progress>
@@ -210,8 +205,10 @@
         <p class="muted">Un flou ne couvre pas comme un autocollant opaque et ne garantit pas l'anonymat. Les masques sont gravés dans le fichier, y compris les miniatures. L'original non masqué n'est pas conservé.</p>
         <canvas id="mask-canvas" width="320" height="400"></canvas>
         <div class="row">
-          <button type="button" class="btn ghost" id="mask-add">Autocollant</button>
-          <button type="button" class="btn ghost" id="mask-blur">Flou</button>
+          <button type="button" class="btn ghost" data-sticker="happy">{{ T.sticker_happy }}</button>
+          <button type="button" class="btn ghost" data-sticker="devil">{{ T.sticker_devil }}</button>
+          <button type="button" class="btn ghost" data-sticker="pineapple">{{ T.sticker_pineapple }}</button>
+          <button type="button" class="btn ghost" id="mask-blur">{{ T.mask_blur }}</button>
           <button type="button" class="btn ghost" id="mask-undo">Annuler</button>
           <button type="button" class="btn ghost" id="mask-redo">Rétablir</button>
           <button type="button" class="btn ghost" id="mask-delete">Supprimer</button>

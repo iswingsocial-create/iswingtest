@@ -445,7 +445,7 @@ def send_partner_invite(profile, request):
         "iSwing.live — confirmation d'un profil de couple",
         f"Bonjour {partner.display_name},\n\n"
         "Un profil de couple iSwing.live cite votre pseudonyme. "
-        "Votre accord n'est pas encore enregistré. Ouvrez ce lien pour accepter ou ignorer ce message :\n"
+        f"Ouvrez ce lien, choisissez votre mot de passe et acceptez vous-même :\n"
         f"{link}\n\n— L'équipe iSwing.live\n",
         kind="partner",
         ref=str(profile.id),
@@ -973,7 +973,7 @@ def invite_accept(request, token):
         password = request.POST.get("password", "")
         if len(password) < 10 or password != request.POST.get("password2", ""):
             error = "password"
-        elif request.POST.get("age_confirm") != "1" or request.POST.get("accept") != "1" or request.POST.get("intimate") != "1":
+        elif request.POST.get("accept") != "1":
             error = "consent"
         else:
             user = row.user
@@ -981,6 +981,9 @@ def invite_accept(request, token):
             user.adult_declared = True
             user.terms_accepted_at = timezone.now()
             user.intimate_consent = True
+            user.prefs_consent = True
+            user.reco_consent = True
+            user.promo_consent = True
             user.email_verified_at = timezone.now()
             if user.age_proof_status == "unconfirmed":
                 user.age_proof_status = "declared"
@@ -1004,8 +1007,48 @@ def partner_accept(request, token):
     partner = getattr(row.user.profile, "partner", None)
     error = ""
     if request.method == "POST":
+        password = request.POST.get("password", "")
+        password2 = request.POST.get("password2", "")
         if request.POST.get("accept") != "1" or partner is None:
             error = "consent"
+        elif password or password2:
+            if len(password) < 10 or password != password2:
+                error = "password"
+            elif not partner.consent_email or User.objects.filter(email__iexact=partner.consent_email).exclude(pk=getattr(partner.user, "pk", None)).exists():
+                error = "email"
+            else:
+                account = partner.user
+                if account is None:
+                    account = User.objects.create_user(
+                        email=partner.consent_email,
+                        password=password,
+                        birth_date=partner.birth_date,
+                    )
+                    partner.user = account
+                else:
+                    account.email = partner.consent_email
+                    account.set_password(password)
+                account.adult_declared = True
+                account.terms_accepted_at = timezone.now()
+                account.email_verified_at = timezone.now()
+                account.intimate_consent = True
+                account.prefs_consent = True
+                account.reco_consent = True
+                account.promo_consent = True
+                if account.age_proof_status == "unconfirmed":
+                    account.age_proof_status = "declared"
+                account.save()
+                partner.consent_at = timezone.now()
+                if partner.age_proof_status == "unconfirmed":
+                    partner.age_proof_status = "declared"
+                partner.save()
+                row.used_at = timezone.now()
+                row.save(update_fields=["used_at"])
+                from .services import ensure_profile
+
+                ensure_profile(account)
+                login(request, account, backend="django.contrib.auth.backends.ModelBackend")
+                return redirect("discover")
         else:
             partner.consent_at = timezone.now()
             if partner.age_proof_status == "unconfirmed":

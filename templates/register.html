@@ -12,14 +12,7 @@
   <label>{{ T.kind }}
     <select name="kind"><option value="single">{{ T.single }}</option><option value="couple">{{ T.couple }}</option></select>
   </label>
-  <label class="check"><input type="checkbox" name="age_confirm" required> {{ T.age_confirm }}</label>
-  <label class="check"><input type="checkbox" name="accept" required> {{ T.rules_accept }} <a href="/legal/conditions/">{{ T.footer_terms }}</a> · <a href="/legal/medias/">{{ T.footer_media }}</a></label>
-  <p class="muted">{{ T.privacy_info }} <a href="/legal/confidentialite/">{{ T.footer_privacy }}</a></p>
-  <label class="check"><input type="checkbox" name="intimate" required> {{ T.intimate_consent }}</label>
-  <label class="check"><input type="checkbox" name="prefs"> {{ T.prefs_register }}</label>
-  <label class="check"><input type="checkbox" name="reco"> {{ T.reco_consent }}</label>
-  <label class="check"><input type="checkbox" name="promo"> {{ T.promo_consent }}</label>
-  <p class="muted">{{ T.consent_note }}</p>
+  <label class="check"><input type="checkbox" name="accept" required> {{ T.all_consents }} <a href="/legal/conditions/">{{ T.footer_terms }}</a> · <a href="/legal/medias/">{{ T.footer_media }}</a> · <a href="/legal/confidentialite/">{{ T.footer_privacy }}</a></label>
   <button class="btn" type="submit">{{ T.register }}</button>
 </form>
 {% endblock %}

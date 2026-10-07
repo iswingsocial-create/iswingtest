@@ -61,11 +61,13 @@ from .services import (
     can_view_profile,
     consume_message,
     create_like,
+    ensure_profile,
     find_contact_info,
     haversine_km,
     has_staff_perm,
     is_last_superuser,
     is_premium,
+    author_label_for,
     maybe_validate,
     notify,
     notify_report_inbox,
@@ -114,9 +116,9 @@ def register(request):
                 terms_accepted_at=timezone.now(),
                 adult_declared=True,
                 intimate_consent=True,
-                prefs_consent=bool(form.cleaned_data.get("prefs")),
-                reco_consent=bool(form.cleaned_data.get("reco")),
-                promo_consent=bool(form.cleaned_data.get("promo")),
+                prefs_consent=True,
+                reco_consent=True,
+                promo_consent=True,
             )
             profile = Profile.objects.create(
                 user=user,
@@ -165,7 +167,7 @@ def login_view(request):
                     old = Account.objects.filter(pk=previous).first()
                     if old:
                         disable_endpoint(old, endpoint)
-                touch_activity(getattr(auth, "profile", None))
+                touch_activity(ensure_profile(auth))
                 return redirect("discover")
     return render(request, "login.html", {"error": error})
 
@@ -514,8 +516,27 @@ def inbox(request):
     me = request.user.profile
     items = []
     for match in _open_matches(me).select_related("profile_a", "profile_b"):
+        other = match.other(me)
         last = match.messages.order_by("-id").first()
-        items.append({"match": match, "other": match.other(me), "last": last})
+        unread = match.messages.exclude(sender=me).filter(read_at__isnull=True).count()
+        avatar = other.photos.filter(is_primary=True, moderation_status="approved").first()
+        if avatar is None or not can_view_media(request.user, avatar):
+            avatar = other.photos.filter(is_private=False, moderation_status="approved").order_by("-is_primary", "position", "id").first()
+        when = ""
+        preview = ""
+        if last:
+            when = timezone.localtime(last.created_at).strftime("%d/%m %H:%M")
+            preview = (last.body or "").strip() or "photo"
+            preview = preview[:80]
+        items.append({
+            "match": match,
+            "other": other,
+            "last": last,
+            "preview": preview,
+            "when": when,
+            "unread": unread,
+            "avatar": f"/photos/{avatar.id}/?thumb=1" if avatar and can_view_media(request.user, avatar) else "",
+        })
     return render(request, "inbox.html", {"items": items})
 
 
@@ -557,7 +578,14 @@ def thread(request, pk):
             try:
                 with transaction.atomic():
                     consume_message(request.user, match)
-                    Message.objects.create(match=match, sender=me, body=body[:2000], photo=photo, client_key=client_key)
+                    Message.objects.create(
+                        match=match,
+                        sender=me,
+                        body=body[:2000],
+                        photo=photo,
+                        client_key=client_key,
+                        author_label=author_label_for(me, request.user),
+                    )
                     if photo and photo.is_private:
                         grant, _ = PhotoGrant.objects.get_or_create(photo=photo, grantee=other)
                         if grant.revoked_at:
@@ -567,8 +595,9 @@ def thread(request, pk):
                 error = _quota_message(request, exc)
             else:
                 touch_activity(me)
+                notify(other, "message", (body or t(lang, "shared_photo"))[:160], f"/messages/{match.id}/")
                 return redirect("thread", pk=match.id)
-    if other.read_receipts and not locked:
+    if not locked:
         match.messages.exclude(sender=me).filter(read_at__isnull=True).update(read_at=timezone.now())
     thread_messages = list(match.messages.select_related("sender", "photo"))
     avatar_by_profile = {}
@@ -632,6 +661,7 @@ def thread_poll(request, pk):
             "video": video_url,
             "avatar": avatar_by_profile[sender_id],
             "contact": bool(find_contact_info(msg.body)),
+            "author": msg.author_label or msg.sender.display_name,
         })
     return JsonResponse({"messages": rows})
 
@@ -703,7 +733,7 @@ def upload_photo(request):
     if not upload:
         messages.error(request, t(lang, "upload_missing"))
         return _media_redirect()
-    if request.POST.get("media_rights") != "1" or request.POST.get("media_minor") != "1" or request.POST.get("media_host") != "1":
+    if request.POST.get("media_rights") != "1":
         messages.error(request, t(lang, "upload_rights"))
         return _media_redirect()
     private = request.POST.get("visibility") == "private"
@@ -1309,7 +1339,7 @@ def manifest(request):
 def service_worker(request):
     js = """
 const SHELL = ['/brand/css/app.css', '/brand/js/app.js'];
-const CACHE = 'iswing-shell-v8';
+const CACHE = 'iswing-shell-v10';
 self.addEventListener('install', (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))); });
 self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (event) => {

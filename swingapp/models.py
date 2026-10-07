@@ -142,6 +142,9 @@ class Partner(models.Model):
     consent_at = models.DateTimeField(null=True, blank=True)
     consent_email = models.EmailField(blank=True)
     age_proof_status = models.CharField(max_length=20, default="declared")
+    user = models.OneToOneField(
+        "User", null=True, blank=True, on_delete=models.SET_NULL, related_name="partner_seat"
+    )
 
     def age_years(self):
         today = timezone.now().date()
@@ -278,6 +281,7 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)
     is_demo = models.BooleanField(default=False)
+    author_label = models.CharField(max_length=90, blank=True, default="")
 
     class Meta:
         ordering = ["created_at", "id"]

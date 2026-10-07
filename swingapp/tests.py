@@ -10,7 +10,8 @@ from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from PIL import Image
 
-from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, DailyUsage, Like, Match, MatchUsage, Message, Notice, OutboundEmail, Partner, Photo, PhotoGrant, PrivateAccess, Profile, Report, Subscription
+from swingapp.models import AuditLog, Block, Campaign, CampaignDelivery, DailyUsage, EmailToken, Like, Match, MatchUsage, Message, Notice, OutboundEmail, Partner, Photo, PhotoGrant, PrivateAccess, Profile, Report, Subscription
+from swingapp.models import new_token
 from swingapp.services import QuotaError, consume_like, create_like, find_contact_info
 
 
@@ -348,7 +349,13 @@ class RulesTests(TestCase):
         other = Photo(profile=a, is_primary=False, is_private=True, moderation_status="approved")
         other.image.save("other.jpg", jpeg(), save=True)
         self.client.force_login(user_b)
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 200)
+        self.assertEqual(self.client.get(f"/photos/{other.id}/").status_code, 200)
+        match.closed_at = timezone.now()
+        match.save(update_fields=["closed_at"])
         self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
+        match.closed_at = None
+        match.save(update_fields=["closed_at"])
         self.client.force_login(user_a)
         res = self.client.post(f"/messages/{match.id}/", {"photo": str(photo.id), "client_key": "ct-3"})
         self.assertEqual(res.status_code, 302)
@@ -360,9 +367,14 @@ class RulesTests(TestCase):
         self.assertContains(page, "shared-photo")
         self.assertContains(page, f"/photos/{photo.id}/")
         self.assertNotContains(page, "Message object")
+        match.closed_at = timezone.now()
+        match.save(update_fields=["closed_at"])
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 200)
         self.assertEqual(self.client.get(f"/photos/{other.id}/").status_code, 403)
         PhotoGrant.objects.filter(photo=photo, grantee=b).update(revoked_at=timezone.now())
         self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
+        match.closed_at = None
+        match.save(update_fields=["closed_at"])
         self.client.force_login(user_a)
         again = self.client.post(f"/messages/{match.id}/", {"photo": str(photo.id), "body": "encore", "client_key": "ct-3b"})
         self.assertEqual(again.status_code, 302)
@@ -388,6 +400,114 @@ class RulesTests(TestCase):
         js = __import__("pathlib").Path("static/js/app.js").read_text(encoding="utf-8")
         self.assertIn('className = "avatar"', js)
         self.assertIn("shared-photo", js)
+
+    def test_inbox_lists_avatar_preview_and_unread(self):
+        user_a, a, user_b, b, match = self._match_pair()
+        self.client.force_login(user_a)
+        sent = self.client.post(f"/messages/{match.id}/", {"body": "bonjour les amis", "client_key": "in-1"})
+        self.assertEqual(sent.status_code, 302)
+        again = self.client.post(f"/messages/{match.id}/", {"body": "bonjour les amis", "client_key": "in-1"})
+        self.assertEqual(again.status_code, 302)
+        self.assertEqual(Notice.objects.filter(profile=b, kind="message").count(), 1)
+        self.assertFalse(Notice.objects.filter(profile=a, kind="message").exists())
+        note = Notice.objects.get(profile=b, kind="message")
+        self.assertIn(f"/messages/{match.id}/", note.url)
+        self.assertIn("bonjour", note.body)
+        self.client.force_login(user_b)
+        page = self.client.get("/messages/")
+        self.assertContains(page, "inbox-item")
+        self.assertContains(page, "inbox-item unread")
+        self.assertContains(page, 'class="avatar"')
+        self.assertContains(page, a.display_name)
+        self.assertContains(page, "bonjour les amis")
+        self.assertContains(page, 'class="badge"')
+        notices = self.client.get("/notifications/")
+        self.assertContains(notices, "bonjour les amis")
+        self.assertContains(notices, f"/messages/{match.id}/")
+        opened = self.client.get(f"/messages/{match.id}/")
+        self.assertEqual(opened.status_code, 200)
+        again_list = self.client.get("/messages/")
+        self.assertNotContains(again_list, "inbox-item unread")
+
+    def test_open_match_unlocks_private_photos(self):
+        user_a, a = self.make("priv-a@example.com", "PrivA")
+        user_b, b = self.make("priv-b@example.com", "PrivB")
+        photo = Photo(profile=a, is_private=True, moderation_status="approved")
+        photo.image.save("secret.jpg", jpeg(), save=True)
+        self.client.force_login(user_b)
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
+        create_like(a, b)
+        match, _ = create_like(b, a)
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 200)
+        match.closed_at = timezone.now()
+        match.save(update_fields=["closed_at"])
+        self.assertEqual(self.client.get(f"/photos/{photo.id}/").status_code, 403)
+
+    def test_one_consent_checkbox_sets_every_flag(self):
+        page = self.client.get("/comptes/inscription/")
+        self.assertEqual(page.content.decode().count('type="checkbox"'), 1)
+        self.assertContains(page, "conditions")
+        self.assertContains(page, "intime")
+        self.assertContains(page, "médias")
+        self.assertContains(page, "communications")
+        res = self.client.post("/comptes/inscription/", {
+            "email": "one-box@example.com", "password": "motdepasse10", "birth_date": "1991-03-03",
+            "display_name": "Une", "kind": "single", "accept": "on",
+        })
+        self.assertEqual(res.status_code, 200)
+        created = get_user_model().objects.get(email="one-box@example.com")
+        self.assertTrue(created.adult_declared)
+        self.assertIsNotNone(created.terms_accepted_at)
+        self.assertTrue(created.intimate_consent)
+        self.assertTrue(created.prefs_consent)
+        self.assertTrue(created.reco_consent)
+        self.assertTrue(created.promo_consent)
+        media = __import__("pathlib").Path("templates/edit_profile.html").read_text(encoding="utf-8")
+        self.assertEqual(media.count('name="media_rights"'), 2)
+        self.assertNotIn('name="media_minor"', media)
+        self.assertNotIn('name="media_host"', media)
+        invite = __import__("pathlib").Path("templates/invitation.html").read_text(encoding="utf-8")
+        self.assertEqual(invite.count('type="checkbox"'), 2)
+
+    def test_partner_login_signs_messages_with_both_names(self):
+        owner, profile = self.make("chave@example.com", "chave")
+        profile.kind = "couple"
+        profile.save(update_fields=["kind"])
+        partner = Partner.objects.create(
+            profile=profile, display_name="monica", birth_date=date(1992, 2, 2), consent_email="monica@example.com",
+        )
+        raw, digest = new_token()
+        EmailToken.objects.create(user=owner, purpose="partner", token_hash=digest, expires_at=timezone.now() + timedelta(days=2))
+        res = self.client.post(f"/invitation/partenaire/{raw}/", {
+            "accept": "1", "password": "motdepasse10", "password2": "motdepasse10",
+        })
+        self.assertEqual(res.status_code, 302)
+        partner.refresh_from_db()
+        self.assertIsNotNone(partner.consent_at)
+        self.assertEqual(partner.user.email, "monica@example.com")
+        self.assertEqual(Profile.objects.filter(user__email="monica@example.com").count(), 0)
+        home = self.client.get("/decouvrir/")
+        self.assertEqual(home.status_code, 200)
+        self.assertEqual(Profile.objects.filter(user__email="monica@example.com").count(), 0)
+        _, other = self.make("dest-couple@example.com", "Dest")
+        create_like(profile, other)
+        match, _ = create_like(other, profile)
+        sent = self.client.post(f"/messages/{match.id}/", {"body": "coucou", "client_key": "monica-1"})
+        self.assertEqual(sent.status_code, 302)
+        msg = Message.objects.get(match=match, body="coucou")
+        self.assertEqual(msg.author_label, "chave (monica)")
+        self.client.force_login(other.user)
+        page = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(page, "chave (monica)")
+        self.client.force_login(owner)
+        mine = self.client.post(f"/messages/{match.id}/", {"body": "salut", "client_key": "chave-1"})
+        self.assertEqual(mine.status_code, 302)
+        self.assertTrue(Message.objects.filter(match=match, body="salut", author_label="chave").exists())
+        self.assertEqual(MatchUsage.objects.get(user=owner, match=match).messages_sent, 2)
+        self.client.force_login(owner)
+        seen = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(seen, "chave (monica)")
+        self.assertContains(seen, ">chave<")
 
     def test_discover_empty_is_not_the_quota_warning(self):
         user, _ = self.make("empty-deck@example.com", "Empty")

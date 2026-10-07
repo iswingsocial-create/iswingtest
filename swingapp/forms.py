@@ -28,12 +28,7 @@ class RegisterForm(forms.Form):
     birth_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
     display_name = forms.CharField(max_length=40)
     kind = forms.ChoiceField(choices=Profile.KIND)
-    age_confirm = forms.BooleanField()
     accept = forms.BooleanField()
-    intimate = forms.BooleanField()
-    prefs = forms.BooleanField(required=False)
-    reco = forms.BooleanField(required=False)
-    promo = forms.BooleanField(required=False)
 
     def clean_birth_date(self):
         value = self.cleaned_data["birth_date"]

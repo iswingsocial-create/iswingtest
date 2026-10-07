@@ -78,6 +78,20 @@ Exécutés ici :
 
 Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.
 
+# Rapport de tests — messagerie visuelle, photos de match, consentement, partenaire, 2026-10-07
+
+Suite `python manage.py test swingapp` : 105 tests OK.
+
+Exécutés ici :
+
+- la liste Messages montre l'avatar, le nom, l'aperçu, l'heure et la classe `unread` ; ouvrir le fil retire le non-lu
+- un message crée une Notice `kind=message` pour le destinataire seulement, avec lien vers le fil ; la cloche compte les non-lues
+- un match ouvert rend les photos privées visibles ; hors match elles restent refusées, sauf PhotoGrant explicite
+- inscription, invitation et envoi de média : une seule case, qui coche conditions, contenu intime, médias et communications
+- le partenaire crée un mot de passe sur son e-mail, sans second profil ; ses messages s'affichent « chave (monica) », ceux du titulaire « chave » ; le quota de messages reste commun
+
+Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.
+
 # Rapport de tests — likes et quotas, 2026-10-06
 
 87 tests Django OK (`python manage.py test swingapp`).
@@ -93,3 +107,15 @@ Exécutés ici :
 - Chromium headless 360×640 (pas un téléphone) : double tap, un seul POST avec `client_key`, carte retirée en 68 ms, compteur 10 puis 9
 
 Non exécutés : tap sur un téléphone physique. Stripe, S3 et Celery toujours non raccordés.
+
+# Rapport de tests — masques et écran médias, 2026-10-07
+
+Exécutés ici :
+
+- trois autocollants (visage souriant, diable, ananas) gravés dans les pixels, distincts les uns des autres
+- le flou ovale laisse les coins du cadre nets et change le centre
+- l'écran d'envoi sépare photo et vidéo et n'énumère plus les extensions
+- la phrase « ajustée si possible, sans déformation » n'est plus dans fr/en/es
+- /legal/medias/ décrit les limites (poids, 2 560 pixels, 10 minutes, formats) en français, anglais et espagnol
+
+Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.

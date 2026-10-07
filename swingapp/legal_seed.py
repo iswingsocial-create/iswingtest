@@ -259,7 +259,12 @@ Cette confirmation ne remplace pas l'autorisation individuelle des autres person
 
 Une photo publique est visible sur la fiche par les membres admissibles. Une photo privée n'est visible que si vous l'autorisez pour une personne précise. Vous pouvez changer ce type après l'envoi. L'audience est indiquée avant la publication. Aucune plateforme ne peut empêcher toutes les captures d'écran.
 
-Les médias sont hébergés pour le service, modérés, et retirés en cas de signalement valable selon la page Signalements.""",
+Les médias sont hébergés pour le service, modérés, et retirés en cas de signalement valable selon la page Signalements.
+
+Limites techniques
+Photos : JPEG, PNG, WebP, HEIC, HEIF, AVIF, TIFF, BMP, GIF et les autres images que le serveur sait ouvrir. PDF, SVG et documents sont refusés. Poids maximal à l'envoi : 50 Mo (50 000 000 octets), réglable par l'équipe. Après traitement, le plus grand côté est réduit à 2 560 pixels. Une image décodée de plus de 80 000 000 pixels est refusée. Un GIF animé est refusé, sauf confirmation : il est alors enregistré en WebP animé. Les autocollants (visage souriant, diable, ananas) et le flou ovale sont gravés dans le fichier ; l'original non masqué n'est pas conservé.
+Vidéos : MP4, MOV, M4V, WebM, MKV, AVI, MPEG, WMV, 3GP, MTS, M2TS et les conteneurs que l'outil de conversion reconnaît. Durée maximale : 10 minutes (600 secondes). Poids maximal : 2 000 000 000 octets. L'envoi se fait par morceaux et peut reprendre. La vidéo publiée est convertie (H.264, sans déformation volontaire) ; tant que la conversion n'a pas réussi, elle n'est pas visible. Le masquage de visage n'est pas proposé sur la vidéo. Le poids annoncé après conversion est une estimation.
+MEDIA-LIMITS""",
         "body_en": """Before uploading media, the person who shares it confirms that:
 
 — they have the necessary rights and permission from every person shown or identifiable;
@@ -270,7 +275,12 @@ This confirmation does not replace the individual permission of other people who
 
 A public photo is visible on the profile to eligible members. A private photo is visible only if you allow it for a specific person. You can change that type after upload. The audience is shown before publication. No platform can prevent every screenshot.
 
-Media are hosted for the service, moderated, and removed when a valid report requires it under the Reports page.""",
+Media are hosted for the service, moderated, and removed when a valid report requires it under the Reports page.
+
+Technical limits
+Photos: JPEG, PNG, WebP, HEIC, HEIF, AVIF, TIFF, BMP, GIF and other images the server can open. PDF, SVG and documents are refused. Maximum upload size: 50 MB (50,000,000 bytes), adjustable by the team. After processing, the longest side is reduced to 2,560 pixels. A decoded image over 80,000,000 pixels is refused. An animated GIF is refused unless confirmed, in which case it is stored as animated WebP. Stickers (smile, devil, pineapple) and the oval blur are baked into the file; the unmasked original is not kept.
+Videos: MP4, MOV, M4V, WebM, MKV, AVI, MPEG, WMV, 3GP, MTS, M2TS and containers the converter recognizes. Maximum length: 10 minutes (600 seconds). Maximum size: 2,000,000,000 bytes. Upload is sent in chunks and can resume. The published video is converted (H.264, without intentional stretching); it stays hidden until conversion succeeds. Face masking is not offered on video. The size shown after conversion is an estimate.
+MEDIA-LIMITS""",
         "body_es": """Antes de enviar un medio, quien lo comparte confirma que:
 
 — tiene los derechos necesarios y la autorización de cada persona representada o identificable;
@@ -281,7 +291,12 @@ Esta confirmación no sustituye la autorización individual de las demás person
 
 Una foto pública es visible en la ficha para los miembros admisibles. Una foto privada solo es visible si usted la autoriza para una persona concreta. Puede cambiar ese tipo después del envío. La audiencia se indica antes de publicar. Ninguna plataforma puede impedir todas las capturas de pantalla.
 
-Los medios se alojan para el servicio, se moderan y se retiran si una denuncia válida lo exige según la página Denuncias.""",
+Los medios se alojan para el servicio, se moderan y se retiran si una denuncia válida lo exige según la página Denuncias.
+
+Límites técnicos
+Fotos: JPEG, PNG, WebP, HEIC, HEIF, AVIF, TIFF, BMP, GIF y las demás imágenes que el servidor sepa abrir. Se rechazan PDF, SVG y documentos. Peso máximo al enviar: 50 Mo (50 000 000 octetos), ajustable por el equipo. Tras el tratamiento, el lado mayor se reduce a 2 560 píxeles. Una imagen decodificada de más de 80 000 000 píxeles se rechaza. Un GIF animado se rechaza salvo confirmación: entonces se guarda como WebP animado. Los adhesivos (cara sonriente, diablo, piña) y el desenfoque ovalado quedan grabados en el archivo; no se conserva el original sin máscara.
+Vídeos: MP4, MOV, M4V, WebM, MKV, AVI, MPEG, WMV, 3GP, MTS, M2TS y los contenedores que reconoce la conversión. Duración máxima: 10 minutos (600 segundos). Peso máximo: 2 000 000 000 octetos. El envío va por fragmentos y puede reanudarse. El vídeo publicado se convierte (H.264, sin deformación intencionada); no es visible hasta que la conversión termina bien. El enmascarado de caras no se ofrece en el vídeo. El peso indicado después de la conversión es una estimación.
+MEDIA-LIMITS""",
     },
     {
         "slug": "conditions",
@@ -346,6 +361,10 @@ def ensure_legal_pages():
     for page in PAGES:
         LegalPage.objects.get_or_create(slug=page["slug"], defaults=page)
     append_staff_privacy()
+    append_media_limits()
+
+
+MEDIA_LIMITS_MARKER = "MEDIA-LIMITS"
 
 
 STAFF_ACCESS_MARKER = "MODERATION-STAFF-ACCESS"
@@ -390,5 +409,33 @@ def append_staff_privacy():
         if STAFF_ACCESS_MARKER not in body:
             setattr(page, field, body + text)
             changed = True
+    if changed:
+        page.save()
+
+
+def append_media_limits():
+    from .models import LegalPage
+
+    page = LegalPage.objects.filter(slug="medias").first()
+    seed = next((row for row in PAGES if row["slug"] == "medias"), None)
+    if page is None or seed is None:
+        return
+    changed = False
+    for lang in ("fr", "en", "es"):
+        field = f"body_{lang}"
+        body = getattr(page, field) or ""
+        if MEDIA_LIMITS_MARKER in body:
+            continue
+        extra = seed[field].split("Limites techniques")[-1] if lang == "fr" else ""
+        if lang == "fr" and "Limites techniques" in seed[field]:
+            extra = "\n\nLimites techniques" + seed[field].split("Limites techniques", 1)[1]
+        elif lang == "en" and "Technical limits" in seed[field]:
+            extra = "\n\nTechnical limits" + seed[field].split("Technical limits", 1)[1]
+        elif lang == "es" and "Límites técnicos" in seed[field]:
+            extra = "\n\nLímites técnicos" + seed[field].split("Límites técnicos", 1)[1]
+        else:
+            continue
+        setattr(page, field, body.rstrip() + extra)
+        changed = True
     if changed:
         page.save()

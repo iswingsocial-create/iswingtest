@@ -41,26 +41,24 @@
       ctx.translate(x + bw / 2, y + bh / 2);
       ctx.rotate(((mask.rotation || 0) * Math.PI) / 180);
       if (mask.type === "blur") {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bw / 2, bh / 2, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(80, 48, 224, 0.35)";
-        ctx.fillRect(-bw / 2, -bh / 2, bw, bh);
+        ctx.fill();
         ctx.fillStyle = "#fff";
         ctx.font = "14px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("flou", 0, 4);
       } else {
-        roundRect(-bw / 2, -bh / 2, bw, bh, Math.max(6, bw / 6));
-        ctx.fillStyle = "#0c0818";
-        ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.font = Math.max(14, Math.floor(bh / 3)) + "px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(mask.emoji || "●", 0, 0);
+        drawSticker(mask.emoji || "happy", bw, bh);
       }
       if (index === selected) {
         ctx.strokeStyle = "#c9b6ff";
         ctx.lineWidth = 2;
-        ctx.strokeRect(-bw / 2, -bh / 2, bw, bh);
+        ctx.beginPath();
+        if (mask.type === "blur") ctx.ellipse(0, 0, bw / 2, bh / 2, 0, 0, Math.PI * 2);
+        else ctx.ellipse(0, 0, bw / 2, bh / 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
       }
       ctx.restore();
     });
@@ -87,7 +85,63 @@
     if (rot) rot.value = String(mask.rotation || 0);
     if (strength) strength.value = String(mask.strength || 12);
   }
-  function add(type) {
+  function drawSticker(code, bw, bh) {
+    var x = -bw / 2;
+    var y = -bh / 2;
+    if (code === "devil") {
+      ctx.fillStyle = "#c42030";
+      ctx.beginPath();
+      ctx.moveTo(x + bw * 0.22, y + bh * 0.30);
+      ctx.lineTo(x + bw * 0.32, y + bh * 0.02);
+      ctx.lineTo(x + bw * 0.42, y + bh * 0.30);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + bw * 0.58, y + bh * 0.30);
+      ctx.lineTo(x + bw * 0.68, y + bh * 0.02);
+      ctx.lineTo(x + bw * 0.78, y + bh * 0.30);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(0, y + bh * 0.58, bw * 0.38, bh * 0.38, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#1a1020";
+      ctx.beginPath();
+      ctx.ellipse(x + bw * 0.36, y + bh * 0.50, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
+      ctx.ellipse(x + bw * 0.64, y + bh * 0.50, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (code === "pineapple") {
+      ctx.fillStyle = "#2e8b3a";
+      ctx.beginPath();
+      ctx.moveTo(0, y + bh * 0.02);
+      ctx.lineTo(x + bw * 0.30, y + bh * 0.32);
+      ctx.lineTo(x + bw * 0.48, y + bh * 0.18);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, y + bh * 0.02);
+      ctx.lineTo(x + bw * 0.70, y + bh * 0.32);
+      ctx.lineTo(x + bw * 0.52, y + bh * 0.18);
+      ctx.fill();
+      ctx.fillStyle = "#f0c428";
+      ctx.beginPath();
+      ctx.ellipse(0, y + bh * 0.58, bw * 0.28, bh * 0.36, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = "#ffd628";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, bw * 0.46, bh * 0.46, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#1a1020";
+      ctx.beginPath();
+      ctx.ellipse(x + bw * 0.36, y + bh * 0.40, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
+      ctx.ellipse(x + bw * 0.64, y + bh * 0.40, Math.max(2, bw * 0.05), Math.max(2, bh * 0.06), 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.strokeStyle = "#1a1020";
+      ctx.lineWidth = Math.max(2, bw / 16);
+      ctx.arc(0, y + bh * 0.52, Math.min(bw, bh) * 0.22, 0.25, Math.PI - 0.25);
+      ctx.stroke();
+    }
+  }
+  function add(type, code) {
     snapshot();
     masks.push({
       type: type,
@@ -97,7 +151,7 @@
       h: 0.2,
       rotation: 0,
       strength: 12,
-      emoji: "●"
+      emoji: code || (type === "sticker" ? "happy" : "")
     });
     selected = masks.length - 1;
     syncSliders();
@@ -149,7 +203,9 @@
     var node = document.getElementById(id);
     if (node) node.addEventListener("click", fn);
   }
-  bind("mask-add", function () { add("sticker"); });
+  document.querySelectorAll("[data-sticker]").forEach(function (node) {
+    node.addEventListener("click", function () { add("sticker", node.getAttribute("data-sticker") || "happy"); });
+  });
   bind("mask-blur", function () { add("blur"); });
   bind("mask-delete", function () {
     if (selected < 0) return;
