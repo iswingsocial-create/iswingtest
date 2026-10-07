@@ -1089,3 +1089,38 @@ class V4CorrectionTests(TestCase):
 
 
 
+
+class SmtpTimeoutTests(TestCase):
+    def test_mail_connection_has_timeout(self):
+        from .integrations import get_integration, mail_connection
+
+        row = get_integration("smtp")
+        row.public_data = {
+            "host": "10.255.255.1", "port": "587", "username": "x",
+            "tls": "starttls", "from_email": "x@x.xx",
+        }
+        row.secret_data = ""
+        row.enabled = True
+        row.save()
+        conn = mail_connection("smtp")
+        self.assertIsNotNone(conn)
+        self.assertGreaterEqual(conn.timeout, 5)
+        self.assertLessEqual(conn.timeout, 60)
+
+    def test_smtp_unreachable_returns_clean_error(self):
+        import time
+        from .integrations import get_integration, test_smtp
+
+        row = get_integration("smtp")
+        row.public_data = {
+            "host": "10.255.255.1", "port": "587", "username": "x",
+            "tls": "starttls", "from_email": "x@x.xx",
+        }
+        row.secret_data = ""
+        row.enabled = True
+        row.save()
+        start = time.time()
+        ok, msg = test_smtp("smtp", "test@example.com")
+        self.assertFalse(ok)
+        self.assertTrue(msg)
+        self.assertLess(time.time() - start, 60)

@@ -201,6 +201,11 @@ def mail_connection(code="smtp"):
         return None
     from django.core.mail import get_connection
 
+    try:
+        timeout = int(os_environ("SMTP_TIMEOUT") or 20)
+    except ValueError:
+        timeout = 20
+    timeout = min(max(timeout, 5), 60)
     return get_connection(
         backend="django.core.mail.backends.smtp.EmailBackend",
         host=cfg["host"],
@@ -209,6 +214,7 @@ def mail_connection(code="smtp"):
         password=cfg["password"],
         use_tls=cfg["use_tls"],
         use_ssl=cfg["use_ssl"],
+        timeout=timeout,
     )
 
 
