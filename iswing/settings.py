@@ -167,3 +167,19 @@ CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = "Lax"
 X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Le site tourne derrière le proxy Render qui termine le TLS : il faut
+# toujours l'indiquer à Django (pas seulement en mode production), sinon
+# request.is_secure() est faux et la vérification CSRF de l'en-tête
+# Origin échoue avec un 403 « Origin checking failed ».
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Origines autorisées à poster des formulaires (vérification CSRF stricte
+# sur HTTPS). Configurable via variable d'environnement.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS", "https://iswingtest.onrender.com"
+    ).split(",")
+    if o.strip()
+]
