@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Gestion iSwing</title>
+  <link rel="icon" href="/brand/icons/icon-192.png">
+  <link rel="stylesheet" href="/brand/css/app.css">
+  <link rel="stylesheet" href="/brand/css/gestion.css">
+</head>
+<body data-theme="{{ theme|default:'violet' }}">
+  <input id="g-nav" type="checkbox">
+  <div class="g-app">
+    <aside class="g-side">
+      <a class="g-brand" href="/gestion/"><img src="/brand/icons/logo.png?v={{ brand_stamp }}" alt="" width="36" height="36"> iSwing</a>
+      <nav>
+        <a href="/gestion/" {% if section == "dash" %}aria-current="page"{% endif %}>Tableau de bord</a>
+        <a href="/gestion/membres/" {% if section == "members" %}aria-current="page"{% endif %}>Membres</a>
+        <a href="/gestion/medias/" {% if section == "media" %}aria-current="page"{% endif %}>Médias</a>
+        <a href="/gestion/certifications/" {% if section == "cert" %}aria-current="page"{% endif %}>Certifications</a>
+        <a href="/gestion/signalements/" {% if section == "reports" %}aria-current="page"{% endif %}>Signalements</a>
+        <a href="/gestion/entreprises/" {% if section == "businesses" %}aria-current="page"{% endif %}>Entreprises</a>
+        <a href="/gestion/abonnements/" {% if section == "billing" %}aria-current="page"{% endif %}>Abonnements</a>
+        <a href="/gestion/communications/" {% if section == "messages" %}aria-current="page"{% endif %}>Messages</a>
+        <a href="/gestion/parametres/" {% if section == "settings" %}aria-current="page"{% endif %}>Paramètres</a>
+        <a href="/gestion/configuration/" {% if section == "config" %}aria-current="page"{% endif %}>Configuration</a>
+        <a href="/gestion/profils-test/" {% if section == "tests" %}aria-current="page"{% endif %}>Profils TEST</a>
+        <a href="/gestion/journal/" {% if section == "audit" %}aria-current="page"{% endif %}>Journal</a>
+        <a href="/gestion/inactivite/" {% if section == "inactive" %}aria-current="page"{% endif %}>Inactivité</a>
+      </nav>
+      <p class="g-side-foot"><a href="/decouvrir/">Retour au site</a></p>
+    </aside>
+    <div class="g-main">
+      <label class="g-burger" for="g-nav">Menu</label>
+      <p class="muted">Gestion{% if section %} · {{ section }}{% endif %}</p>
+      {% if messages %}{% for m in messages %}<p class="note">{{ m }}</p>{% endfor %}{% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+  <script src="/brand/js/app.js"></script>
+</body>
+</html>

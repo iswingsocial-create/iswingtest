@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="card">
+  {% if biz.logo %}<img class="biz-logo" src="/entreprises/fichier/logo/{{ biz.id }}/" alt="">{% endif %}
+  <h1>{{ biz.profile.display_name }}</h1>
+  {% if badge %}<p><span class="status-badge">{{ T.biz_verified }}</span></p>{% endif %}
+  <p>{{ category }}{% if biz.profile.city %} · {{ biz.profile.city }}{% endif %}</p>
+  {% if biz.address %}<p>{{ T.biz_address }} : {{ biz.address }}</p>{% endif %}
+  <p>{{ biz.description }}</p>
+  {% if biz.website %}<p><a href="{{ biz.website }}">{{ T.biz_website }}</a></p>{% endif %}
+  {% if biz.ticket_url %}<p><a href="{{ biz.ticket_url }}">{{ T.biz_tickets }}</a></p>{% endif %}
+  <p class="muted">{{ T.ticketing_external }}</p>
+  <div class="gallery">
+    {% for photo in photos %}<img src="/entreprises/fichier/photo/{{ photo.id }}/" alt="">{% endfor %}
+  </div>
+  <h2>{{ T.biz_upcoming }}</h2>
+  {% for event in events %}
+  <p><a href="/evenements/{{ event.id }}/">{{ event.title }}</a> · {{ event.city }} · {{ event.starts_at }}</p>
+  {% empty %}<p class="muted">{{ T.biz_empty }}</p>{% endfor %}
+</article>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ T.messages }}</h1>
+{% if not items %}<p class="empty">{{ T.empty_messages }}</p>{% endif %}
+{% for item in items %}
+<article class="card inbox-item{% if item.unread %} unread{% endif %}">
+  <a class="inbox-who" href="/profil/{{ item.other.id }}/">
+    {% if item.avatar %}<img class="avatar" src="{{ item.avatar }}" alt="">{% else %}<span class="avatar avatar-fallback" aria-hidden="true"></span>{% endif %}
+    <strong>{{ item.other.display_name }}</strong>
+  </a>
+  <a class="inbox-main" href="/messages/{{ item.match.id }}/">
+    <span class="inbox-top">
+      {% if item.when %}<time>{{ item.when }}</time>{% endif %}
+      {% if item.unread %}<span class="badge">{{ item.unread }}</span>{% endif %}
+    </span>
+    <span class="inbox-preview">{{ item.preview|default:"—" }}</span>
+  </a>
+</article>
+{% endfor %}
+{% endblock %}

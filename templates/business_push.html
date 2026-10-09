@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ T.biz_push }}</h1>
+  <p class="muted">{{ T.biz_push_help }}</p>
+  {% if not plan_on %}<p class="warn">{{ T.biz_plan_needed }}</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  {% if reached %}<p class="note">{{ reached }}</p>{% endif %}
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <label>{{ T.nav_events }}
+      <select name="event"><option value="">—</option>{% for event in events %}<option value="{{ event.id }}">{{ event.title }}</option>{% endfor %}</select>
+    </label>
+    <label>{{ T.city }} <input name="city" data-city="admin" required></label>
+    <input type="hidden" name="lat"><input type="hidden" name="lng">
+    <label>{{ T.biz_radius }} <input name="radius" value="30" inputmode="numeric"></label>
+    <label>{{ T.kind }}
+      <select name="category"><option value="">—</option>{% for code, label in categories %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select>
+    </label>
+    <label>{{ T.message_label }} <textarea name="body" rows="4"></textarea></label>
+    <div class="row">
+      <button class="btn ghost" name="action" value="preview" type="submit">{{ T.biz_preview }}</button>
+      <button class="btn" name="action" value="send" type="submit">{{ T.biz_send_push }}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

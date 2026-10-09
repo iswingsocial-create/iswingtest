@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ T.notices }}</h1>
+{% for n in notices %}
+<article class="card notice-card">
+  <p class="muted">{{ n.created_at|date:"d/m/Y H:i" }}</p>
+  {% if n.kind == "like" %}<p class="notice-full"><a href="{{ n.url }}">{{ n.text }}</a> {{ T.notice_like }}</p>
+  {% elif n.kind == "access_request" %}<p class="notice-full"><a href="{{ n.url }}">{{ n.text }}</a> {{ T.notice_access_request }}</p>
+  {% elif n.kind == "access_ok" %}<p class="notice-full">{{ n.text }} {{ T.notice_access_ok }}</p>
+  {% elif n.kind == "access_no" %}<p class="notice-full">{{ n.text }} {{ T.notice_access_no }}</p>
+  {% elif n.kind == "message" %}<p class="notice-full"><a href="{{ n.url }}">{{ n.text }}</a> {{ T.notice_message }}</p>
+  {% else %}<p class="notice-full">{{ n.text }}</p>{% if n.url %}<p><a href="{{ n.url }}">{{ T.open_notice }}</a></p>{% endif %}{% endif %}
+</article>
+{% empty %}<p class="empty">{{ T.no_notices }}</p>{% endfor %}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Signalement n°{{ report.id }}</h1><a class="btn ghost" href="/gestion/signalements/">Retour</a></header>
+<section class="card">
+  <p><strong>Date</strong> {{ report.created_at }}</p>
+  <p><strong>Statut</strong> {% for code, label in statuses %}{% if report.status == code %}{{ label }}{% endif %}{% endfor %}</p>
+  <p><strong>Compte signalé</strong> <a href="/gestion/membres/{{ report.target_id }}/">{{ report.target.display_name }}</a> · {{ report.target.user.email }} · #{{ report.target_id }}</p>
+  <p><strong>Origine du signalement</strong> {{ report.reporter.display_name }} · {{ report.reporter.user.email }} · #{{ report.reporter_id }}</p>
+  <p class="muted">Ne communiquez pas ces deux dernières lignes au membre signalé.</p>
+  <p><strong>Motif</strong> {{ report.reason }} ({{ report.reason_code }})</p>
+  <p><strong>Commentaire</strong> {{ report.comment|default:"—" }}</p>
+  <p><strong>Contenu concerné</strong> {{ report.related_ref|default:"Profil" }}</p>
+  <p><a href="/profil/{{ report.target_id }}/">Ouvrir la fiche publique</a></p>
+</section>
+<section class="card">
+  <h2>Contenu du membre</h2>
+  {% for photo in photos %}
+  <form class="staff-row" method="post" action="/gestion/photo/{{ photo.id }}/">{% csrf_token %}
+    <input type="hidden" name="next" value="/gestion/signalements/{{ report.id }}/">
+    <span>#{{ photo.id }} {{ photo.media_type }} {% if photo.is_private %}privé{% else %}public{% endif %} {{ photo.moderation_status }}</span>
+    {% if can_moderate %}
+    {% if photo.is_private %}<a href="/photos/{{ photo.id }}/">consulter</a>{% else %}<a href="/photos/{{ photo.id }}/">voir</a>{% endif %}
+    <input name="reason" placeholder="Motif du retrait">
+    <button name="status" value="removed" type="submit" data-confirm="Retirer ce média ?">Retirer</button>
+    {% else %}<span class="muted">Retrait réservé à la modération</span>{% endif %}
+  </form>
+  {% empty %}<p>Aucun média conservé.</p>{% endfor %}
+</section>
+<section class="card">
+  <h2>Décision</h2>
+  <form method="post" class="stack">{% csrf_token %}
+    <input type="hidden" name="action" value="status">
+    <label>Statut <select name="status">{% for code, label in statuses %}<option value="{{ code }}" {% if report.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label>Note interne <textarea name="note" rows="3"></textarea></label>
+    <button class="btn" type="submit">Enregistrer le statut</button>
+  </form>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="note">
+    <label>Note interne <textarea name="note" rows="3" required></textarea></label>
+    <button class="btn ghost" type="submit">Ajouter une note</button>
+  </form>
+  <form method="post" class="stack">{% csrf_token %}
+    <input type="hidden" name="action" value="warn">
+    <p>L'avertissement part de l'équipe iSwing.live. N'y mettez pas le nom de la personne qui a signalé.</p>
+    <label>Texte <textarea name="note" rows="4" required></textarea></label>
+    <label>Canal <select name="channel"><option value="both">Avis et courriel</option><option value="notice">Avis interne</option><option value="email">Courriel</option></select></label>
+    <button class="btn" type="submit" data-confirm="Envoyer cet avertissement au membre signalé ?">Envoyer l'avertissement</button>
+  </form>
+  <form method="post">{% csrf_token %}
+    {% if report.target.suspended %}
+    <input type="hidden" name="action" value="restore">
+    <button class="btn" type="submit">Réactiver le compte</button>
+    {% else %}
+    <input type="hidden" name="action" value="suspend">
+    <button class="btn danger" type="submit" data-confirm="Suspendre le compte signalé ?">Suspendre le compte</button>
+    {% endif %}
+  </form>
+</section>
+<section class="card">
+  <h2>Historique</h2>
+  {% for note in notes %}
+  <p><span class="muted">{{ note.created_at|date:"Y-m-d H:i" }} · {{ note.author.email|default:"—" }} · {{ note.action }}</span><br>{{ note.body }}</p>
+  {% empty %}<p>Aucune décision pour l'instant.</p>{% endfor %}
+</section>
+{% endblock %}

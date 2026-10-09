@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="card" method="post">
+  {% csrf_token %}
+  <h1>{{ T.register }}</h1>
+  <p class="warn">{{ T.age_gate }} {{ T.declared_not_proof }}</p>
+  {% if error %}<p class="error">{{ T.email_taken }}</p>{% endif %}
+  <label>{{ T.email }} <input type="email" name="email" required></label>
+  <label>{{ T.password }} <input type="password" name="password" minlength="10" required></label>
+  <label>{{ T.birth }} <input type="date" name="birth_date" required></label>
+  <label>{{ T.display_name }} <input name="display_name" maxlength="40" required></label>
+  <label>{{ T.kind }}
+    <select name="kind"><option value="single">{{ T.single }}</option><option value="couple">{{ T.couple }}</option></select>
+  </label>
+  <label class="check"><input type="checkbox" name="accept" required> {{ T.all_consents }} <a href="/legal/conditions/">{{ T.footer_terms }}</a> · <a href="/legal/medias/">{{ T.footer_media }}</a> · <a href="/legal/confidentialite/">{{ T.footer_privacy }}</a></label>
+  <button class="btn" type="submit">{{ T.register }}</button>
+</form>
+{% endblock %}
