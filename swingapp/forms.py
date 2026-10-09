@@ -141,6 +141,7 @@ class PartnerForm(forms.Form):
     display_name = forms.CharField(max_length=40, required=False)
     birth_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}), required=False)
     gender = forms.ChoiceField(choices=[("", "—")] + GENDERS, required=False)
+    orientation = forms.ChoiceField(choices=ORIENTATIONS, required=False)
     consent = forms.BooleanField(required=False)
     consent_email = forms.EmailField(required=False)
 
@@ -150,6 +151,8 @@ class PartnerForm(forms.Form):
         self.fields["birth_date"].label = t(lang, "partner_birth")
         self.fields["gender"].label = t(lang, "partner_gender")
         self.fields["gender"].choices = [("", "—")] + _label(GENDERS, lang)
+        self.fields["orientation"].label = t(lang, "partner_orientation")
+        self.fields["orientation"].choices = _label(ORIENTATIONS, lang)
         self.fields["consent"].label = t(lang, "partner_consent")
         self.fields["consent_email"].label = t(lang, "partner_email")
 

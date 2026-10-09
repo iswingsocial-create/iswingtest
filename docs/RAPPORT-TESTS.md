@@ -124,3 +124,8 @@ Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.
 
 Exécutés : emojis 😊 😈 🍍 gravés, badges essai/membre/certifié, certification privée revue en gestion, profil test peut écrire à un membre réel, avis en cartes séparées et traduits fr/en/es à l’ouverture.
 Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.
+
+# Rapport de tests — orientations, courriel, médias privés, 2026-10-08
+
+Exécutés : deux orientations de couple visibles et modifiables, interrupteur de courriel d’inscription désactivé par défaut puis envoi réel, miniature privée dans le fil et accès du destinataire. 113 tests Django OK.
+Non exécutés : téléphone réel, Stripe, SMTP, S3, Celery.

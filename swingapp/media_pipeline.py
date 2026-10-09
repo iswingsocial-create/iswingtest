@@ -672,7 +672,7 @@ def store_source(upload, suffix):
     return str(path)
 
 
-def queue_video(profile, source_path, private, original_name=""):
+def queue_video(profile, source_path, private, original_name="", title=""):
     size = os.path.getsize(source_path)
     if size > video_max_bytes():
         os.remove(source_path)
@@ -688,6 +688,7 @@ def queue_video(profile, source_path, private, original_name=""):
         byte_size=size,
         is_primary=False,
         moderation_status="pending",
+        title=(title or "")[:80],
     )
     from .services import poster_for_video
 

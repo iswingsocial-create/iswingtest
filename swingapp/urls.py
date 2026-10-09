@@ -31,6 +31,7 @@ urlpatterns = [
     path("moi/medias/import/<str:token>/", views.upload_status, name="upload_status"),
     path("moi/photos/<int:pk>/principale/", views.primary_photo, name="primary_photo"),
     path("moi/photos/<int:pk>/visibilite/", views.photo_visibility, name="photo_visibility"),
+    path("moi/photos/<int:pk>/titre/", views.photo_title, name="photo_title"),
     path("moi/position/", views.set_location, name="set_location"),
     path("moi/position/effacer/", views.clear_location, name="clear_location"),
     path("abonnement/", views.billing, name="billing"),

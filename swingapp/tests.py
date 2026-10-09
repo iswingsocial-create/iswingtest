@@ -1090,6 +1090,109 @@ class V4CorrectionTests(TestCase):
 
 
 
+
+class V5CorrectionTests(TestCase):
+    make = RulesTests.make
+    as_staff = RulesTests.as_staff
+
+    def test_couple_stores_two_orientations_and_shows_both_names(self):
+        user, profile = self.make("couple-or@example.com", "Alex")
+        self.client.force_login(user)
+        payload = {
+            "display_name": "Alex", "kind": "couple", "orientation": "hetero",
+            "city": "Lyon", "bio": "bio", "visibility": "public",
+            "p-display_name": "Jo", "p-birth_date": "1992-04-04", "p-gender": "femme", "p-orientation": "bi",
+        }
+        res = self.client.post("/moi/", payload)
+        self.assertEqual(res.status_code, 302)
+        profile.refresh_from_db()
+        self.assertEqual(profile.orientation, "hetero")
+        self.assertEqual(profile.partner.display_name, "Jo")
+        self.assertEqual(profile.partner.orientation, "bi")
+        page = self.client.get(f"/profil/{profile.id}/")
+        self.assertContains(page, "Alex (Hétérosexuel")
+        self.assertContains(page, "Jo (Bisexuel")
+        payload["orientation"] = "homo"
+        payload["p-display_name"] = "Joelle"
+        payload["p-orientation"] = "pan"
+        self.client.post("/moi/", payload)
+        profile.partner.refresh_from_db()
+        profile.refresh_from_db()
+        self.assertEqual(profile.partner.display_name, "Joelle")
+        self.assertEqual(profile.partner.orientation, "pan")
+        changed = self.client.get(f"/profil/{profile.id}/?lang=en")
+        self.assertContains(changed, "Alex (Homosexual)")
+        self.assertContains(changed, "Joelle (Pansexual)")
+
+    def test_signup_confirmation_email_follows_the_switch(self):
+        from swingapp.models import SiteSetting
+
+        admin, _ = self.make("root-signup@example.com", "RootMail")
+        admin.is_staff = True
+        admin.is_superuser = True
+        admin.save()
+        self.as_staff(admin)
+        page = self.client.get("/gestion/configuration/?onglet=courriels")
+        self.assertContains(page, "Envoyer le courriel de confirmation à l'inscription")
+        self.assertContains(page, 'name="send_signup_email"')
+        self.assertNotIn(b'name="send_signup_email" value="1" checked', page.content)
+        self.assertEqual(SiteSetting.get("send_signup_email", "0"), "0")
+        self.client.logout()
+        first = self.client.post("/comptes/inscription/", {
+            "email": "sans-mail@example.com", "password": "motdepasse10", "birth_date": "1991-03-03",
+            "display_name": "Sans", "kind": "single", "accept": "on",
+        })
+        self.assertEqual(first.status_code, 200)
+        self.assertFalse(OutboundEmail.objects.filter(kind="verify").exists())
+        self.client.logout()
+        self.as_staff(admin)
+        saved = self.client.post("/gestion/configuration/", {
+            "onglet": "courriels", "action": "save", "send_signup_email": "1",
+        })
+        self.assertEqual(saved.status_code, 302)
+        self.assertEqual(SiteSetting.get("send_signup_email", "0"), "1")
+        self.client.logout()
+        second = self.client.post("/comptes/inscription/", {
+            "email": "avec-mail@example.com", "password": "motdepasse10", "birth_date": "1991-03-03",
+            "display_name": "Avec", "kind": "single", "accept": "on",
+        })
+        self.assertEqual(second.status_code, 200)
+        mail = OutboundEmail.objects.get(kind="verify", to_email="avec-mail@example.com")
+        self.assertIn("/comptes/verifier/", mail.body)
+        self.assertEqual(OutboundEmail.objects.filter(kind="verify").count(), 1)
+
+    def test_private_media_can_be_attached_from_the_thread(self):
+        owner, me = self.make("partage@example.com", "Partage")
+        other, them = self.make("recoit@example.com", "Recoit")
+        private = Photo(profile=me, is_private=True, moderation_status="approved", title="Soiree")
+        private.image.save("p.jpg", jpeg(), save=True)
+        video = Photo(profile=me, is_private=True, moderation_status="approved", media_type="video", title="Clip", processing_status="ready")
+        video.image.save("v.jpg", jpeg(), save=True)
+        hidden = Photo(profile=me, is_private=True, moderation_status="approved", role="certification", title="Secret")
+        hidden.image.save("c.jpg", jpeg(), save=True)
+        create_like(me, them)
+        match, _ = create_like(them, me)
+        self.client.force_login(owner)
+        renamed = self.client.post(f"/moi/photos/{private.id}/titre/", {"title": "Soiree privee"})
+        self.assertEqual(renamed.status_code, 302)
+        private.refresh_from_db()
+        self.assertEqual(private.title, "Soiree privee")
+        page = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(page, "attach-item")
+        self.assertContains(page, "Soiree privee")
+        self.assertContains(page, "Clip")
+        self.assertContains(page, f"/photos/{private.id}/?thumb=1")
+        self.assertNotContains(page, f"#{private.id}")
+        self.assertNotContains(page, "Secret")
+        sent = self.client.post(f"/messages/{match.id}/", {"body": "pour toi", "photo": str(private.id)})
+        self.assertEqual(sent.status_code, 302)
+        self.assertTrue(PhotoGrant.objects.filter(photo=private, grantee=them, revoked_at__isnull=True).exists())
+        self.client.force_login(other)
+        seen = self.client.get(f"/messages/{match.id}/")
+        self.assertContains(seen, f"/photos/{private.id}/")
+        self.assertEqual(self.client.get(f"/photos/{private.id}/").status_code, 200)
+        self.assertEqual(self.client.get(f"/photos/{hidden.id}/").status_code, 403)
+
 class SmtpTimeoutTests(TestCase):
     def test_mail_connection_has_timeout(self):
         from .integrations import get_integration, mail_connection

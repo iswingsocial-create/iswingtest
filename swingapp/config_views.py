@@ -95,6 +95,7 @@ def configuration(request):
         "theme": theme_choice(),
         "categories": category_rows(),
         "logo_custom": (Path(settings.BASE_DIR) / "data" / "brand" / "icons" / "logo.png").is_file(),
+        "send_signup_email": SiteSetting.get("send_signup_email", "0") == "1",
     })
 
 
@@ -206,6 +207,8 @@ def _save_stripe(request, action):
 
 
 def _save_smtp(request, action):
+    if action != "disable":
+        _set("send_signup_email", "1" if request.POST.get("send_signup_email") == "1" else "0")
     _mail_form(request, action, "smtp")
 
 

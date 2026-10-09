@@ -482,3 +482,12 @@ body[data-theme="nuit"] .g-side { background: #0a0a0a; }
 }
 .notice-card { margin-bottom: 0.8rem; }
 .notice-full { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0.3rem 0; }
+.couple-line { font-weight: 700; }
+.attach { border: 0; margin: 0.6rem 0; padding: 0; }
+.attach-grid { display: flex; gap: 0.55rem; overflow-x: auto; padding-bottom: 0.3rem; }
+.attach-item { position: relative; width: 88px; flex: none; display: grid; gap: 0.25rem; font-size: 0.75rem; }
+.attach-item img { width: 88px; height: 88px; object-fit: cover; border-radius: 14px; background: #07040f; }
+.attach-item input { position: absolute; opacity: 0; }
+.attach-item:has(input:checked) img,
+.attach-item:has(input:checked) span { outline: 3px solid var(--violet); outline-offset: 2px; }
+.attach-item.none { place-items: center; min-height: 88px; border: 1px dashed var(--line); border-radius: 14px; }

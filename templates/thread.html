@@ -25,11 +25,22 @@
   <form method="post" id="send-form">{% csrf_token %}
     <input type="hidden" name="client_key" id="client-key">
     <label>{{ T.message_label }} <textarea name="body" maxlength="2000"></textarea></label>
-    <label>{{ T.shared_photo }}
-      <select name="photo"><option value="">—</option>
-        {% for photo in my_photos %}<option value="{{ photo.id }}">{% if photo.is_private %}{{ T.photo_private }}{% else %}{{ T.photo_public }}{% endif %} #{{ photo.id }}</option>{% endfor %}
-      </select>
-    </label>
+    <fieldset class="attach">
+      <legend>{{ T.attach_private }}</legend>
+      <div class="attach-grid">
+        <label class="attach-item none">
+          <input type="radio" name="photo" value="" checked>
+          <span>{{ T.attach_none }}</span>
+        </label>
+        {% for photo in my_photos %}
+        <label class="attach-item">
+          <input type="radio" name="photo" value="{{ photo.id }}">
+          <img src="/photos/{{ photo.id }}/?thumb=1" alt="{{ photo.title|default:T.photo_private }}">
+          <span>{% if photo.title %}{{ photo.title }}{% elif photo.is_private %}{{ T.photo_private }}{% else %}{{ T.photo_public }}{% endif %}</span>
+        </label>
+        {% empty %}<p class="muted">{{ T.no_private_media }}</p>{% endfor %}
+      </div>
+    </fieldset>
     <button class="btn" type="submit" {% if not quota.premium and quota.messages_left == 0 %}disabled{% endif %}>{{ T.send }}</button>
     <p><a href="/moi/?onglet=medias">{{ T.manage_media }}</a></p>
   </form>

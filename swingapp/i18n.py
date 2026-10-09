@@ -76,6 +76,11 @@ STRINGS = {
         "team_warning": "Bonjour {display_name}, l'équipe vous adresse un avertissement concernant le respect des règles du service.",
         "team_account": "Bonjour {display_name}, information au sujet de votre compte ou de votre abonnement.",
         "team_announce": "Bonjour {display_name}, annonce de l'équipe.",
+        "partner_orientation": "Orientation du partenaire",
+        "attach_private": "Joindre un média privé",
+        "attach_none": "Ne rien joindre",
+        "media_title": "Nom du média",
+        "no_private_media": "Aucun média privé approuvé. Ajoutez-en un depuis Photos et vidéos.",
     },
     "en": {
         "lang_name": "English",
@@ -153,6 +158,11 @@ STRINGS = {
         "team_warning": "Hello {display_name}, the team is sending a warning about the service rules.",
         "team_account": "Hello {display_name}, information about your account or subscription.",
         "team_announce": "Hello {display_name}, a note from the team.",
+        "partner_orientation": "Partner's orientation",
+        "attach_private": "Attach a private media",
+        "attach_none": "Don't attach anything",
+        "media_title": "Media name",
+        "no_private_media": "No approved private media. Add one from Photos and videos.",
     },
     "es": {
         "lang_name": "Español",
@@ -230,6 +240,11 @@ STRINGS = {
         "team_warning": "Hola {display_name}, el equipo le envía un aviso sobre las reglas del servicio.",
         "team_account": "Hola {display_name}, información sobre su cuenta o su suscripción.",
         "team_announce": "Hola {display_name}, un aviso del equipo.",
+        "partner_orientation": "Orientación de la pareja",
+        "attach_private": "Adjuntar un medio privado",
+        "attach_none": "No adjuntar nada",
+        "media_title": "Nombre del medio",
+        "no_private_media": "Ningún medio privado aprobado. Añádalo desde Fotos y vídeos.",
     },
 }
 

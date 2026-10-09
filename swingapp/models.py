@@ -140,6 +140,7 @@ class Partner(models.Model):
     display_name = models.CharField(max_length=40)
     birth_date = models.DateField()
     gender = models.CharField(max_length=32, blank=True)
+    orientation = models.CharField(max_length=32, blank=True, default="")
     consent_at = models.DateTimeField(null=True, blank=True)
     consent_email = models.EmailField(blank=True)
     age_proof_status = models.CharField(max_length=20, default="declared")
@@ -176,6 +177,7 @@ class Photo(models.Model):
     duration_s = models.FloatField(null=True, blank=True)
     source_path = models.CharField(max_length=500, blank=True, default="")
     role = models.CharField(max_length=16, default="gallery")
+    title = models.CharField(max_length=80, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

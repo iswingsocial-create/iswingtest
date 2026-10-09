@@ -96,6 +96,7 @@
       <label>{{ pform.display_name.label }} {{ pform.display_name }}{{ pform.display_name.errors }}</label>
       <label>{{ pform.birth_date.label }} {{ pform.birth_date }}{{ pform.birth_date.errors }}</label>
       <label>{{ pform.gender.label }} {{ pform.gender }}{{ pform.gender.errors }}</label>
+      <label>{{ pform.orientation.label }} {{ pform.orientation }}{{ pform.orientation.errors }}</label>
       <label>{{ pform.consent_email.label }} {{ pform.consent_email }}{{ pform.consent_email.errors }}</label>
       <label class="check">{{ pform.consent }} {{ pform.consent.label }}</label>
     </section>
@@ -109,6 +110,7 @@
       <h2>{{ T.add_photo }}</h2>
       <p class="muted">{{ T.photo_type_help }}</p>
       <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif,image/*" required data-crop>
+      <label>{{ T.media_title }} <input name="title" maxlength="80" placeholder="{{ T.media_title }}"></label>
       <input type="hidden" name="masks" id="masks-json" value="[]">
       <label class="check"><input type="checkbox" name="confirm_gif" value="1"> <span>{{ T.gif_keep }}</span></label>
       <div class="photo-choice">
@@ -123,6 +125,7 @@
       <input type="hidden" name="kind" value="video">
       <p class="muted">{{ T.video_help }} {{ T.video_chunks }}</p>
       <input type="file" name="file" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.mts,.m2ts" required>
+      <label>{{ T.media_title }} <input name="title" maxlength="80" placeholder="{{ T.media_title }}"></label>
       <div class="photo-choice">
         <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
         <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
@@ -159,6 +162,7 @@
           {% endif %}
         </div>
         <figcaption>
+          {% if photo.title %}{{ photo.title }} · {% endif %}
           {% if photo.media_type == "video" %}{{ T.add_video }} · {% endif %}
           {% if photo.is_private %}{{ T.photo_private }}{% else %}{{ T.photo_public }}{% endif %}
           · {% if photo.processing_status == "failed" %}Échec{% elif photo.processing_status == "uploading" %}Importation{% elif photo.processing_status == "checking" %}Vérification{% elif photo.processing_status == "converting" or photo.processing_status == "pending" %}Conversion{% elif photo.moderation_status == "pending" %}En modération{% elif photo.moderation_status == "approved" %}Disponible{% else %}{{ photo.moderation_status }}{% endif %}
@@ -166,6 +170,10 @@
           {% if photo.estimated_bytes %} · estimation {{ photo.estimated_bytes }} octets, réel {{ photo.byte_size }}{% endif %}
           {% if photo.is_primary %} · {{ T.primary }}{% endif %}
         </figcaption>
+        <form method="post" action="/moi/photos/{{ photo.id }}/titre/">{% csrf_token %}
+          <input name="title" value="{{ photo.title }}" maxlength="80" placeholder="{{ T.media_title }}">
+          <button type="submit" class="ghost">{{ T.save }}</button>
+        </form>
         <form method="post" action="/moi/photos/{{ photo.id }}/visibilite/">{% csrf_token %}
           <button type="submit" name="visibility" value="public" class="{% if not photo.is_private %}on{% else %}ghost{% endif %}">{{ T.photo_public }}</button>
           <button type="submit" name="visibility" value="private" class="{% if photo.is_private %}on{% else %}ghost{% endif %}">{{ T.photo_private }}</button>

@@ -149,6 +149,8 @@
     <label>Adresse de réponse <input name="reply_to" value="{{ public.smtp.reply_to }}"></label>
     <label>Destinataire des signalements <input name="report_to" value="{{ public.smtp.report_to|default:'Info@iswing.live' }}"></label>
     <label>Destinataire d'un essai <input name="test_to" value="{{ public.smtp.test_to }}"></label>
+    <label class="check"><input type="checkbox" name="send_signup_email" value="1" {% if send_signup_email %}checked{% endif %}> Envoyer le courriel de confirmation à l'inscription</label>
+    <p class="muted">Désactivé par défaut. Tant que cette case n'est pas cochée et enregistrée, l'inscription ne crée qu'un jeton, sans courriel.</p>
     <div class="row">
       <button class="btn" name="action" value="save">Enregistrer</button>
       <button class="btn ghost" name="action" value="test">Envoyer un essai</button>

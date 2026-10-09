@@ -88,7 +88,7 @@ from .services import (
 )
 
 
-def _send_token(user, purpose):
+def _send_token(user, purpose, lang="fr"):
     raw, digest = new_token()
     EmailToken.objects.create(
         user=user,
@@ -96,6 +96,13 @@ def _send_token(user, purpose):
         token_hash=digest,
         expires_at=timezone.now() + timedelta(hours=24),
     )
+    if purpose == "verify" and SiteSetting.get("send_signup_email", "0") == "1":
+        from .integrations import render_transactional
+        from .services import queue_email
+
+        link = settings.ISWING_PUBLIC_BASE_URL.rstrip("/") + f"/comptes/verifier/{raw}/"
+        subject, text, _html = render_transactional("verify", lang if lang in ("fr", "en", "es") else "fr", link=link)
+        queue_email(user.email, subject, text, kind="verify", ref=str(user.id))
     return raw
 
 
@@ -129,7 +136,7 @@ def register(request):
                 kind=form.cleaned_data["kind"],
             )
             start_trial_at_signup(profile)
-            raw = _send_token(user, "verify")
+            raw = _send_token(user, "verify", getattr(request, "lang", "fr"))
             login(request, user)
             return render(request, "verify_sent.html", {"dev_link": f"/comptes/verifier/{raw}/" if settings.DEBUG else ""})
     return render(request, "register.html", {"form": form, "error": error})
@@ -445,6 +452,8 @@ def profile_detail(request, pk):
         "kind_label": t(lang, profile.kind),
         "gender_label": t(lang, profile.gender) if profile.gender else "",
         "orientation_label": t(lang, profile.orientation) if profile.orientation and not profile.hide_orientation else "",
+        "partner_orientation_label": t(lang, profile.partner.orientation) if getattr(profile, "partner", None) and profile.partner.orientation and not profile.hide_orientation else "",
+        "couple_line": _couple_line(profile, lang),
         "seeking_labels": _mapped(profile.seeking, SEEKING, lang),
         "taste_labels": _mapped(profile.tastes, TASTES, lang),
         "activity_labels": _mapped(profile.activities, ACTIVITIES, lang),
@@ -624,7 +633,9 @@ def thread(request, pk):
         "quota": quota_snapshot(request.user, match),
         "error": error,
         "locked": locked,
-        "my_photos": me.photos.filter(moderation_status="approved"),
+        "my_photos": me.photos.exclude(role="certification").filter(moderation_status="approved").filter(
+            Q(media_type="photo") | Q(processing_status__in=["", "ready"])
+        ).order_by("-is_private", "position", "id"),
     })
 
 
@@ -669,6 +680,21 @@ def thread_poll(request, pk):
     return JsonResponse({"messages": rows})
 
 
+
+def _couple_line(profile, lang):
+    partner = getattr(profile, "partner", None)
+    if profile.kind != "couple" or partner is None:
+        return ""
+    left = profile.display_name
+    right = partner.display_name
+    if not profile.hide_orientation:
+        if profile.orientation:
+            left = f"{left} ({t(lang, profile.orientation)})"
+        if partner.orientation:
+            right = f"{right} ({t(lang, partner.orientation)})"
+    return f"{left} & {right}"
+
+
 def other_blocked(me, match):
     other = match.other(me)
     return other.id in blocked_ids(me) or me.suspended or other.suspended
@@ -684,6 +710,7 @@ def edit_profile(request):
         "display_name": partner.display_name if partner else "",
         "birth_date": partner.birth_date if partner else None,
         "gender": partner.gender if partner else "",
+        "orientation": partner.orientation if partner else "",
         "consent_email": partner.consent_email if partner else "",
     })
     if request.method == "POST" and form.is_valid():
@@ -698,6 +725,7 @@ def edit_profile(request):
             partner.display_name = data["display_name"] or partner.display_name
             partner.birth_date = data["birth_date"]
             partner.gender = data["gender"]
+            partner.orientation = data.get("orientation") or ""
             partner.consent_email = data["consent_email"]
             if data.get("consent"):
                 partner.consent_at = timezone.now()
@@ -793,7 +821,7 @@ def upload_photo(request):
         assert_member_room(profile, getattr(upload, "size", 0) or 0)
         if kind == "video":
             path = store_source(upload, ".bin")
-            queue_video(profile, path, private, upload.name or "")
+            queue_video(profile, path, private, upload.name or "", (request.POST.get("title") or "")[:80])
             messages.success(request, t(lang, "upload_queued"))
             touch_activity(profile)
             return _media_redirect()
@@ -811,6 +839,9 @@ def upload_photo(request):
         else:
             photo = Photo(profile=profile, position=profile.photos.count())
         save_photo_files(photo, prepared, private, settings.AUTO_APPROVE_PHOTOS)
+        photo.title = (request.POST.get("title") or "")[:80]
+        if photo.title:
+            photo.save(update_fields=["title"])
     except MediaError as exc:
         messages.error(request, str(exc))
         return _media_redirect()
@@ -825,6 +856,18 @@ def upload_photo(request):
 
 @login_required
 @require_POST
+
+@login_required
+@require_POST
+def photo_title(request, pk):
+    photo = get_object_or_404(Photo, pk=pk, profile=request.user.profile)
+    if photo.role == "certification":
+        return _media_redirect()
+    photo.title = (request.POST.get("title") or "").strip()[:80]
+    photo.save(update_fields=["title"])
+    return _media_redirect()
+
+
 def delete_photo(request, pk):
     from .media_pipeline import _discard
 
@@ -1385,7 +1428,7 @@ def manifest(request):
 def service_worker(request):
     js = """
 const SHELL = ['/brand/css/app.css', '/brand/js/app.js'];
-const CACHE = 'iswing-shell-v11';
+const CACHE = 'iswing-shell-v12';
 self.addEventListener('install', (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))); });
 self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (event) => {
