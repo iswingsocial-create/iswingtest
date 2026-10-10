@@ -1886,3 +1886,20 @@ class SmtpTimeoutTests(TestCase):
         self.assertFalse(ok)
         self.assertTrue(msg)
         self.assertLess(time.time() - start, 60)
+
+
+class PasswordResetPageTests(TestCase):
+    def test_reset_post_shows_confirmation(self):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        User.objects.create_user(email="r@example.com", password="x" * 12)
+        resp = self.client.post("/comptes/mot-de-passe/", {"email": "r@example.com"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context["sent"])
+        self.assertContains(resp, "réinitialisation")
+
+    def test_reset_post_unknown_email_shows_same_confirmation(self):
+        resp = self.client.post("/comptes/mot-de-passe/", {"email": "nobody@example.com"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context["sent"])
