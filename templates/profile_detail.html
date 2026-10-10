@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="card">
+  {% if own %}<p class="note">{{ T.preview_note }}</p>{% endif %}
+  <h1>{{ profile.display_name }}{% if profile.is_demo %} · TEST{% endif %}{% if profile.lifetime_member %} · {{ T.lifetime_badge }}{% endif %}, {{ profile.public_age }}</h1>
+  {% if badges or travel_badge %}<p class="badges">{% for label in badges %}<span class="status-badge">{{ label }}</span>{% endfor %}{% if travel_badge %}<span class="status-badge">{{ travel_badge }}</span>{% endif %}</p>{% endif %}
+  <p class="city-line">{% if place_city %}{{ place_city }}{% else %}{{ T.city_missing }}{% endif %}{% if distance %} · {{ T.approx }} {{ distance }}{% endif %}</p>
+  {% if travel_home %}<p class="muted">{{ T.travel_home }} : {{ travel_home }}</p>{% endif %}
+  {% if couple_line %}<p class="couple-line">{{ couple_line }}</p>{% endif %}
+  <p>{{ kind_label }}{% if gender_label %} · {{ gender_label }}{% endif %}</p>
+  {% if orientation_label %}<p>{{ orientation_label }}</p>{% endif %}
+  {% if profile.seeking_serious %}<p>{{ T.seeking_serious_public }}</p>{% endif %}
+  <p>{{ profile.bio }}</p>
+  {% if language_labels %}<p>{{ T.languages_label }} : {{ language_labels|join:" · " }}</p>{% endif %}
+  {% if seeking_labels %}<p>{{ T.seeking_label }} : {{ seeking_labels|join:" · " }}</p>{% endif %}
+  {% if taste_labels %}<p>{{ T.tastes_label }} : {{ taste_labels|join:" · " }}</p>{% endif %}
+  {% if activity_labels %}<p>{{ T.activities_label }} : {{ activity_labels|join:" · " }}</p>{% endif %}
+  {% if availability_labels %}<p>{{ T.availability_label }} : {{ availability_labels|join:" · " }}</p>{% endif %}
+  {% if show_intimate and desire_labels %}<p>{{ T.desires_label }} : {{ desire_labels|join:" · " }}</p>{% endif %}
+  {% if show_intimate and limit_labels %}<p>{{ T.limits_label }} : {{ limit_labels|join:" · " }}</p>{% endif %}
+  {% if own and not show_intimate %}<p class="muted">{{ T.prefs_hidden_preview }}</p>{% endif %}
+  {% if profile.partner %}
+  <h2>{{ T.partner_title }}</h2>
+  <p>{{ profile.partner.display_name }}{% if partner_orientation_label %} ({{ partner_orientation_label }}){% endif %}, {{ profile.partner.age_years }} · {{ T.partner_consent_label }} : {% if profile.partner.consent_at %}{{ T.consent_yes }}{% else %}{{ T.consent_wait }}{% endif %}</p>
+  {% endif %}
+  <div class="gallery">
+    {% for item in photos %}
+      <div class="frame">
+        {% if item.locked %}
+          <div class="ph">{{ T.private_locked }}</div>
+        {% elif item.photo.media_type == "video" %}
+          {% include "player.html" with photo=item.photo %}
+        {% else %}
+          <img src="/photos/{{ item.photo.id }}/" alt="">
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  {% if not own %}
+  <div class="row">
+    {% include "block_modal.html" with profile_id=profile.id %}
+    <button class="btn" type="button" data-action="like" data-id="{{ profile.id }}" data-redirect="/decouvrir/" data-liked-label="{{ T.liked }}" {% if liked %}disabled aria-pressed="true"{% endif %}>{% if liked %}{{ T.liked }}{% else %}{{ T.like }}{% endif %}</button>
+    <button class="btn ghost" type="button" data-action="favorite" data-id="{{ profile.id }}" data-on="{{ T.favorited }}" data-off="{{ T.favorite }}" aria-pressed="{% if faved %}true{% else %}false{% endif %}">{% if faved %}{{ T.favorited }}{% else %}{{ T.favorite }}{% endif %}</button>
+  </div>
+  {% if private_count %}
+    {% if has_access %}<p class="note">{{ T.access_granted_note }}</p>
+    {% elif access and access.status == "pending" %}<p class="note">{{ T.access_pending }}</p>
+    {% else %}
+    <form method="post" action="/acces-prive/{{ profile.id }}/demander/">{% csrf_token %}
+      <button class="btn ghost" type="submit">{{ T.request_access }}</button>
+    </form>
+    <p class="muted">{{ T.access_all_future }}</p>
+    {% endif %}
+  {% endif %}
+  {% else %}
+  <p><a class="btn" href="/moi/?onglet=medias">{{ T.tab_media }}</a></p>
+  {% endif %}
+</article>
+{% endblock %}

@@ -1,0 +1,292 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Configuration</h1></header>
+<nav class="cfg-tabs" aria-label="Onglets de configuration">
+  {% for code, label in tabs %}
+  <a href="/gestion/configuration/?onglet={{ code }}" {% if tab == code %}class="on" aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+{% if tab == "apparence" %}
+<section class="card">
+  <h2>Thème, logo et vignettes</h2>
+  <p>Choisissez un thème, puis le logo. Pour une vignette, choisissez une image et enregistrez. Toutes est la première vignette de Découvrir.</p>
+  <form method="post" enctype="multipart/form-data" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="save">
+    <fieldset>
+      <legend>Thème du site</legend>
+      {% for code, label, help in themes %}
+      <label class="check"><input type="radio" name="theme" value="{{ code }}" {% if theme == code %}checked{% endif %}> <span><strong>{{ label }}</strong> — {{ help }}</span></label>
+      {% endfor %}
+    </fieldset>
+    <p><img src="/brand/icons/logo.png?v={{ brand_stamp }}" alt="" width="72" height="72">{% if logo_custom %} Image personnalisée{% else %} Image d'origine{% endif %}</p>
+    <label>Nouveau logo (PNG, JPEG ou WebP, carré de préférence) <input type="file" name="logo" accept="image/png,image/jpeg,image/webp"></label>
+    <div class="look-grid">
+      {% for row in categories %}
+      <label>
+        <img src="/brand/categories/{{ row.code }}.png?v={{ brand_stamp }}" alt="" width="72" height="72">
+        <span>{{ row.label }}{% if row.custom %} · personnalisée{% endif %}</span>
+        <input type="file" name="cat_{{ row.code }}" accept="image/png,image/jpeg,image/webp">
+      </label>
+      {% endfor %}
+    </div>
+    <button class="btn" type="submit">Enregistrer l'apparence</button>
+  </form>
+  <h2>Remettre une image d'origine</h2>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="reset">
+    <input type="hidden" name="reset" value="logo">
+    <button class="btn ghost" type="submit">Logo d'origine</button>
+  </form>
+  {% for row in categories %}
+  {% if row.custom %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="reset">
+    <input type="hidden" name="reset" value="{{ row.code }}">
+    <button class="btn ghost" type="submit">{{ row.label }} d'origine</button>
+  </form>
+  {% endif %}
+  {% endfor %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="onglet" value="apparence">
+    <input type="hidden" name="action" value="reset">
+    <input type="hidden" name="reset" value="all">
+    <button class="btn ghost" type="submit">Tout remettre d'origine</button>
+  </form>
+</section>
+{% elif tab == "medias" %}
+<section class="card cfg-grid">
+  <h2>Médias et stockage <span class="muted">· local</span></h2>
+  <p>Stockage objet compatible S3 : non installé, non opérationnel. Les fichiers restent dans le dossier privé du serveur. Les URL publiques ne contournent pas les permissions.</p>
+  {% if not storage.measurable %}<p>L'espace disque n'a pas pu être mesuré de façon fiable sur ce système. Les comptes de photos et de vidéos ci-dessous restent exacts.</p>{% elif storage.alert %}<p class="error">Alerte : le disque est utilisé à {{ storage.used_percent }} %. Libérez de l'espace avant d'accepter de nouvelles vidéos.</p>{% else %}<p>Disque utilisé : {{ storage.used_percent }} %. Libre : {{ storage.free }} octets.</p>{% endif %}
+  <p>Photos : {{ storage.photos }} · {{ storage.photo_bytes }} octets. Vidéos diffusées : {{ storage.videos }} · {{ storage.video_bytes }} octets.</p>
+  <p>File de conversion : {{ storage.queue }}. Échecs : {{ storage.failed }}.</p>
+  <p class="muted">1 000 vidéos de 10 minutes à environ 610 Mo font environ 610 Go, soit environ 1,22 To avec une sauvegarde complète, hors fichiers temporaires. 1 000 lectures intégrales font environ 610 Go de trafic sortant. Chaque conversion réserve temporairement la source et le MP4. Le nombre simultané se règle ci-dessous.</p>
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="medias">
+    <label>Taille maximale d'une vidéo source, en octets <input name="video_max_bytes" value="{{ storage.video_max_bytes }}"></label>
+    <label>Durée maximale, en secondes <input name="video_max_seconds" value="{{ storage.video_max_seconds }}"></label>
+    <label>Taille maximale d'une photo, en octets <input name="photo_max_bytes" value="{{ storage.photo_max_bytes }}"></label>
+    <label>Quota cumulé par membre, en octets (0 = pas de nouveau plafond) <input name="member_media_bytes" value="{{ storage.member_quota }}"></label>
+    <label>Conversions simultanées <input name="video_parallel" value="{{ storage.parallel }}"></label>
+    <label>Alerte disque, en pourcentage <input name="storage_alert_percent" value="{{ storage.alert_percent }}"></label>
+    <button class="btn" name="action" value="save">Enregistrer</button>
+  </form>
+  <p class="muted">Les quotas de j'aime et de messages ne changent pas ici. La source vidéo est supprimée après une conversion réussie. En cas d'échec, elle est conservée 24 heures pour une nouvelle tentative, puis effacée. L'original n'est jamais publié.</p>
+</section>
+{% elif tab == "paiements" %}
+<section class="card cfg-grid">
+  <h2>Stripe · {{ labels.stripe }}</h2>
+  <div class="note">
+    <p><strong>La clé API se colle ici, pas ailleurs.</strong></p>
+    <ol class="steps">
+      <li>Ouvrez le tableau Stripe, menu Développeurs, puis Clés API.</li>
+      <li>Pour essayer sans argent réel, laissez le mode Test chez Stripe.</li>
+      <li>Copiez la clé secrète qui commence par <code>sk_test_</code> et collez-la dans le champ « Clé API secrète de test ».</li>
+      <li>Copiez la clé publique <code>pk_test_</code> dans « Clé publique de test ».</li>
+      <li>Créez un prix d'abonnement. Son identifiant commence par <code>price_</code>. Collez-le dans « Identifiant de prix, test ».</li>
+      <li>Dans Développeurs, Webhooks, ajoutez l'adresse indiquée plus bas. Copiez le secret qui commence par <code>whsec_</code> dans « Secret de webhook, test ».</li>
+    </ol>
+    <p>Un champ laissé vide ne supprime pas la clé déjà enregistrée. Ne mettez pas cette clé dans un message ni dans le code du site.</p>
+    <p>Le fichier <code>.env</code> (<code>STRIPE_SECRET_KEY</code>) n'est utile que si vous ne remplissez pas cet écran. Cet écran est l'endroit prévu.</p>
+    <p>Coller une clé ne rend pas les paiements actifs. Stripe doit avoir accepté le site. Le bouton Tester ne crée aucun paiement. Les clés <code>sk_live_</code> sont pour plus tard, seulement après cet accord.</p>
+  </div>
+  <p>Mode enregistré : {{ stripe_mode|default:"off" }}.</p>
+  <p>Adresse à donner à Stripe pour le webhook : <code>{{ webhook_url }}</code></p>
+  {% if rows.stripe.last_test_at %}<p>Dernier test : {{ rows.stripe.last_test_at }} · {{ rows.stripe.last_test_message }}</p>{% endif %}
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="paiements">
+    <label>Mode
+      <select name="mode">
+        <option value="test" {% if rows.stripe.mode != "production" %}selected{% endif %}>Test</option>
+        <option value="production">Production</option>
+      </select>
+    </label>
+    <label>Clé API secrète de test — collez sk_test_ ici {% if secret_flags.stripe.secret_test %}(déjà enregistrée){% endif %} <input type="password" name="secret_test" autocomplete="new-password" placeholder="sk_test_… inchangé si vide"></label>
+    <label>Clé publique de test — pk_test_ <input name="publishable_test" value="{{ public.stripe.publishable_test }}" autocomplete="off" placeholder="pk_test_…"></label>
+    <label>Identifiant de prix, test — price_ <input name="price_test" value="{{ public.stripe.price_test }}" autocomplete="off" placeholder="price_…"></label>
+    <label>Secret de webhook, test — whsec_ {% if secret_flags.stripe.webhook_test %}(déjà enregistré){% endif %} <input type="password" name="webhook_test" autocomplete="new-password" placeholder="whsec_… inchangé si vide"></label>
+    <h2>Production, seulement après accord de Stripe</h2>
+    <label>Clé API secrète de production — sk_live_ {% if secret_flags.stripe.secret_live %}(déjà enregistrée){% endif %} <input type="password" name="secret_live" autocomplete="new-password" placeholder="sk_live_… inchangé si vide"></label>
+    <label>Clé publique de production — pk_live_ <input name="publishable_live" value="{{ public.stripe.publishable_live }}" autocomplete="off"></label>
+    <label>Identifiant de prix, production <input name="price_live" value="{{ public.stripe.price_live }}" autocomplete="off"></label>
+    <label>Secret de webhook, production {% if secret_flags.stripe.webhook_live %}(déjà enregistré){% endif %} <input type="password" name="webhook_live" autocomplete="new-password" placeholder="inchangé si vide"></label>
+    <label>Devise <input name="currency" value="{{ public.stripe.currency|default:'usd' }}"></label>
+    <p class="muted">L'admissibilité du modèle iSwing auprès de Stripe n'est pas vérifiée par ce formulaire. N'activez la production qu'après accord du prestataire. Aucun numéro de carte n'est stocké ici.</p>
+    <div class="row">
+      <button class="btn" name="action" value="save">Enregistrer</button>
+      <button class="btn ghost" name="action" value="test">Tester la connexion</button>
+      <button class="btn ghost" name="action" value="disable">Désactiver</button>
+    </div>
+  </form>
+  <h2>Autres prestataires</h2>
+  <p>CCBill : non implémenté, non opérationnel.</p>
+  <p>Segpay : non implémenté, non opérationnel.</p>
+  <p>Epoch : non implémenté, non opérationnel.</p>
+  <p class="muted">Un champ de clé API seul ne constitue pas une intégration. Ces connecteurs ne sont pas proposés comme actifs.</p>
+</section>
+{% elif tab == "courriels" %}
+<section class="card cfg-grid">
+  <h2>Courriels transactionnels · {{ labels.smtp }}</h2>
+  <p>Transport initial : SMTP. Un connecteur API de fournisseur pourra s'ajouter ensuite. « Accepté par le serveur » ne veut pas dire « délivré ».</p>
+  {% if rows.smtp.last_test_at %}<p>Dernier test : {{ rows.smtp.last_test_at }} · {{ rows.smtp.last_test_message }}</p>{% endif %}
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="courriels">
+    <label>Hôte SMTP <input name="host" value="{{ public.smtp.host }}"></label>
+    <label>Port <input name="port" value="{{ public.smtp.port|default:'587' }}"></label>
+    <label>Identifiant <input name="username" value="{{ public.smtp.username }}" autocomplete="off"></label>
+    <label>Mot de passe {% if secret_flags.smtp.password %}(déjà enregistré){% endif %} <input type="password" name="password" autocomplete="new-password" placeholder="inchangé si vide"></label>
+    <label>Chiffrement
+      <select name="tls">
+        <option value="starttls" {% if public.smtp.tls != "ssl" and public.smtp.tls != "none" %}selected{% endif %}>STARTTLS</option>
+        <option value="ssl" {% if public.smtp.tls == "ssl" %}selected{% endif %}>SSL</option>
+        <option value="none" {% if public.smtp.tls == "none" %}selected{% endif %}>Aucun</option>
+      </select>
+    </label>
+    <label>Nom et adresse d'expéditeur <input name="from_email" value="{{ public.smtp.from_email }}"></label>
+    <label>Adresse de réponse <input name="reply_to" value="{{ public.smtp.reply_to }}"></label>
+    <label>Destinataire des signalements <input name="report_to" value="{{ public.smtp.report_to|default:'Info@iswing.live' }}"></label>
+    <label>Destinataire d'un essai <input name="test_to" value="{{ public.smtp.test_to }}"></label>
+    <label class="check"><input type="checkbox" name="send_signup_email" value="1" {% if send_signup_email %}checked{% endif %}> Envoyer le courriel de confirmation à l'inscription</label>
+    <p class="muted">Désactivé par défaut. Tant que cette case n'est pas cochée et enregistrée, l'inscription ne crée qu'un jeton, sans courriel.</p>
+    <div class="row">
+      <button class="btn" name="action" value="save">Enregistrer</button>
+      <button class="btn ghost" name="action" value="test">Envoyer un essai</button>
+      <button class="btn ghost" name="action" value="disable">Désactiver</button>
+    </div>
+  </form>
+  <h2>DNS</h2>
+  {% for line in dns %}<p>{{ line }}</p>{% endfor %}
+  <h2>Modèles</h2>
+  {% for code, langs in letters.items %}
+  <h3>{{ code }}</h3>
+  {% for lang, pair in langs.items %}<p><strong>{{ lang }}</strong> — {{ pair.0 }}<br><pre>{{ pair.1 }}</pre></p>{% endfor %}
+  {% endfor %}
+  <p class="muted">La file d'envoi, les reprises et l'historique des tentatives restent dans Paramètres, indépendamment de cette page. Ouvrir la configuration n'envoie rien.</p>
+</section>
+{% elif tab == "campagnes" %}
+<section class="card cfg-grid">
+  <h2>Campagnes · {{ labels.campaign_smtp }}</h2>
+  <p>Ce transport est distinct des courriels transactionnels. Les envois se préparent dans Messages. Cette page ne lance aucune campagne.</p>
+  <p class="muted">Celery et Redis ne sont pas installés. La file locale est Planifier.bat, ou le service worker du VPS. Les conversions vidéo ne passent pas par la file des mots de passe.</p>
+  {% if rows.campaign_smtp.last_test_at %}<p>Dernier test : {{ rows.campaign_smtp.last_test_at }} · {{ rows.campaign_smtp.last_test_message }}</p>{% endif %}
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="campagnes">
+    <label>Maximum par heure <input name="campaign_per_hour" value="{{ campaign_hour }}"></label>
+    <label>Maximum par jour <input name="campaign_per_day" value="{{ campaign_day }}"></label>
+    <label>Hôte SMTP des campagnes <input name="host" value="{{ public.campaign_smtp.host }}"></label>
+    <label>Port <input name="port" value="{{ public.campaign_smtp.port|default:'587' }}"></label>
+    <label>Identifiant <input name="username" value="{{ public.campaign_smtp.username }}" autocomplete="off"></label>
+    <label>Mot de passe {% if secret_flags.campaign_smtp.password %}(déjà enregistré){% endif %} <input type="password" name="password" autocomplete="new-password" placeholder="inchangé si vide"></label>
+    <label>Chiffrement
+      <select name="tls">
+        <option value="starttls">STARTTLS</option>
+        <option value="ssl">SSL</option>
+        <option value="none">Aucun</option>
+      </select>
+    </label>
+    <label>Expéditeur <input name="from_email" value="{{ public.campaign_smtp.from_email }}"></label>
+    <label>Réponse <input name="reply_to" value="{{ public.campaign_smtp.reply_to }}"></label>
+    <label>Essai vers <input name="test_to" value="{{ public.campaign_smtp.test_to }}"></label>
+    <div class="row">
+      <button class="btn" name="action" value="save">Enregistrer</button>
+      <button class="btn ghost" name="action" value="test">Tester ce transport</button>
+      <button class="btn ghost" name="action" value="disable">Désactiver</button>
+    </div>
+  </form>
+  <p>Les profils TEST sont exclus par défaut. Les promotions demandent un consentement et un lien de désabonnement. Les rebonds ne sont comptés que si un fournisseur les envoie : ce n'est pas le cas du SMTP simple.</p>
+</section>
+{% elif tab == "push" %}
+<section class="card">
+  <h2>Notifications push · {{ labels.push }}</h2>
+  <p>Web Push avec clés VAPID de ce serveur. Le test enregistre seulement la réponse du service. Il ne prouve pas qu'un téléphone a affiché la notification.</p>
+  {% if rows.push.last_test_at %}<p>Dernier test : {{ rows.push.last_test_at }} · {{ rows.push.last_test_message }}</p>{% endif %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="onglet" value="push">
+    <label>Appareil pour l'essai
+      <select name="device">
+        {% for device in push_devices %}<option value="{{ device.id }}">#{{ device.id }} {{ device.user.email }} {% if device.disabled %}désactivé{% endif %}</option>{% empty %}<option value="">Aucun</option>{% endfor %}
+      </select>
+    </label>
+    <div class="row">
+      <button class="btn" name="action" value="save">Activer</button>
+      <button class="btn ghost" name="action" value="test">Essai vers l'appareil choisi</button>
+      <button class="btn ghost" name="action" value="disable">Désactiver</button>
+    </div>
+  </form>
+  <p class="muted">Les abonnements expirés (réponse 404 ou 410) sont désactivés. La déconnexion retire l'appareil de la session.</p>
+</section>
+{% elif tab == "seo" %}
+<section class="card cfg-grid">
+  <h2>SEO et indexation · {{ labels.seo }}</h2>
+  <p>Il n'y a pas de clé unique « Google SEO ». Les profils, messages, médias et pages d'administration restent en noindex, même si l'accueil est indexable.</p>
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="seo">
+    <label class="check"><input type="checkbox" name="index" value="1" {% if public.seo.index == "1" %}checked{% endif %}> Autoriser l'indexation des pages publiques</label>
+    <label>Titre <input name="title" value="{{ public.seo.title }}"></label>
+    <label>Description <input name="description" value="{{ public.seo.description }}"></label>
+    <label>Origine canonique, par exemple https://iswing.live <input name="canonical" value="{{ public.seo.canonical }}"></label>
+    <label>Code Google Search Console <input name="search_console" value="{{ public.seo.search_console }}" autocomplete="off"></label>
+    <div class="row">
+      <button class="btn" name="action" value="save">Enregistrer</button>
+      <button class="btn ghost" name="action" value="disable">Désactiver</button>
+    </div>
+  </form>
+  <p>robots.txt et sitemap.xml sont publiés. Tant que l'indexation n'est pas cochée, les pages restent en noindex.</p>
+</section>
+{% elif tab == "stats" %}
+<section class="card cfg-grid">
+  <h2>Statistiques · {{ labels.stats }}</h2>
+  <p>Désactivé tant que la case n'est pas cochée. Identifiants seulement : aucun script libre. Rien n'est chargé sur les profils, messages, médias ou l'administration.</p>
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="stats">
+    <label class="check"><input type="checkbox" name="enabled" value="1" {% if rows.stats.enabled %}checked{% endif %}> Activer</label>
+    <label>Identifiant Google Analytics 4 (G-…) <input name="ga4" value="{{ public.stats.ga4 }}" autocomplete="off"></label>
+    <label>Identifiant Google Tag Manager (GTM-…) <input name="gtm" value="{{ public.stats.gtm }}" autocomplete="off"></label>
+    <p class="muted">Si les deux sont remplis, les deux scripts officiels sont ajoutés une seule fois, seulement sur les pages publiques autorisées.</p>
+    <div class="row">
+      <button class="btn" name="action" value="save">Enregistrer</button>
+      <button class="btn ghost" name="action" value="disable">Désactiver</button>
+    </div>
+  </form>
+</section>
+{% elif tab == "pixels" %}
+<section class="card cfg-grid">
+  <h2>Pixels publicitaires · {{ labels.pixels }}</h2>
+  <p>Désactivé par défaut. Seul l'identifiant Meta Pixel est implémenté. Aucune préférence, aucun message, aucun média et aucune URL privée ne lui est envoyé.</p>
+  <form method="post" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="onglet" value="pixels">
+    <label class="check"><input type="checkbox" name="enabled" value="1" {% if rows.pixels.enabled %}checked{% endif %}> Activer sur les pages publiques autorisées</label>
+    <label>Identifiant Meta Pixel (chiffres) <input name="meta" value="{{ public.pixels.meta }}" autocomplete="off"></label>
+    <div class="row">
+      <button class="btn" name="action" value="save">Enregistrer</button>
+      <button class="btn ghost" name="action" value="disable">Désactiver</button>
+    </div>
+  </form>
+</section>
+{% else %}
+<section class="card">
+  <h2>Sécurité et intégrations</h2>
+  {% if separate_key %}<p>La clé ISWING_DATA_KEY est distincte de SECRET_KEY. Les secrets d'intégration sont chiffrés avec elle.</p>{% else %}<p class="error">ISWING_DATA_KEY n'est pas définie. Les secrets retombent sur SECRET_KEY. Ajoutez une clé séparée avant la production.</p>{% endif %}
+  <p>Un champ secret laissé vide conserve la valeur déjà chiffrée. Les valeurs ne sont pas renvoyées au navigateur ni écrites dans le journal.</p>
+  <table class="g-table">
+    <thead><tr><th>Intégration</th><th>État</th><th>Dernier test</th></tr></thead>
+    <tbody>
+    {% for code, label, row in health_rows %}
+    <tr>
+      <td>{{ code }}</td>
+      <td>{{ label }}</td>
+      <td>{% if row.last_test_at %}{{ row.last_test_at }} · {{ row.last_test_message }}{% else %}jamais{% endif %}</td>
+    </tr>
+    {% endfor %}
+    <tr><td>s3</td><td>Non configuré</td><td>non installé, non opérationnel</td></tr>
+    <tr><td>ccbill</td><td>Non configuré</td><td>non implémenté</td></tr>
+    <tr><td>celery</td><td>Non configuré</td><td>non installé ; Planifier.bat ou le worker Docker traitent les files</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">La réinitialisation de mot de passe et la double authentification ne dépendent pas de la conversion vidéo.</p>
+</section>
+{% endif %}
+{% endblock %}

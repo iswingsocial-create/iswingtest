@@ -1,0 +1,26 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head">
+  <h1>Aperçu administratif · {{ profile.display_name }}</h1>
+  <a class="btn ghost" href="/gestion/membres/{{ profile.id }}/">Retour à la fiche</a>
+</header>
+<p class="muted">Cet aperçu reste dans l'administration. Il ne rend pas le profil visible aux autres membres.</p>
+<section class="card">
+  <p>{% if profile.suspended %}<span class="tag warn">Suspendu</span>{% endif %}
+    {% if profile.visibility == "paused" %}<span class="tag">En pause</span>{% endif %}
+    {% if profile.visibility == "discrete" %}<span class="tag">Discret</span>{% endif %}
+    {% if profile.is_demo %}<span class="tag test">TEST</span>{% endif %}</p>
+  <h2>{{ profile.display_name }}, {{ profile.user.age_years }}</h2>
+  <p>{{ profile.city }} {{ profile.country }}</p>
+  <p>{{ profile.bio }}</p>
+  {% if partner %}<p>Partenaire : {{ partner.display_name }}</p>{% endif %}
+</section>
+<section class="card">
+  <h2>Médias</h2>
+  {% for photo in photos %}
+  <p>#{{ photo.id }} · {{ photo.media_type }} · {% if photo.is_private %}privé{% else %}public{% endif %} · {{ photo.moderation_status }}
+    {% if photo.is_private and not can_moderate %} — masqué sans permission de modération{% elif can_moderate or not photo.is_private %}<a href="/photos/{{ photo.id }}/">ouvrir</a>{% endif %}
+  </p>
+  {% empty %}<p>Aucun média.</p>{% endfor %}
+</section>
+{% endblock %}

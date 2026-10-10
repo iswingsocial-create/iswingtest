@@ -1,0 +1,42 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>{{ camp.subject }}</h1></header>
+<section class="card">
+  <p>Expéditeur : {{ camp.sender.email|default:"—" }}</p>
+  <p>Date : {{ camp.created_at }} {% if camp.sent_at %}· traité {{ camp.sent_at }}{% endif %}</p>
+  <p>Statut : {{ camp.status }}{% if camp.scheduled_at %} · prévu {{ camp.scheduled_at }} UTC{% endif %}</p>
+  <p class="muted">« accepted_by_mailer » signifie que le serveur d'envoi a accepté le message. Cela ne prouve pas qu'il a été délivré ni lu. Aucun taux de lecture n'est affiché sans événement du fournisseur.</p>
+  <p>Critères : {{ camp.criteria }}</p>
+  <p>Canal : {{ camp.channel }} · {% if camp.is_promo %}promotionnel{% else %}service{% endif %}</p>
+  <pre class="preview">{{ camp.body }}</pre>
+  {% if camp.status == "scheduled" or camp.status == "sending" or camp.status == "partial" %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="pause"><button class="btn ghost" type="submit">Mettre en pause</button></form>
+  {% endif %}
+  {% if camp.status == "scheduled" or camp.status == "paused" or camp.status == "sending" or camp.status == "partial" %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button class="btn danger" type="submit">Annuler les envois restants</button></form>
+  {% endif %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="retry"><button class="btn ghost" type="submit">Réessayer les échecs</button></form>
+</section>
+<table class="g-table">
+  <thead><tr><th>Destinataire</th><th>Statut d'envoi</th><th>Détail</th></tr></thead>
+  <tbody>
+  {% for row in pager.rows %}
+  <tr>
+    <td data-label="Destinataire">{{ row.user.profile.display_name }} · {{ row.user.email }}</td>
+    <td data-label="Statut">
+      {% if row.status == "sent" %}Envoyé
+      {% elif row.status == "failed" %}Échec
+      {% elif row.status == "skipped" %}Non envoyé
+      {% else %}En attente{% endif %}
+    </td>
+    <td>
+      {% if row.detail == "promo_consent" %}Consentement promotionnel absent{% else %}{{ row.detail }}{% endif %}
+      {% if row.email %} · courriel {{ row.email.status }}{% endif %}
+      {% if row.notice and row.notice.read_at %} · avis ouvert le {{ row.notice.read_at|date:"Y-m-d H:i" }}{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "gestion/pager.html" %}
+{% endblock %}
