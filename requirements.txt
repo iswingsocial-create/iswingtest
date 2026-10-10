@@ -5,4 +5,5 @@ stripe>=11.0
 cryptography>=42.0
 pillow-heif>=0.16
 pywebpush>=2.0
+py-vapid>=1.8
 
