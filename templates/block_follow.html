@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="card">
+  <h1>{{ T.block }}</h1>
+  <p>{{ T.block_done_ask }}</p>
+  <p><a class="btn ghost" href="/decouvrir/">{{ T.block_done_btn }}</a></p>
+  <form method="post" action="/signaler/{{ target.id }}/">{% csrf_token %}
+    <input type="hidden" name="related" value="Profil #{{ target.id }}">
+    <label>{{ T.report_reason }}
+      <select name="reason_code" required>
+        <option value="">—</option>
+        {% for code, label in report_reasons %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>{{ T.report_comment }} <textarea name="comment" maxlength="1000"></textarea></label>
+    <p class="muted">{{ T.reporter_hidden }}</p>
+    <button class="btn" type="submit">{{ T.report_send }}</button>
+  </form>
+</article>
+{% endblock %}

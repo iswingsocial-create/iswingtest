@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ event.title }}</h1>
+<p>{{ T.biz_views }} : {{ event.views }} · {{ T.biz_guests }} : {{ guests|length }}</p>
+<ul>
+  {% for guest in guests %}
+  <li>{% if guest.anonymous %}{{ T.biz_anonymous_guest }}{% else %}{{ guest.name }}{% endif %} · {{ guest.status }}</li>
+  {% empty %}<li>{{ T.biz_empty }}</li>{% endfor %}
+</ul>
+<p><a href="/entreprises/moi/">{{ T.biz_dash }}</a></p>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Inactivité</h1></header>
+<section class="card">
+  <p>{{ count }} compte(s) sans connexion ni activité significative depuis 12 mois. Les comptes staff, superadministrateurs et profils TEST sont exclus.</p>
+  <p class="muted">La suppression emporte le profil, les photos, les vidéos et les messages. Les signalements liés à la fiche disparaissent avec elle. Cette page ne supprime rien tant que la confirmation n'est pas envoyée.</p>
+  {% for user in rows %}<p>{{ user.email }} · {{ user.profile.display_name }} · activité {{ user.profile.last_active|default:"—" }} · connexion {{ user.last_login|default:"—" }}</p>{% empty %}<p>Aucun compte concerné.</p>{% endfor %}
+  {% if count %}<p class="muted">{% if count > 100 %}Seuls les 100 premiers sont listés.{% endif %}</p>{% endif %}
+  <form method="post">{% csrf_token %}
+    <label>Pour supprimer ces comptes, tapez SUPPRIMER <input name="confirm"></label>
+    <button class="btn danger" type="submit" data-confirm="Supprimer les comptes inactifs ?">Supprimer les comptes listés</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Historique d'exécution</h2>
+  {% for run in runs %}<p>{{ run.created_at }} · {{ run.mode }} · vus {{ run.matched }} · supprimés {{ run.deleted }} · {{ run.detail }}</p>{% empty %}<p>Aucune exécution.</p>{% endfor %}
+</section>
+{% endblock %}

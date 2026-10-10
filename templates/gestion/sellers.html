@@ -1,0 +1,11 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Vendeurs</h1></header>
+{% if error %}<p class="error">Courriel ou mot de passe invalide.</p>{% endif %}
+<form method="post" class="card cfg-grid">{% csrf_token %}
+  <label>Courriel <input type="email" name="email" required></label>
+  <label>Mot de passe <span class="pw-wrap"><input type="password" name="password" minlength="10" required>{% include "_pw_eye.html" %}</span></label>
+  <button class="btn" type="submit">Créer le vendeur</button>
+</form>
+{% for row in rows %}<p>{{ row.email }}</p>{% empty %}<p>Aucun vendeur.</p>{% endfor %}
+{% endblock %}

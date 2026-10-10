@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ T.matches }}</h1>
+{% if not items %}<p class="empty">{{ T.empty_matches }}</p>{% endif %}
+{% for item in items %}
+<article class="card">
+  <h2><a href="/profil/{{ item.other.id }}/">{{ item.other.display_name }}</a>{% if item.other.is_demo %} · TEST{% endif %}{% if item.travel_badge %} <span class="status-badge">{{ item.travel_badge }}</span>{% endif %}</h2>
+  <div class="row">
+    <a class="btn" href="/messages/{{ item.match.id }}/">{{ T.messages }}</a>
+    <form method="post" action="/matchs/{{ item.match.id }}/retirer/">{% csrf_token %}
+      <button class="btn danger" data-confirm="{{ T.unmatch_confirm }}">{{ T.unmatch }}</button>
+    </form>
+  </div>
+</article>
+{% endfor %}
+{% endblock %}

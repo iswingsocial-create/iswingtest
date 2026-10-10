@@ -1,0 +1,66 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Ajouter un membre</h1></header>
+{% if errors %}<div class="card error">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="stack">{% csrf_token %}
+  <section class="card">
+    <h2>Compte</h2>
+    <label>Type de profil
+      <select name="kind"><option value="single">Célibataire</option><option value="couple">Couple</option></select>
+    </label>
+    <label>Pseudonyme <input name="display_name" maxlength="40" required value="{{ posted.display_name }}"></label>
+    <label>Courriel <input name="email" type="email" required value="{{ posted.email }}"></label>
+    <label>Date de naissance <input name="birth_date" type="date" required value="{{ posted.birth_date }}"></label>
+    <label>Genre
+      <select name="gender"><option value="">—</option>{% for code, label in genders %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select>
+    </label>
+    <p class="note">Une personne réelle n'est pas marquée comme ayant consenti. Elle reçoit une invitation pour choisir son mot de passe et accepter elle-même.</p>
+    <label class="check"><input type="checkbox" name="is_demo" value="1"> Profil fictif de test, pas une personne réelle</label>
+    <label>Confirmation TEST <input name="confirm_test" placeholder="Écrivez TEST"></label>
+    <label>Mot de passe du profil TEST <span class="pw-wrap"><input name="password" type="password" minlength="10" autocomplete="new-password">{% include "_pw_eye.html" %}</span></label>
+    <label>Statut du compte
+      <select name="account_status"><option value="invite">Invitation en attente</option><option value="suspended">Suspendu</option></select>
+    </label>
+    <label>Abonnement
+      <select name="sub_status">{% for code, label in sub_choices %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select>
+    </label>
+    <label class="check"><input type="checkbox" name="lifetime" value="1"> Membre à vie (décision d'administration, sans paiement)</label>
+  </section>
+  <section class="card">
+    <h2>Second partenaire</h2>
+    <p class="muted">Seulement pour un couple. Le partenaire réel confirme lui-même par son propre courriel.</p>
+    <label>Pseudonyme <input name="partner_name" maxlength="40"></label>
+    <label>Date de naissance <input name="partner_birth" type="date"></label>
+    <label>Genre <select name="partner_gender"><option value="">—</option>{% for code, label in genders %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select></label>
+    <label>Courriel du partenaire <input name="partner_email" type="email"></label>
+  </section>
+  <section class="card">
+    <h2>Profil</h2>
+    <label>Ville <input name="city" data-city="admin" autocomplete="off" value="{{ posted.city }}"></label>
+    <input type="hidden" name="city_lat" value="{{ posted.city_lat }}">
+    <input type="hidden" name="city_lng" value="{{ posted.city_lng }}">
+    <input type="hidden" name="city_ref" value="{{ posted.city_ref }}">
+    <div class="city-results"></div>
+    <label>Pays (code) <input name="country" maxlength="2" value="{% if posted.country %}{{ posted.country }}{% else %}FR{% endif %}"></label>
+    <fieldset><legend>Langues</legend><div class="chips">{% for code, label in languages %}<label class="check"><input type="checkbox" name="languages" value="{{ code }}"> {{ label }}</label>{% endfor %}</div></fieldset>
+    <label>Autre langue <input name="language_other" maxlength="40"></label>
+    <label>Présentation <textarea name="bio" rows="4"></textarea></label>
+    <fieldset><legend>Recherche</legend><div class="chips">{% for code, label in seeking %}<label class="check"><input type="checkbox" name="seeking" value="{{ code }}"> {{ label }}</label>{% endfor %}</div></fieldset>
+    <fieldset><legend>Goûts</legend><div class="chips">{% for code, label in tastes %}<label class="check"><input type="checkbox" name="tastes" value="{{ code }}"> {{ label }}</label>{% endfor %}</div></fieldset>
+    <fieldset><legend>Recherches</legend><div class="chips">{% for code, label in desires %}<label class="check"><input type="checkbox" name="desires" value="{{ code }}"> {{ label }}</label>{% endfor %}</div></fieldset>
+    <fieldset><legend>Limites</legend><div class="chips">{% for code, label in limits %}<label class="check"><input type="checkbox" name="limits" value="{{ code }}"> {{ label }}</label>{% endfor %}</div></fieldset>
+  </section>
+  <section class="card">
+    <h2>Photos et vidéos</h2>
+    <p class="muted">Pour une personne réelle, le média reste en attente de modération. La visibilité choisie ne le publie pas sur Internet.</p>
+    {% for n in "123" %}
+    <label>Fichier {{ n }} <input type="file" name="file{{ n }}" accept="image/*,video/mp4,video/webm"></label>
+    <label>Visibilité
+      <select name="vis{{ n }}"><option value="public">Public aux membres autorisés</option><option value="private">Privé</option></select>
+    </label>
+    {% endfor %}
+  </section>
+  <label class="check"><input type="checkbox" name="send_invite" value="1" checked> Envoyer l'invitation maintenant (comptes réels)</label>
+  <button class="btn" type="submit">Créer le membre</button>
+</form>
+{% endblock %}

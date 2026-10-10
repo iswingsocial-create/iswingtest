@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="card">
+  {% if mode == "partner" %}
+  <h1>{{ T.partner_invite_title }}</h1>
+  <p>{{ T.partner_invite_help }}</p>
+  {% if partner %}<p><strong>{{ partner.display_name }}</strong></p>{% endif %}
+  <form method="post">{% csrf_token %}
+    <p class="muted">{{ T.partner_password_help }}</p>
+    <label>{{ T.password }} <span class="pw-wrap"><input type="password" name="password" minlength="10" required autocomplete="new-password">{% include "_pw_eye.html" %}</span></label>
+    <label>{{ T.password_again }} <span class="pw-wrap"><input type="password" name="password2" minlength="10" required autocomplete="new-password">{% include "_pw_eye.html" %}</span></label>
+    <label class="check"><input type="checkbox" name="accept" value="1" required> {{ T.all_consents }}</label>
+    {% if error == "password" %}<p class="error">{{ T.invite_password_error }}</p>{% endif %}
+    {% if error == "email" %}<p class="error">{{ T.email_taken }}</p>{% endif %}
+    {% if error == "consent" %}<p class="error">{{ T.invite_need_consent }}</p>{% endif %}
+    <button class="btn" type="submit">{{ T.partner_invite_save }}</button>
+  </form>
+  {% else %}
+  <h1>{{ T.invite_title }}</h1>
+  <p>{{ T.invite_help }}</p>
+  <p>{{ email }}</p>
+  <form method="post">{% csrf_token %}
+    <label>{{ T.password }} <span class="pw-wrap"><input type="password" name="password" minlength="10" required autocomplete="new-password">{% include "_pw_eye.html" %}</span></label>
+    <label>{{ T.password_again }} <span class="pw-wrap"><input type="password" name="password2" minlength="10" required autocomplete="new-password">{% include "_pw_eye.html" %}</span></label>
+    <label class="check"><input type="checkbox" name="accept" value="1" required> {{ T.all_consents }}</label>
+    {% if error == "password" %}<p class="error">{{ T.invite_password_error }}</p>{% endif %}
+    {% if error == "consent" %}<p class="error">{{ T.invite_need_consent }}</p>{% endif %}
+    <button class="btn" type="submit">{{ T.invite_save }}</button>
+  </form>
+  {% endif %}
+</article>
+{% endblock %}
