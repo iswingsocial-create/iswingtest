@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ T.nav_events }}</h1>
+<form method="get" class="row">
+  <label>{{ T.city }} <input name="city" value="{{ city }}"></label>
+  <label>{{ T.kind }}
+    <select name="category"><option value="">—</option>{% for code, label in categories %}<option value="{{ code }}" {% if category == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  </label>
+  <label>{{ T.event_when }} <input type="date" name="date" value="{{ date }}"></label>
+  <button class="btn" type="submit">{{ T.event_filter }}</button>
+</form>
+{% for event in events %}
+<article class="card">
+  <h2><a href="/evenements/{{ event.id }}/">{{ event.title }}</a></h2>
+  <p>{{ event.city }} · {{ event.starts_at }} · {{ event.business.profile.display_name }}</p>
+</article>
+{% empty %}<p class="empty">{{ T.biz_empty }}</p>{% endfor %}
+{% endblock %}

@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: iswing
+      POSTGRES_USER: iswing
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  web:
+    build: .
+    env_file: .env
+    environment:
+      POSTGRES_DB: iswing
+      POSTGRES_USER: iswing
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      ISWING_ENV: production
+      DEBUG: "0"
+    volumes:
+      - media:/app/data
+    depends_on:
+      - db
+    restart: unless-stopped
+    command: gunicorn iswing.wsgi:application --bind 0.0.0.0:8000
+  worker:
+    build: .
+    env_file: .env
+    environment:
+      POSTGRES_DB: iswing
+      POSTGRES_USER: iswing
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      ISWING_ENV: production
+      DEBUG: "0"
+    volumes:
+      - media:/app/data
+    depends_on:
+      - db
+    restart: unless-stopped
+    command: sh -c "while true; do python manage.py process_outbox || true; python manage.py process_videos || true; sleep 60; done"
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile
+      - caddydata:/data
+    depends_on:
+      - web
+    restart: unless-stopped
+volumes:
+  pgdata:
+  media:
+  caddydata:

@@ -1,0 +1,33 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Signalements</h1></header>
+<form class="filters" method="get">
+  <label>Membre <input name="q" value="{{ request.GET.q }}" placeholder="Pseudonyme ou courriel"></label>
+  <label>Statut
+    <select name="status"><option value="">Tous</option>{% for code, label in statuses %}<option value="{{ code }}" {% if request.GET.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  </label>
+  <label>Motif
+    <select name="reason"><option value="">Tous</option>{% for code, label in report_reasons %}<option value="{{ code }}" {% if request.GET.reason == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  </label>
+  <label>Du <input type="date" name="start" value="{{ request.GET.start }}"></label>
+  <label>Au <input type="date" name="end" value="{{ request.GET.end }}"></label>
+  <button class="btn ghost" type="submit">Filtrer</button>
+</form>
+<p class="muted">{{ pager.total }} dossier(s). L'identité du signalant n'est pas visible par le membre signalé.</p>
+<table class="g-table">
+  <thead><tr><th>N°</th><th>Date</th><th>Signalé</th><th>Origine</th><th>Motif</th><th>Statut</th></tr></thead>
+  <tbody>
+  {% for report in pager.rows %}
+  <tr>
+    <td><a href="/gestion/signalements/{{ report.id }}/">{{ report.id }}</a></td>
+    <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>
+    <td>{{ report.target.display_name }}</td>
+    <td>{{ report.reporter.display_name }}</td>
+    <td>{{ report.reason }}</td>
+    <td>{{ report.status }}</td>
+  </tr>
+  {% empty %}<tr><td colspan="6">Aucun dossier.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% include "gestion/pager.html" %}
+{% endblock %}

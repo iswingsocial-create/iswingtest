@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="card" method="post">
+  {% csrf_token %}
+  <h1>{{ T.login }}</h1>
+  {% if error == "bad" %}<p class="error">{{ T.bad_login }}</p>{% endif %}
+  {% if error == "locked" %}<p class="error">{{ T.locked_login }}</p>{% endif %}
+  <label>{{ T.email }} <input type="email" name="email" required></label>
+  <label>{{ T.password }} <input type="password" name="password" required></label>
+  <button class="btn" type="submit">{{ T.login }}</button>
+  <p><a href="/comptes/mot-de-passe/">{{ T.forgot }}</a></p>
+</form>
+{% endblock %}
