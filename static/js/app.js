@@ -190,10 +190,19 @@
   if (geo) {
     geo.addEventListener("click", function () {
       if (!navigator.geolocation) return;
+      var original = geo.textContent;
+      geo.disabled = true;
+      geo.textContent = geo.getAttribute("data-wait") || "\u2026";
       navigator.geolocation.getCurrentPosition(function (pos) {
         document.getElementById("lat").value = pos.coords.latitude.toFixed(2);
         document.getElementById("lng").value = pos.coords.longitude.toFixed(2);
-      }, function () { alert(document.body.dataset.geodenied || "Position refusée. Indiquez une ville."); });
+        geo.textContent = geo.getAttribute("data-done") || "\u2713";
+        geo.disabled = false;
+      }, function () {
+        geo.textContent = original;
+        geo.disabled = false;
+        alert(document.body.dataset.geodenied || "Position refusée. Indiquez une ville.");
+      }, {timeout: 15000, maximumAge: 120000});
     });
   }
   document.querySelectorAll("[data-city]").forEach(function (city) {

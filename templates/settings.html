@@ -7,7 +7,7 @@
   <form method="post" action="/moi/position/">{% csrf_token %}
     <h2>{{ T.location_title }}</h2>
     <p>{{ T.location_help }}</p>
-    <button type="button" class="btn" id="geo-btn">{{ T.use_gps }}</button>
+    <button type="button" class="btn" id="geo-btn" data-wait="{{ T.gps_wait }}" data-done="{{ T.gps_done }}">{{ T.use_gps }}</button>
     <input type="hidden" name="lat" id="lat">
     <input type="hidden" name="lng" id="lng">
     <div class="field">
