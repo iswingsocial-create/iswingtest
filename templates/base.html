@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="{{ robots_meta|default:'noindex, nofollow' }}">
+  <title>{% if seo.title %}{{ seo.title }}{% else %}iSwing{% endif %}</title>
+  {% if seo.description %}<meta name="description" content="{{ seo.description }}">{% endif %}
+  {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
+  {% if seo.search_console %}<meta name="google-site-verification" content="{{ seo.search_console }}">{% endif %}
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/brand/icons/icon-192.png?v={{ brand_stamp }}">
+  <link rel="stylesheet" href="/brand/css/app.css">
+</head>
+<body data-theme="{{ theme|default:'violet' }}" data-refused="{{ T.action_refused }}" data-lost="{{ T.connection_lost }}" data-geodenied="{{ T.geo_denied }}" data-match="{{ T.match_sentence }}" data-liked="{{ T.liked }}" data-already="{{ T.already_liked }}" data-citynone="{{ T.city_none }}">
+  <div hidden>{% csrf_token %}</div>
+  <header class="top">
+    {% if user.is_authenticated %}
+    <button type="button" class="icon-btn" id="menu-btn" aria-expanded="false" aria-controls="main-menu" aria-label="{{ T.menu }}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    {% endif %}
+    <a class="brand" href="{% if user.is_authenticated %}/decouvrir/{% else %}/{% endif %}">
+      <img src="/brand/icons/logo.png?v={{ brand_stamp }}" alt="iSwing" width="40" height="40">
+      <span>iSwing</span>
+    </a>
+    {% if user.is_authenticated %}
+    <a class="icon-btn bell" href="/notifications/" aria-label="{{ T.notices }}{% if unread_notices %} ({{ unread_notices }}){% endif %}"{% if request.resolver_match.url_name == "notices" %} aria-current="page"{% endif %}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 0 1-6 0"/></svg>
+      {% if unread_notices %}<span class="badge">{{ unread_notices }}</span>{% endif %}
+    </a>
+    <nav id="main-menu" class="main-menu" hidden aria-label="{{ T.menu }}">
+      {% with name=request.resolver_match.url_name %}
+      {% if user.profile.kind == "business" %}
+      <a href="/entreprises/moi/"{% if name == "business_home" %} aria-current="page"{% endif %}>{{ T.biz_dash }}</a>
+      <a href="/evenements/"{% if name == "event_list" %} aria-current="page"{% endif %}>{{ T.nav_events }}</a>
+      {% else %}
+      <a href="/decouvrir/"{% if name == "discover" %} aria-current="page"{% endif %}>{{ T.discover }}</a>
+      <a href="/matchs/"{% if name == "matches" or name == "unmatch" %} aria-current="page"{% endif %}>{{ T.matches }}</a>
+      <a href="/messages/"{% if name == "inbox" or name == "thread" %} aria-current="page"{% endif %}>{{ T.messages }}</a>
+      <a href="/moi/"{% if name == "edit_profile" %} aria-current="page"{% endif %}>{{ T.profile }}</a>
+      <a href="/abonnement/"{% if name == "billing" or name == "subscribe" or name == "stripe_checkout" or name == "cancel_subscription" %} aria-current="page"{% endif %}>{{ T.billing }}</a>
+      <a href="/parametres/"{% if name == "settings" or name == "export" or name == "delete_account" or name == "logout_others" %} aria-current="page"{% endif %}>{{ T.settings }}</a>
+      {% if businesses_on %}
+      <a href="/entreprises/"{% if name == "business_list" or name == "business_page" %} aria-current="page"{% endif %}>{{ T.nav_businesses }}</a>
+      <a href="/evenements/"{% if name == "event_list" or name == "event_page" %} aria-current="page"{% endif %}>{{ T.nav_events }}</a>
+      {% endif %}
+      {% endif %}
+      {% endwith %}
+    </nav>
+    {% endif %}
+  </header>
+  <main>
+    <p id="action-msg" class="warn" hidden></p>
+    {% if messages %}{% for m in messages %}<p class="note">{{ m }}</p>{% endfor %}{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-foot">
+    <nav class="langs" aria-label="{{ T.language }}">
+      {% for code, label, href in lang_links %}<a href="{{ href }}" hreflang="{{ code }}" lang="{{ code }}"{% if lang == code %} aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+    </nav>
+    <div class="legal-links">
+    <a href="/legal/conditions/">{{ T.footer_terms }}</a>
+    <a href="/legal/confidentialite/">{{ T.footer_privacy }}</a>
+    <a href="/legal/medias/">{{ T.footer_media }}</a>
+    <a href="/legal/temoins/">{{ T.footer_cookies }}</a>
+    <a href="/legal/abonnements/">{{ T.footer_billing }}</a>
+    <a href="/legal/inactivite/">{{ T.footer_deletion }}</a>
+    <a href="/legal/signalements/">{{ T.footer_reports }}</a>
+    </div>
+  </footer>
+  <button type="button" id="install-btn" class="install" hidden>{{ T.install }}</button>
+  <script src="/brand/js/app.js"></script>
+  {% if stats.ga4 %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ stats.ga4 }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ stats.ga4 }}');</script>{% endif %}
+  {% if stats.gtm %}<script>window.dataLayer=window.dataLayer||[];</script><script async src="https://www.googletagmanager.com/gtm.js?id={{ stats.gtm }}"></script>{% endif %}
+  {% if pixel.meta %}<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','{{ pixel.meta }}');fbq('track','PageView');</script>{% endif %}
+</body>
+</html>

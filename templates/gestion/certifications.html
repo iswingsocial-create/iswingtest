@@ -1,0 +1,19 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Certifications</h1></header>
+<p class="muted">La photo reste privée. Elle n'apparaît pas sur la fiche. Le badge certifié ne s'affiche que tant que l'abonnement payant est actif.</p>
+{% for row in rows %}
+<article class="card">
+  <p><strong>{{ row.profile.display_name }}</strong> · {{ row.profile.user.email }} · {{ row.status }}</p>
+  {% if row.photo %}<p><a href="/photos/{{ row.photo.id }}/">Voir la photo de certification</a></p>{% endif %}
+  {% if row.note %}<p>{{ row.note }}</p>{% endif %}
+  {% if row.status == "pending" %}
+  <form method="post" action="/gestion/certifications/{{ row.id }}/">{% csrf_token %}
+    <label>Motif en cas de refus <input name="note"></label>
+    <button class="btn" name="action" value="approve" type="submit">Approuver</button>
+    <button class="btn ghost" name="action" value="refuse" type="submit">Refuser</button>
+  </form>
+  {% endif %}
+</article>
+{% empty %}<p class="empty">Aucune demande.</p>{% endfor %}
+{% endblock %}

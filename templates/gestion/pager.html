@@ -1,0 +1,7 @@
+{% if pager.pages > 1 %}
+<p class="pager">
+  {% if pager.prev %}<a href="{{ pager.prev }}">Précédent</a>{% endif %}
+  <span>{{ pager.page }} / {{ pager.pages }}</span>
+  {% if pager.next %}<a href="{{ pager.next }}">Suivant</a>{% endif %}
+</p>
+{% endif %}

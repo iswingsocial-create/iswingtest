@@ -1,0 +1,18 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Commissions</h1></header>
+<p class="muted">Taux {{ rate }} %. Uniquement les factures payées.</p>
+{% for row in rows %}
+<article class="card">
+  <p>{{ row.seller.email }} · {{ row.period }} · vendu {{ row.paid }} · commission {{ row.due }}
+    · {% if row.paid_out %}versée{% else %}non versée{% endif %}</p>
+  {% if not seller and not row.paid_out %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="seller" value="{{ row.seller.id }}">
+    <input type="hidden" name="period" value="{{ row.period }}">
+    <button class="btn" type="submit">Marquer versée</button>
+  </form>
+  {% endif %}
+</article>
+{% empty %}<p>Aucune commission.</p>{% endfor %}
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ T.settings }}</h1>
+  <p>{{ T.screenshot }}</p>
+  <p>{{ T.settings_visibility }} : {{ visibility_label }}. {{ T.settings_discrete }}</p>
+  <form method="post" action="/moi/position/">{% csrf_token %}
+    <h2>{{ T.location_title }}</h2>
+    <p>{{ T.location_help }}</p>
+    <button type="button" class="btn" id="geo-btn">{{ T.use_gps }}</button>
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lng" id="lng">
+    <div class="field">
+      <label for="settings-city">{{ T.city }}</label>
+      <input id="settings-city" name="city" data-city="1" autocomplete="off" value="{{ profile.city }}">
+      <div class="city-results"></div>
+    </div>
+    <p class="muted">{{ T.city_help }}</p>
+    <button class="btn">{{ T.save_place }}</button>
+  </form>
+  <form method="post" action="/moi/position/effacer/">{% csrf_token %}
+    <button data-confirm="{{ T.clear_place_confirm }}">{{ T.clear_place }}</button>
+  </form>
+  <form method="post" action="/parametres/appareils/">{% csrf_token %}
+    <button>{{ T.logout_others }}</button>
+  </form>
+  <section id="push-box"
+    data-no-support="{{ T.push_no_support }}"
+    data-iphone-first="{{ T.push_iphone_first }}"
+    data-refused="{{ T.push_refused }}"
+    data-not-yet="{{ T.push_not_yet }}"
+    data-team-off="{{ T.push_team_off }}"
+    data-denied="{{ T.push_denied }}"
+    data-registered="{{ T.push_registered }}"
+    data-failed="{{ T.push_failed }}"
+    data-disabled="{{ T.push_disabled }}"
+    data-saved="{{ T.push_saved }}"
+    data-enable-first="{{ T.push_enable_first }}">
+    <h2>{{ T.push_title }}</h2>
+    <p>{{ T.push_help }}</p>
+    <p id="push-diag" class="muted"></p>
+    <div class="checks" id="push-kinds">
+      <label class="chip"><input type="checkbox" value="message" checked> {{ T.push_kind_message }}</label>
+      <label class="chip"><input type="checkbox" value="match" checked> {{ T.push_kind_match }}</label>
+      <label class="chip"><input type="checkbox" value="access_request" checked> {{ T.push_kind_access_request }}</label>
+      <label class="chip"><input type="checkbox" value="access_ok" checked> {{ T.push_kind_access_ok }}</label>
+      <label class="chip"><input type="checkbox" value="access_no" checked> {{ T.push_kind_access_no }}</label>
+      <label class="chip"><input type="checkbox" value="team" checked> {{ T.push_kind_team }}</label>
+      <label class="chip"><input type="checkbox" value="reminder" checked> {{ T.push_kind_reminder }}</label>
+    </div>
+    <p class="muted">{{ T.push_discreet }}</p>
+    <button type="button" class="btn" id="push-on">{{ T.push_on }}</button>
+    <button type="button" class="btn ghost" id="push-off">{{ T.push_off }}</button>
+    <button type="button" class="btn ghost" id="push-save">{{ T.push_save }}</button>
+    <p class="muted">{{ T.push_iphone }}</p>
+  </section>
+  <p><a href="/parametres/export/">{{ T.export }}</a></p>
+  <form method="post" action="/parametres/supprimer/">{% csrf_token %}
+    <label>{{ T.type_delete }} <input name="confirm"></label>
+    <button class="btn danger" data-confirm="{{ T.delete_confirm }}">{{ T.delete_account }}</button>
+  </form>
+  <form method="post" action="/comptes/deconnexion/">{% csrf_token %}<button>{{ T.logout }}</button></form>
+  <p><a href="/installer/">{{ T.install }}</a></p>
+</section>
+<script>
+(function () {
+  var box = document.getElementById("push-box");
+  var copy = box ? box.dataset : {};
+  var diag = document.getElementById("push-diag");
+  function say(text) { if (diag) diag.textContent = text; }
+  function kinds() {
+    var out = {};
+    document.querySelectorAll("#push-kinds input").forEach(function (box) { out[box.value] = box.checked; });
+    return out;
+  }
+  function csrf() {
+    var node = document.querySelector("[name=csrfmiddlewaretoken]");
+    return node ? node.value : "";
+  }
+  var ios = /iPad|iPhone|iPod/.test(navigator.userAgent || "");
+  var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    say(copy.noSupport || "");
+  } else if (ios && !standalone) {
+    say(copy.iphoneFirst || "");
+  } else if (window.Notification && Notification.permission === "denied") {
+    say(copy.refused || "");
+  } else {
+    say(copy.notYet || "");
+  }
+  var on = document.getElementById("push-on");
+  if (on) on.addEventListener("click", function () {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      say(copy.noSupport || "");
+      return;
+    }
+    fetch("/push/cle/").then(function (res) { return res.json(); }).then(function (data) {
+      if (!data.publicKey) {
+        say(copy.teamOff || "");
+        return;
+      }
+      return Notification.requestPermission().then(function (permission) {
+        if (permission !== "granted") {
+          say(copy.denied || "");
+          return;
+        }
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(data.publicKey)
+          });
+        }).then(function (sub) {
+          return fetch("/push/enregistrer/", {
+            method: "POST",
+            headers: {"Content-Type": "application/json", "X-CSRFToken": csrf()},
+            body: JSON.stringify(Object.assign({kinds: kinds()}, sub.toJSON()))
+          });
+        }).then(function () { say(copy.registered || ""); });
+      });
+    }).catch(function () { say(copy.failed || ""); });
+  });
+  var off = document.getElementById("push-off");
+  if (off) off.addEventListener("click", function () {
+    fetch("/push/desactiver/", {method: "POST", headers: {"X-CSRFToken": csrf()}}).then(function () {
+      say(copy.disabled || "");
+    });
+  });
+  var save = document.getElementById("push-save");
+  if (save) save.addEventListener("click", function () {
+    fetch("/push/preferences/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": csrf()},
+      body: JSON.stringify({kinds: kinds()})
+    }).then(function (res) {
+      say(res.ok ? (copy.saved || "") : (copy.enableFirst || ""));
+    });
+  });
+  function urlBase64ToUint8Array(base64String) {
+    var padding = "=".repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(base64);
+    var output = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
+    return output;
+  }
+})();
+</script>
+{% endblock %}

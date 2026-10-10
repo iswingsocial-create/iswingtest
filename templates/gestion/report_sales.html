@@ -1,0 +1,17 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Rapport</h1>
+  <a class="btn ghost" href="?export=csv">CSV</a>
+</header>
+<article class="card">
+  <p>Prospects : {{ report.prospects }}</p>
+  <p>Clients : {{ report.clients }} · conversion {{ report.conversion }} %</p>
+  <p>Facturé : {{ report.billed }} · payé : {{ report.paid }}</p>
+  <p>Commissions dues : {{ report.commission_due }} · versées : {{ report.commission_paid }}</p>
+  <ul>
+    {% for status, count in report.by_status.items %}
+    <li>{{ status }} : {{ count }}</li>
+    {% endfor %}
+  </ul>
+</article>
+{% endblock %}

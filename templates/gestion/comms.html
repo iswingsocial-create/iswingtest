@@ -1,0 +1,35 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Communications</h1><a class="btn" href="/gestion/communications/nouveau/">Nouveau message</a></header>
+<p class="muted">Messages de l'équipe iSwing.live. L'historique indique l'envoi, pas une lecture, sauf si la personne a ouvert l'avis dans l'application.</p>
+<table class="g-table">
+  <thead><tr><th>Date</th><th>Objet</th><th>Expéditeur</th><th>Critères</th><th>Statut</th></tr></thead>
+  <tbody>
+  {% for camp in pager.rows %}
+  <tr>
+    <td><a href="/gestion/communications/{{ camp.id }}/">{{ camp.created_at|date:"Y-m-d H:i" }}</a></td>
+    <td>{{ camp.subject }}</td>
+    <td>{{ camp.sender.email|default:"—" }}</td>
+    <td>{{ camp.criteria }}</td>
+    <td>{{ camp.status }}{% if camp.scheduled_at and camp.status == "scheduled" %} · {{ camp.scheduled_at|date:"Y-m-d H:i" }}{% endif %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="5">Aucun envoi.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% include "gestion/pager.html" %}
+<section class="card">
+  <h2>Modèles</h2>
+  {% for row in templates %}
+  <form method="post" action="/gestion/communications/modele/{{ row.id }}/" class="stack">{% csrf_token %}
+    <h3>{{ row.name }} {% if row.is_promo %}· promotionnel{% else %}· service{% endif %}</h3>
+    <label>Nom <input name="name" value="{{ row.name }}"></label>
+    <label>Objet <input name="subject" value="{{ row.subject }}"></label>
+    <label>Texte <textarea name="body" rows="5">{{ row.body }}</textarea></label>
+    <label>Canal <select name="channel"><option value="both" {% if row.channel == "both" %}selected{% endif %}>Avis et courriel</option><option value="notice" {% if row.channel == "notice" %}selected{% endif %}>Avis interne</option><option value="email" {% if row.channel == "email" %}selected{% endif %}>Courriel</option></select></label>
+    <label class="check"><input type="checkbox" name="is_promo" value="1" {% if row.is_promo %}checked{% endif %}> Promotionnel (respecte le consentement)</label>
+    <button class="btn ghost" type="submit">Enregistrer le modèle</button>
+    <p><a href="/gestion/communications/nouveau/?template={{ row.code }}">Utiliser</a></p>
+  </form>
+  {% endfor %}
+</section>
+{% endblock %}
