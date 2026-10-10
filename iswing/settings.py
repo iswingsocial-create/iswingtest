@@ -160,7 +160,22 @@ if ISWING_ENV == "production":
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 3600
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Render termine le TLS à son proxy : il faut TOUJOURS l'indiquer à Django
+# (pas seulement en production, car Render tourne en ISWING_ENV=development).
+# Sans cela request.is_secure() est faux et la vérification CSRF de l'en-tête
+# Origin échoue avec un 403 « Origin checking failed » sur tous les formulaires.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Origines autorisées à poster des formulaires (vérification CSRF stricte
+# sur HTTPS). Configurable via variable d'environnement.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS", "https://iswingtest.onrender.com"
+    ).split(",")
+    if o.strip()
+]
 
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
