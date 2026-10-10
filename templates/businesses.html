@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ T.biz_list }}</h1>
+<p><a href="/entreprises/inscription/">{{ T.biz_signup }}</a></p>
+{% for row in rows %}
+<article class="card biz-card">
+  <a href="/entreprises/{{ row.biz.profile_id }}/">
+    {% if row.biz.logo %}<img class="biz-logo" src="/entreprises/fichier/logo/{{ row.biz.id }}/" alt="">{% endif %}
+    <strong>{{ row.biz.profile.display_name }}</strong>
+  </a>
+  <p>{{ row.category }}{% if row.biz.profile.city %} · {{ row.biz.profile.city }}{% endif %}</p>
+  {% if row.badge %}<p><span class="status-badge">{{ T.biz_verified }}</span></p>{% endif %}
+</article>
+{% empty %}<p class="empty">{{ T.biz_empty }}</p>{% endfor %}
+{% endblock %}

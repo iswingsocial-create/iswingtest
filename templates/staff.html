@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ T.staff_title }}</h1>
+  <div class="kpis">
+    <article><strong>{{ stats.members }}</strong><span>{{ T.members }}</span></article>
+    <article><strong>{{ stats.demos }}</strong><span>{{ T.test_profiles }}</span></article>
+    <article><strong>{{ stats.trials }}</strong><span>{{ T.trials }}</span></article>
+    <article><strong>{{ stats.active }}</strong><span>{{ T.subscribers }}</span></article>
+    <article><strong>{{ stats.pending_photos }}</strong><span>{{ T.pending_photos }}</span></article>
+    <article><strong>{{ stats.reports }}</strong><span>{{ T.report }}</span></article>
+  </div>
+  <form method="post">{% csrf_token %}
+    <label>{{ T.likes_per_day }} <input name="likes" value="{{ likes }}"></label>
+    <label>{{ T.msgs_per_match }} <input name="messages" value="{{ messages_cap }}"></label>
+    <button class="btn" type="submit">{{ T.save_quotas }}</button>
+  </form>
+  <form method="get">
+    <label>{{ T.search }} <input name="q" value="{{ request.GET.q }}"></label>
+    <button class="btn ghost" type="submit">{{ T.search_btn }}</button>
+  </form>
+</section>
+<section class="card">
+  <h2>{{ T.edit_legal }}</h2>
+  <p class="muted">{{ T.edit_legal_help }}</p>
+  {% for page in legal_pages %}
+  <details class="legal-editor">
+    <summary>{{ page.title_fr }}</summary>
+    <form method="post" action="/gestion/legal/{{ page.slug }}/">{% csrf_token %}
+      <label>{{ T.legal_title_fr }} <input name="title_fr" value="{{ page.title_fr }}"></label>
+      <label>{{ T.legal_body_fr }} <textarea name="body_fr" rows="8">{{ page.body_fr }}</textarea></label>
+      <label>{{ T.legal_title_en }} <input name="title_en" value="{{ page.title_en }}"></label>
+      <label>{{ T.legal_body_en }} <textarea name="body_en" rows="8">{{ page.body_en }}</textarea></label>
+      <label>{{ T.legal_title_es }} <input name="title_es" value="{{ page.title_es }}"></label>
+      <label>{{ T.legal_body_es }} <textarea name="body_es" rows="8">{{ page.body_es }}</textarea></label>
+      <button class="btn" type="submit">{{ T.save_page }}</button>
+      <p><a href="/legal/{{ page.slug }}/">{{ page.title_fr }}</a></p>
+    </form>
+  </details>
+  {% endfor %}
+</section>
+<section class="card">
+  <h2>{{ T.photos_mod }}</h2>
+  {% for photo in photos %}
+  <form class="staff-row" method="post" action="/gestion/photo/{{ photo.id }}/">{% csrf_token %}
+    <img src="/photos/{{ photo.id }}/" alt="" width="72" height="72">
+    <span>#{{ photo.id }} {{ photo.profile.display_name }} {% if photo.is_private %}· {{ T.photo_private }}{% endif %}</span>
+    <button name="status" value="approved" type="submit">{{ T.approve }}</button>
+    <button class="ghost" name="status" value="rejected" type="submit">{{ T.reject }}</button>
+  </form>
+  {% empty %}<p>{{ T.none_pending }}</p>{% endfor %}
+</section>
+<section class="card">
+  <h2>{{ T.reports_open }}</h2>
+  {% for report in reports %}
+  <p><strong>{{ report.target.display_name }}</strong> — {{ report.reason }}{% if report.comment %} — {{ report.comment }}{% endif %} <span class="muted">{{ T.by }} {{ report.reporter.display_name }}</span></p>
+  {% empty %}<p>{{ T.none_reports }}</p>{% endfor %}
+  <p class="muted">{{ T.reporter_hidden }}</p>
+</section>
+<section class="card">
+  <h2>{{ T.profiles }}</h2>
+  {% for profile in profiles %}
+  <form class="staff-row" method="post" action="/gestion/profil/{{ profile.id }}/">{% csrf_token %}
+    <strong>{{ profile.display_name }}</strong>
+    <span>{{ profile.city }} · {{ profile.get_kind_display }} · {{ profile.user.age_proof_status }}{% if profile.suspended %} · {{ T.suspend }}{% endif %}{% if profile.is_demo %} · TEST{% endif %}</span>
+    <button name="action" value="suspend" type="submit">{{ T.suspend }}</button>
+    <button class="ghost" name="action" value="restore" type="submit">{{ T.restore }}</button>
+    <button class="ghost" name="action" value="verify_age" type="submit">{{ T.verify_age }}</button>
+    <button class="ghost" name="action" value="reject_age" type="submit">{{ T.reject_age }}</button>
+    <button class="danger" name="action" value="delete" type="submit" data-confirm="{{ T.delete_account_confirm }}">{{ T.delete_account_short }}</button>
+  </form>
+  {% endfor %}
+  <p><a href="/gestion/profils-test/">Profils de test — générer et importer</a></p>
+  <p><a href="/admin/">{{ T.tech_admin }}</a></p>
+</section>
+{% endblock %}

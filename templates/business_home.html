@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ T.biz_dash }}</h1>
+{% if badge %}<p><span class="status-badge">{{ T.biz_verified }}</span></p>{% endif %}
+<p>{{ T.biz_views }} : {{ biz.views }}</p>
+{% if not plan_on %}<p class="warn">{{ T.biz_plan_needed }}</p>{% endif %}
+<p><a class="btn" href="/entreprises/{{ biz.profile_id }}/">{{ T.see_profile }}</a> <a class="btn ghost" href="/entreprises/moi/push/">{{ T.biz_push }}</a></p>
+<section class="card">
+  <h2>{{ T.profile }}</h2>
+  <form method="post" enctype="multipart/form-data" class="cfg-grid">{% csrf_token %}
+    <input type="hidden" name="action" value="profile">
+    <label>{{ T.biz_name }} <input name="name" value="{{ biz.profile.display_name }}" maxlength="40"></label>
+    <label>{{ T.kind }}
+      <select name="category">{% for code, label in categories %}<option value="{{ code }}" {% if biz.category == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    </label>
+    <label>{{ T.city }} <input name="city" value="{{ biz.profile.city }}" data-city="admin"></label>
+    <input type="hidden" name="lat" value="{{ biz.profile.lat|default:'' }}"><input type="hidden" name="lng" value="{{ biz.profile.lng|default:'' }}">
+    <label>{{ T.biz_address }} <input name="address" value="{{ biz.address }}"></label>
+    <label>{{ T.biz_desc }} <textarea name="description" rows="4">{{ biz.description }}</textarea></label>
+    <label>{{ T.biz_website }} <input name="website" value="{{ biz.website }}"></label>
+    <label>{{ T.biz_tickets }} <input name="ticket_url" value="{{ biz.ticket_url }}"></label>
+    <label>{{ T.biz_logo }} <input type="file" name="logo" accept="image/*"></label>
+    <label>{{ T.biz_photos }} <input type="file" name="photos" accept="image/*" multiple></label>
+    <button class="btn" type="submit">{{ T.save }}</button>
+  </form>
+</section>
+<section class="card">
+  <h2>{{ T.biz_doc }}</h2>
+  <p class="muted">{{ T.biz_doc_help }}</p>
+  {% for doc in biz.documents.all %}<p>{{ doc.status }}{% if doc.status == "pending" %} · {{ T.biz_pending }}{% endif %}</p>{% endfor %}
+  <form method="post" action="/entreprises/moi/justificatif/" enctype="multipart/form-data">{% csrf_token %}
+    <input type="file" name="document" required>
+    <button class="btn" type="submit">{{ T.biz_doc }}</button>
+  </form>
+</section>
+<section class="card">
+  <h2>{{ T.nav_events }}</h2>
+  {% for event in events %}
+  <p><a href="/entreprises/moi/evenements/{{ event.id }}/invites/">{{ event.title }}</a> · {{ T.biz_views }} {{ event.views }} · {{ event.rsvps.count }}</p>
+  {% endfor %}
+  <form method="post" action="/entreprises/moi/evenement/" enctype="multipart/form-data" class="cfg-grid">{% csrf_token %}
+    <label>{{ T.biz_name }} <input name="title" maxlength="120" required></label>
+    <label>{{ T.kind }}
+      <select name="category">{% for code, label in categories %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select>
+    </label>
+    <label>{{ T.event_when }} <input type="datetime-local" name="starts" required> <input type="datetime-local" name="ends" required></label>
+    <label>{{ T.event_place }} <input name="place"></label>
+    <label>{{ T.city }} <input name="city" data-city="admin"></label>
+    <input type="hidden" name="lat"><input type="hidden" name="lng">
+    <label>{{ T.biz_desc }} <textarea name="description" rows="3"></textarea></label>
+    <label>{{ T.event_practical }} <textarea name="practical" rows="3"></textarea></label>
+    <label>{{ T.event_prices }} <input name="price_note" maxlength="240"></label>
+    <label>{{ T.biz_tickets }} <input name="ticket_url"></label>
+    <label>{{ T.event_capacity }} <input name="capacity" inputmode="numeric"></label>
+    <label>{{ T.biz_photos }} <input type="file" name="photos" accept="image/*" multiple></label>
+    <label class="check"><input type="checkbox" name="published" value="1" checked> {{ T.nav_events }}</label>
+    <button class="btn" type="submit">{{ T.save }}</button>
+  </form>
+</section>
+{% endblock %}

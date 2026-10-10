@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{% if journey %}{{ T.subscribe_title }}{% else %}{{ T.billing }}{% endif %}</h1>
+  {% if user.is_staff or user.is_superuser %}
+  <p>{{ T.admin_unlimited }} {{ T.members_stay }}</p>
+  {% endif %}
+  <p>{{ T.billing_status }} : {{ bill_label }} · {{ T.billing_end }} : {{ quota.period_end|default:"—" }}</p>
+  {% if billing_source == "manual" %}<p class="muted">{{ T.billing_manual }}</p>{% endif %}
+  {% if billing_source == "provider" %}<p class="muted">{{ T.billing_provider }}</p>{% endif %}
+  {% if quota.premium %}<p>{{ T.premium }}</p>{% else %}<p>{{ T.quota_likes }} : {{ quota.likes_left }}</p>{% endif %}
+  {% if paid %}<p>{{ T.billing_return }}</p>{% endif %}
+  {% if cancelled %}<p>{{ T.billing_cancel_back }}</p>{% endif %}
+  <div class="plans">
+    <article class="plan">
+      <h2>{{ T.plan_trial }}</h2>
+      <p class="price">0 USD</p>
+      <p>{{ T.plan_trial_items }}</p>
+      {% if quota.status == "trial" %}<p class="note">{{ T.plan_current }}</p>{% endif %}
+    </article>
+    <article class="plan">
+      <h2>{{ T.plan_premium }}</h2>
+      <p class="price">{{ price }} USD</p>
+      <p>{{ T.per_month }}</p>
+      <p>{{ T.plan_premium_items }}</p>
+      {% if not journey %}
+      <a class="btn" href="/abonnement/souscrire/">{{ T.subscribe_path }}</a>
+      {% endif %}
+    </article>
+  </div>
+  {% if journey %}
+  <ol class="steps">
+    <li>{{ T.subscribe_step1 }}</li>
+    <li>{{ T.subscribe_step2 }}</li>
+    <li>{{ T.subscribe_step3 }}</li>
+  </ol>
+  {% if stripe_ready %}
+  <form method="post" action="/abonnement/stripe/">{% csrf_token %}
+    <button class="btn" type="submit">{{ T.subscribe_go }} — {{ price }} {{ T.per_month }}</button>
+  </form>
+  <p class="muted">{{ T.billing_cards }}</p>
+  {% else %}
+  <p class="warn">{{ T.subscribe_off }}</p>
+  {% endif %}
+  {% endif %}
+  <p><a href="/legal/abonnements/">{{ T.footer_billing }}</a></p>
+  <form method="post" action="/abonnement/annuler/">{% csrf_token %}
+    <button class="btn danger" type="submit" data-confirm="{{ T.billing_cancel_confirm }}">{{ T.billing_cancel }}</button>
+  </form>
+</section>
+{% endblock %}
