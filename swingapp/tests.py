@@ -23,6 +23,49 @@ def jpeg():
 
 
 class RulesTests(TestCase):
+
+    def test_resend_does_not_kill_previous_link(self):
+        from django.test import RequestFactory
+        from swingapp.gestion import send_member_invite
+        from swingapp.models import EmailToken
+
+        user, profile = self.make("reinvite@example.com", "ReInvite")
+        rf = RequestFactory()
+        req = rf.get("/")
+        req.lang = "fr"
+        link1 = send_member_invite(profile, req)
+        link2 = send_member_invite(profile, req)
+        # Les deux liens restent valides (aucun n'est tué par le renvoi)
+        alive = EmailToken.objects.filter(user=user, purpose="invite", used_at__isnull=True).count()
+        self.assertEqual(alive, 2)
+        # Le premier lien fonctionne encore
+        resp = self.client.get(link1.replace("http://testserver", ""))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, "expir")
+
+    def test_accepting_one_link_kills_the_others(self):
+        from django.test import RequestFactory
+        from swingapp.gestion import send_member_invite
+        from swingapp.models import EmailToken
+
+        user, profile = self.make("reinvite2@example.com", "ReInvite2")
+        rf = RequestFactory()
+        req = rf.get("/")
+        req.lang = "fr"
+        link1 = send_member_invite(profile, req)
+        link2 = send_member_invite(profile, req)
+        path1 = link1.replace("http://testserver", "")
+        self.client.post(path1, {
+            "password": "motdepasse10", "password2": "motdepasse10",
+            "accept": "1",
+        })
+        # Après activation, plus aucun lien non utilisé
+        alive = EmailToken.objects.filter(user=user, purpose="invite", used_at__isnull=True).count()
+        self.assertEqual(alive, 0)
+        # Le second lien est maintenant expiré
+        path2 = link2.replace("http://testserver", "")
+        resp = self.client.get(path2)
+        self.assertContains(resp, "expir")
     def make(self, email, name):
         user = get_user_model().objects.create_user(
             email=email, password="motdepasse10", birth_date=date(1990, 1, 1),

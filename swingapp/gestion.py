@@ -429,7 +429,8 @@ def _store_upload(profile, upload, private, approve, label="Fichier"):
 
 
 def send_member_invite(profile, request):
-    EmailToken.objects.filter(user=profile.user, purpose="invite", used_at__isnull=True).update(used_at=timezone.now())
+    # Les anciens liens restent valides jusqu'à leur échéance (7 jours) ou leur
+    # utilisation : un renvoi ne doit pas invalider le courriel précédent.
     raw, digest = new_token()
     EmailToken.objects.create(
         user=profile.user,
@@ -450,7 +451,6 @@ def send_partner_invite(profile, request):
     partner = getattr(profile, "partner", None)
     if partner is None or not partner.consent_email:
         return ""
-    EmailToken.objects.filter(user=profile.user, purpose="partner", used_at__isnull=True).update(used_at=timezone.now())
     raw, digest = new_token()
     EmailToken.objects.create(
         user=profile.user,
@@ -1054,6 +1054,7 @@ def invite_accept(request, token):
                 profile.save(update_fields=["visibility"])
             row.used_at = timezone.now()
             row.save(update_fields=["used_at"])
+            EmailToken.objects.filter(user=user, purpose="invite", used_at__isnull=True).exclude(pk=row.pk).update(used_at=timezone.now())
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect("edit_profile")
     return render(request, "invitation.html", {"mode": "account", "error": error, "email": row.user.email})
@@ -1104,6 +1105,7 @@ def partner_accept(request, token):
                 partner.save()
                 row.used_at = timezone.now()
                 row.save(update_fields=["used_at"])
+                EmailToken.objects.filter(user=row.user, purpose="partner", used_at__isnull=True).exclude(pk=row.pk).update(used_at=timezone.now())
                 from .services import ensure_profile
 
                 ensure_profile(account)
