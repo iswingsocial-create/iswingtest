@@ -43,6 +43,7 @@ from .services import (
     ensure_message_templates,
     flush_emails,
     has_staff_perm,
+    maybe_validate,
     inactive_members,
     is_last_superuser,
     is_seller,
@@ -503,6 +504,11 @@ def member_detail(request, pk):
             invite_link = send_member_invite(profile, request)
         elif action == "partner_invite":
             partner_link = send_partner_invite(profile, request)
+        elif action == "verify_email":
+            profile.user.email_verified_at = timezone.now()
+            profile.user.save(update_fields=["email_verified_at"])
+            maybe_validate(profile)
+            messages.success(request, "Courriel marqué comme vérifié.")
         elif action == "subscription":
             before = Subscription.objects.filter(user=profile.user).first()
             billed = bool(before and (before.source == "provider" or (before.provider == "stripe" and before.external_id)))

@@ -31,6 +31,9 @@
   {% endif %}
   {% if not profile.is_demo %}
   <form method="post">{% csrf_token %}<input type="hidden" name="action" value="invite"><button class="btn" type="submit">Envoyer l'invitation</button></form>
+  {% if not profile.user.email_verified_at %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="verify_email"><button class="btn ghost" type="submit" data-confirm="Marquer le courriel comme vérifié ? Le membre accédera au site comme si son courriel était vérifié.">Marquer le courriel comme vérifié</button></form>
+  {% endif %}
   {% if invite_link %}<p>Lien local : <a href="{{ invite_link }}">{{ invite_link }}</a></p>{% endif %}
   {% if partner and not partner.consent_at %}
   <form method="post">{% csrf_token %}<input type="hidden" name="action" value="partner_invite"><button class="btn ghost" type="submit">Inviter le second partenaire</button></form>

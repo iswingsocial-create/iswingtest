@@ -2149,3 +2149,30 @@ class InviteResendPageTests(TestCase):
         Profile.objects.create(user=u, display_name="Actif", kind="single")
         self.client.post("/invitation/renvoyer/", {"email": "actif@example.com"})
         self.assertEqual(EmailToken.objects.filter(user=u, purpose="invite").count(), 0)
+
+
+class StaffVerifyEmailTests(TestCase):
+    def test_staff_can_force_verify_email(self):
+        from django.contrib.auth import get_user_model
+        from django.utils import timezone
+        from datetime import timedelta, date
+        from swingapp.models import Profile
+
+        User = get_user_model()
+        admin = User.objects.create_superuser(email="boss2@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1))
+        admin.is_staff = True
+        admin.save()
+        u = User.objects.create_user(email="noverify@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1))
+        p = Profile.objects.create(user=u, display_name="NoVerify", city="Lyon", bio="bio",
+                                   validated_at=None, trial_ends_at=timezone.now() + timedelta(days=7))
+        self.client.force_login(admin)
+        s = self.client.session
+        s["staff_2fa"] = True
+        s.save()
+        resp = self.client.post(f"/gestion/membres/{p.pk}/", {"action": "verify_email"})
+        self.assertEqual(resp.status_code, 302)
+        u.refresh_from_db()
+        self.assertIsNotNone(u.email_verified_at)
+        # Le bouton disparaît une fois vérifié
+        page = self.client.get(f"/gestion/membres/{p.pk}/")
+        self.assertNotContains(page, "Marquer le courriel comme vérifié")
