@@ -2108,3 +2108,44 @@ class PasswordResetPageTests(TestCase):
         resp = self.client.post("/comptes/mot-de-passe/", {"email": "nobody@example.com"})
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.context["sent"])
+
+
+class InviteResendPageTests(TestCase):
+    def test_expired_page_links_to_resend(self):
+        resp = self.client.get("/invitation/ce-token-nexiste-pas/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "/invitation/renvoyer/")
+
+    def test_resend_form_sends_new_link(self):
+        from django.contrib.auth import get_user_model
+        from swingapp.models import EmailToken
+
+        User = get_user_model()
+        u = User.objects.create_user(email="attente@example.com", password="x" * 12)
+        # compte en attente d'activation (conditions non acceptées)
+        u.terms_accepted_at = None
+        u.save()
+        from swingapp.models import Profile
+        Profile.objects.create(user=u, display_name="Attente", kind="single")
+        resp = self.client.post("/invitation/renvoyer/", {"email": "attente@example.com"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context["sent"])
+        self.assertEqual(EmailToken.objects.filter(user=u, purpose="invite", used_at__isnull=True).count(), 1)
+
+    def test_resend_unknown_email_shows_same_confirmation(self):
+        resp = self.client.post("/invitation/renvoyer/", {"email": "inconnu@example.com"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context["sent"])
+
+    def test_resend_ignores_activated_accounts(self):
+        from django.utils import timezone
+        from django.contrib.auth import get_user_model
+        from swingapp.models import EmailToken, Profile
+
+        User = get_user_model()
+        u = User.objects.create_user(email="actif@example.com", password="x" * 12)
+        u.terms_accepted_at = timezone.now()
+        u.save()
+        Profile.objects.create(user=u, display_name="Actif", kind="single")
+        self.client.post("/invitation/renvoyer/", {"email": "actif@example.com"})
+        self.assertEqual(EmailToken.objects.filter(user=u, purpose="invite").count(), 0)
