@@ -2454,3 +2454,43 @@ class VerifyEmailAutoLoginTests(TestCase):
         resp = self.client.get(f"/comptes/verifier/{raw}/")
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp["Location"], "/decouvrir/")
+
+
+class StripePromoCodeTests(TestCase):
+    def test_checkout_allows_promotion_codes(self):
+        from unittest.mock import patch
+        from django.contrib.auth import get_user_model
+        from django.test import override_settings
+        from django.utils import timezone
+        from datetime import timedelta, date
+        from swingapp.models import Profile
+
+        User = get_user_model()
+        u = User.objects.create_user(email="promo@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1),
+                                     terms_accepted_at=timezone.now(), adult_declared=True,
+                                     email_verified_at=timezone.now())
+        from io import BytesIO
+        from PIL import Image
+        from django.core.files.base import ContentFile
+        from swingapp.models import Photo
+        p = Profile.objects.create(user=u, display_name="Promo", city="Lyon", bio="bio",
+                                   trial_ends_at=timezone.now() + timedelta(days=7))
+        out = BytesIO()
+        Image.new("RGB", (100, 100)).save(out, format="JPEG")
+        photo = Photo(profile=p, is_primary=True, moderation_status="approved")
+        photo.image.save("t.jpg", ContentFile(out.getvalue()), save=True)
+        self.client.force_login(u)
+        captured = {}
+
+        class FakeSession:
+            url = "https://checkout.stripe.com/pay/cs_test_123"
+
+        def fake_create(**kwargs):
+            captured.update(kwargs)
+            return FakeSession()
+
+        with override_settings(STRIPE_SECRET_KEY="sk_test_x", STRIPE_PRICE_ID="price_x"):
+            with patch("stripe.checkout.Session.create", side_effect=fake_create):
+                resp = self.client.post("/abonnement/stripe/")
+        self.assertTrue(captured.get("allow_promotion_codes"))
+        self.assertEqual(captured.get("mode"), "subscription")

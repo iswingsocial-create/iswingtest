@@ -1249,6 +1249,9 @@ def stripe_checkout(request):
         "success_url": settings.ISWING_PUBLIC_BASE_URL + "/abonnement/?paid=1",
         "cancel_url": settings.ISWING_PUBLIC_BASE_URL + "/abonnement/?cancel=1",
         "metadata": {"user_id": str(request.user.id)},
+        # Permet au membre de saisir un code promo Stripe au paiement.
+        # Les codes se créent dans le dashboard Stripe (aucun code à écrire).
+        "allow_promotion_codes": True,
     }
     if sub.customer_id:
         payload["customer"] = sub.customer_id
