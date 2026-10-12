@@ -255,8 +255,14 @@ def verify_email(request, token):
     row.user.email_verified_at = timezone.now()
     row.user.save(update_fields=["email_verified_at"])
     maybe_validate(row.user.profile)
-    lang = getattr(request, "lang", "fr")
-    return render(request, "simple.html", {"title": t(lang, "email_verified"), "body": t(lang, "email_verified_body")})
+    # Le lien de vérification connecte directement : pas de cul-de-sac, pas de reconnexion manuelle.
+    login(request, row.user, backend="django.contrib.auth.backends.ModelBackend")
+    profile = ensure_profile(row.user)
+    if profile.kind == "business":
+        return redirect("/entreprises/moi/")
+    if not profile_fields_complete(profile):
+        return redirect("edit_profile")
+    return redirect("discover")
 
 
 @login_required

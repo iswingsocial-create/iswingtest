@@ -2404,3 +2404,53 @@ class PasswordResetPageTests(TestCase):
         resp = self.client.post("/comptes/mot-de-passe/", {"email": "nobody@example.com"})
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.context["sent"])
+
+
+class VerifyEmailAutoLoginTests(TestCase):
+    def test_verify_link_logs_in_and_redirects_to_profile(self):
+        from django.contrib.auth import get_user_model
+        from django.utils import timezone
+        from datetime import timedelta, date
+        from swingapp.models import Profile, EmailToken
+        from swingapp.models import new_token
+
+        User = get_user_model()
+        u = User.objects.create_user(email="verifyme@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1))
+        Profile.objects.create(user=u, display_name="VerifyMe", city="", bio="",
+                               trial_ends_at=timezone.now() + timedelta(days=7))
+        raw, digest = new_token()
+        EmailToken.objects.create(user=u, purpose="verify", token_hash=digest,
+                                  expires_at=timezone.now() + timedelta(hours=24))
+        resp = self.client.get(f"/comptes/verifier/{raw}/")
+        # Connecté automatiquement et redirigé vers Mon profil (profil incomplet)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], "/moi/")
+        u.refresh_from_db()
+        self.assertIsNotNone(u.email_verified_at)
+        # La session est authentifiée
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_verify_link_complete_profile_goes_to_discover(self):
+        from django.contrib.auth import get_user_model
+        from django.utils import timezone
+        from datetime import timedelta, date
+        from swingapp.models import Profile, EmailToken, Photo
+        from swingapp.models import new_token
+        from django.core.files.base import ContentFile
+        from io import BytesIO
+        from PIL import Image
+
+        User = get_user_model()
+        u = User.objects.create_user(email="verifyfull@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1))
+        p = Profile.objects.create(user=u, display_name="VerifyFull", city="Lyon", bio="bio complète",
+                                   trial_ends_at=timezone.now() + timedelta(days=7))
+        out = BytesIO()
+        Image.new("RGB", (100, 100)).save(out, format="JPEG")
+        photo = Photo(profile=p, is_primary=True, moderation_status="approved")
+        photo.image.save("t.jpg", ContentFile(out.getvalue()), save=True)
+        raw, digest = new_token()
+        EmailToken.objects.create(user=u, purpose="verify", token_hash=digest,
+                                  expires_at=timezone.now() + timedelta(hours=24))
+        resp = self.client.get(f"/comptes/verifier/{raw}/")
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], "/decouvrir/")
