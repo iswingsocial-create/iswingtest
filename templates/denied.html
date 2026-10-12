@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{% if reason == "thread" %}{{ T.denied_thread }}{% else %}{{ T.denied_profile }}{% endif %}</h1>
+  <p><a class="btn" href="/decouvrir/">{{ T.continue_discover }}</a></p>
+</section>
+{% endblock %}

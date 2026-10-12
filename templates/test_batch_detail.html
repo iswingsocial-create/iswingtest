@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ batch.name }}</h1>
+  <p>Identifiant : {{ batch.batch_id }}</p>
+  <p>État : {{ batch.status }}</p>
+  <p>Graine : {{ batch.seed }} — date de référence : {{ batch.reference_date }}</p>
+  {% if message %}<p class="note">{{ message }}</p>{% endif %}
+  {% if batch.error %}<p class="note">{{ batch.error }}</p>{% endif %}
+  {% if batch.zip_path %}<p>Paquet : {{ batch.zip_path }}</p>{% endif %}
+  <p>{{ coverage.ready }} / {{ coverage.expected }} images pour {{ coverage.profiles }} comptes.</p>
+  <form method="post" action="/gestion/profils-test/{{ batch.batch_id }}/assembler/">{% csrf_token %}
+    <button class="btn" type="submit" {% if production %}disabled{% endif %}>Assembler le ZIP avec les images déposées</button>
+  </form>
+  <form method="post" action="/gestion/profils-test/{{ batch.batch_id }}/supprimer/">{% csrf_token %}
+    <button class="btn danger" type="submit">Supprimer uniquement ce lot fictif</button>
+  </form>
+  <p><a href="/gestion/profils-test/">Retour</a></p>
+</section>
+<section class="card">
+  <h2>Images par compte</h2>
+  <p class="muted">Générez les fiches d'abord. Déposez ensuite vos JPEG, un fichier par emplacement. Le nom de dossier doit être l'identifiant du compte.</p>
+  <form method="post" action="/gestion/profils-test/{{ batch.batch_id }}/photo/" enctype="multipart/form-data">{% csrf_token %}
+    <label>Archive d'images (dossiers <code>identifiant/0.jpg</code>) <input type="file" name="archive" accept=".zip"></label>
+    <button class="btn" type="submit">Ranger les images</button>
+  </form>
+  <form method="get">
+    <label>Filtrer <input name="q" value="{{ query }}"></label>
+    <button class="btn ghost" type="submit">Chercher</button>
+  </form>
+  {% for account in accounts.rows %}
+  <article>
+    <h3>{{ account.display_name }} — {{ account.city }} — {{ account.kind }} — visage {{ account.face }}</h3>
+    <p><code>{{ account.external_key }}</code> · {{ account.email }}</p>
+    {% for photo in account.photos %}
+    <form method="post" action="/gestion/profils-test/{{ batch.batch_id }}/photo/" enctype="multipart/form-data">{% csrf_token %}
+      <input type="hidden" name="external_key" value="{{ account.external_key }}">
+      <input type="hidden" name="slot" value="{{ photo.slot }}">
+      <span>Photo {{ photo.slot }}{% if photo.is_primary %} principale{% endif %}{% if photo.is_private %} privée{% else %} publique{% endif %}{% if photo.ready %} — déjà déposée{% endif %}</span>
+      <input type="file" name="image" accept="image/jpeg,.jpg">
+      {% if account.face != "visible" %}<label><input type="checkbox" name="mask" value="1" checked> Appliquer le {{ account.face }} dans le fichier</label>{% endif %}
+      <button class="btn ghost" type="submit">Déposer</button>
+    </form>
+    {% endfor %}
+  </article>
+  {% empty %}<p>Aucune fiche. Lancez la génération : même sans images, la liste des comptes est enregistrée.</p>{% endfor %}
+  {% if accounts.matched > accounts.rows|length %}<p class="muted">{{ accounts.matched }} comptes correspondent. Affinez la recherche pour voir la suite.</p>{% endif %}
+</section>
+{% endblock %}

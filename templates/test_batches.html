@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Profils de test — générer et importer</h1>
+  <p class="muted">Lots fictifs, is_demo=True, badge membre à vie. Refusés en production. Aucun courriel ni paiement réel.</p>
+  {% if production %}<p class="note">Environnement de production : import et génération bloqués.</p>{% endif %}
+  {% if message %}<p class="note">{{ message }}</p>{% endif %}
+  <form method="post">{% csrf_token %}
+    <label>Rechercher une ville <input name="q" placeholder="Lyon"></label>
+    <button class="btn ghost" name="action" value="search" type="submit">Chercher</button>
+  </form>
+  {% if results %}
+  <ul>
+    {% for row in results %}
+    <li><code>{{ row.ref }}</code> — {{ row.name }}, {{ row.country }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post">{% csrf_token %}
+    <label>Villes, une référence par ligne
+      <textarea name="cities" rows="4" placeholder="Lyon|FR|45.74906|4.84789">{{ preview.cities|join:"&#10;" }}</textarea>
+    </label>
+    <label>Nom du lot <input name="batch_id" value="lot-validation"></label>
+    <label>Libellé <input name="name" value="Lot de test"></label>
+    <label>Graine <input name="seed" value="iswing-2026"></label>
+    <label>Profils par ville <input name="per_city" value="{{ opts.per_city }}"></label>
+    <label>Part de couples (0 à 1) <input name="couple_ratio" value="{{ opts.couple_ratio }}"></label>
+    <label>HH <input name="comp_HH" value="{{ opts.compositions.HH }}"></label>
+    <label>HF <input name="comp_HF" value="{{ opts.compositions.HF }}"></label>
+    <label>FF <input name="comp_FF" value="{{ opts.compositions.FF }}"></label>
+    <label>NBH <input name="comp_NBH" value="{{ opts.compositions.NBH }}"></label>
+    <label>NBF <input name="comp_NBF" value="{{ opts.compositions.NBF }}"></label>
+    <label>Âge minimum <input name="age_min" value="{{ opts.age_min }}"></label>
+    <label>Âge maximum <input name="age_max" value="{{ opts.age_max }}"></label>
+    <label>Langues <input name="languages" value="fr,en,es"></label>
+    <label>Photos par profil <input name="photos" value="{{ opts.photos }}"></label>
+    <label>Dont privées <input name="private_photos" value="{{ opts.private_photos }}"></label>
+    <label>Visages visibles <input name="face_visible" value="{{ opts.face_mix.visible }}"></label>
+    <label>Visages floutés <input name="face_blurred" value="{{ opts.face_mix.blurred }}"></label>
+    <label>Visages emoji <input name="face_emoji" value="{{ opts.face_mix.emoji }}"></label>
+    <button class="btn ghost" name="action" value="preview" type="submit">Calculer le volume</button>
+    <button class="btn" name="action" value="start" type="submit">Lancer la génération</button>
+  </form>
+  {% if preview %}
+  <p><strong>{{ preview.profiles }}</strong> profils, <strong>{{ preview.images }}</strong> images. {{ preview.note }}</p>
+  {% endif %}
+  {% if result.created %}
+  <p>Créés : {{ result.created|length }}. Ignorés : {{ result.skipped|length }}. Refusés : {{ result.refused|length }}.</p>
+  {% elif result.verified %}
+  <p>Vérifié : {{ result.verified.profiles }} profils, {{ result.verified.images }} images. Relancez avec confirmation pour écrire.</p>
+  {% endif %}
+  <form method="post" action="/gestion/profils-test/importer/" enctype="multipart/form-data">{% csrf_token %}
+    <h2>Vérifier et importer le lot</h2>
+    <label>ZIP <input type="file" name="zip" accept=".zip"></label>
+    <label><input type="checkbox" name="confirm" value="1"> Écrire en base après vérification</label>
+    <label><input type="checkbox" name="update" value="1"> Mettre à jour ce lot fictif seulement</label>
+    <button class="btn" type="submit">Vérifier et importer le lot</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Lots</h2>
+  {% for batch in batches %}
+  <p><a href="/gestion/profils-test/{{ batch.batch_id }}/">{{ batch.name }}</a> — {{ batch.status }} — {{ batch.seed }}</p>
+  {% empty %}<p>Aucun lot.</p>{% endfor %}
+  <p><a href="/gestion/">Retour gestion</a></p>
+</section>
+{% endblock %}

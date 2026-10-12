@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ title }}</h1>
+  <p>{{ body }}</p>
+  <p><a class="btn" href="/invitation/renvoyer/">{{ T.invite_resend }}</a></p>
+</section>
+{% endblock %}

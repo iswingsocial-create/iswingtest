@@ -1,0 +1,25 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Abonnements</h1></header>
+<p class="muted">Aucun numéro de carte n'est stocké. Sans prestataire connecté, un statut « actif » posé ici est une décision d'administration, pas un paiement.</p>
+<form class="filters" method="get">
+  <label>Membre <input name="q" value="{{ request.GET.q }}"></label>
+  <label>Statut <select name="status"><option value="">Tous</option>{% for code, label in statuses %}<option value="{{ code }}" {% if request.GET.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <button class="btn ghost" type="submit">Filtrer</button>
+</form>
+<table class="g-table">
+  <thead><tr><th>Membre</th><th>Statut</th><th>Prestataire</th><th>Échéance</th><th>À vie</th></tr></thead>
+  <tbody>
+  {% for sub in pager.rows %}
+  <tr>
+    <td><a href="/gestion/membres/{{ sub.user.profile.id }}/">{{ sub.user.profile.display_name }}</a>{% if sub.user.is_demo %} <span class="tag test">TEST</span>{% endif %}</td>
+    <td>{{ sub.get_status_display }}</td>
+    <td>{{ sub.provider|default:"—" }}</td>
+    <td>{{ sub.current_period_end|date:"Y-m-d"|default:"—" }}</td>
+    <td>{% if sub.user.profile.lifetime_member %}oui{% else %}non{% endif %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="5">Aucun abonnement.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% include "gestion/pager.html" %}
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Nouveau message</h1></header>
+<p>{% for row in templates %}<a href="?template={{ row.code }}">{{ row.name }}</a> · {% endfor %}</p>
+<form method="post" class="stack card">{% csrf_token %}
+  <input type="hidden" name="client_key" value="{{ client_key }}">
+  <label>Destinataires
+    <select name="scope">
+      {% for code, label in scopes %}<option value="{{ code }}" {% if posted.scope == code or not posted.scope and code == "one" %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Membre (courriel exact, ou numéro de fiche) <input name="one" value="{% if posted.one %}{{ posted.one }}{% else %}{{ preset }}{% endif %}"></label>
+  <label class="check"><input type="checkbox" name="include_test" value="1" {% if posted.include_test %}checked{% endif %}> Inclure les profils TEST</label>
+  <label>Canal
+    <select name="channel">
+      <option value="both" {% if posted.channel == "both" or chosen and chosen.channel == "both" and not posted %}selected{% endif %}>Avis interne et courriel</option>
+      <option value="notice">Avis interne</option>
+      <option value="email">Courriel</option>
+    </select>
+  </label>
+  <label class="check"><input type="checkbox" name="is_promo" value="1" {% if posted.is_promo or chosen.is_promo and not posted %}checked{% endif %}> Message promotionnel</label>
+  <p class="muted">Un message de service part aux destinataires choisis. Un message promotionnel ignore les membres qui n'ont pas accepté les promotions. Le pseudonyme se place avec {display_name}.</p>
+  <label>Objet <input name="subject" required value="{% if posted.subject %}{{ posted.subject }}{% elif chosen %}{{ chosen.subject }}{% endif %}"></label>
+  <label>Message <textarea name="body" rows="8" required>{% if posted.body %}{{ posted.body }}{% elif chosen %}{{ chosen.body }}{% endif %}</textarea></label>
+  <label>Programmer (laisser vide pour envoyer maintenant)
+    <input type="datetime-local" name="scheduled_at" value="{{ posted.scheduled_at }}">
+  </label>
+  <label>Fuseau horaire
+    <select name="timezone">
+      <option value="UTC" {% if posted.timezone == "UTC" or not posted.timezone %}selected{% endif %}>UTC</option>
+      <option value="Europe/Paris" {% if posted.timezone == "Europe/Paris" %}selected{% endif %}>Europe/Paris</option>
+      <option value="America/New_York" {% if posted.timezone == "America/New_York" %}selected{% endif %}>America/New_York</option>
+      <option value="America/Los_Angeles" {% if posted.timezone == "America/Los_Angeles" %}selected{% endif %}>America/Los_Angeles</option>
+    </select>
+  </label>
+  <p class="muted">L'heure choisie est convertie en UTC avant l'enregistrement. Une date illisible est refusée et rien n'est envoyé.</p>
+  <button class="btn ghost" type="submit">Aperçu et nombre de destinataires</button>
+</form>
+{% if preview %}
+<section class="card">
+  <h2>Aperçu</h2>
+  <p><strong>Critères :</strong> {{ preview.criteria }}</p>
+  <p><strong>Destinataires :</strong> {{ preview.count }}{% if preview.excluded %} · {{ preview.excluded }} exclus (pas de consentement promotionnel){% endif %}</p>
+  {% if preview.date_error %}<p class="error">Date invalide. Rien n'a été envoyé.</p>{% endif %}
+  {% if preview.too_many %}<p class="error">Trop de destinataires. Affinez les critères. Rien n'a été envoyé.</p>{% endif %}
+  {% if preview.ambiguous %}<p class="error">Plusieurs membres correspondent. Indiquez le courriel ou le numéro de fiche.</p>{% endif %}
+  {% if preview.mismatch %}<p class="error">Les destinataires ont changé. Vérifiez à nouveau avant d'envoyer.</p>{% endif %}
+  {% if preview.scheduled %}<p>Envoi prévu (UTC) : {{ preview.scheduled }}</p>{% endif %}
+  <pre class="preview">{{ preview.sample }}</pre>
+  {% if preview.count and not preview.date_error and not preview.too_many and not preview.ambiguous %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="client_key" value="{{ client_key }}">
+    <input type="hidden" name="scope" value="{{ posted.scope }}">
+    <input type="hidden" name="one" value="{{ posted.one }}">
+    <input type="hidden" name="channel" value="{{ posted.channel }}">
+    {% if posted.is_promo %}<input type="hidden" name="is_promo" value="1">{% endif %}
+    <input type="hidden" name="subject" value="{{ posted.subject }}">
+    <input type="hidden" name="scheduled_at" value="{{ posted.scheduled_at }}">
+    <input type="hidden" name="timezone" value="{{ posted.timezone|default:'UTC' }}">
+    <input type="hidden" name="expected_count" value="{{ preview.count }}">
+    <input type="hidden" name="confirm" value="1">
+    {% for uid in preview.ids %}<input type="hidden" name="recipient_ids" value="{{ uid }}">{% endfor %}
+    {% if posted.include_test %}<input type="hidden" name="include_test" value="1">{% endif %}
+    <textarea name="body" hidden>{{ posted.body }}</textarea>
+    <button class="btn" type="submit" data-confirm="Envoyer à {{ preview.count }} destinataire(s) ?">Confirmer l'envoi</button>
+  </form>
+  {% else %}<p>Aucun destinataire. Rien ne sera envoyé.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

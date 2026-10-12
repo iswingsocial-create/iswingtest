@@ -1,0 +1,5 @@
+{% if photo.processing_status == "ready" and photo.video %}
+<video controls playsinline webkit-playsinline preload="metadata" poster="/photos/{{ photo.id }}/?v={{ photo.byte_size }}" src="/photos/{{ photo.id }}/fichier/?v={{ photo.byte_size }}"></video>
+{% else %}
+<img src="/photos/{{ photo.id }}/?v={{ photo.byte_size }}" alt="">
+{% endif %}

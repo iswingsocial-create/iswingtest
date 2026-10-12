@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ T.verify_title }}</h1>
+  {% if sent %}
+  <p>{{ T.verify_body }}</p>
+  {% else %}
+  <p>{{ T.verify_ready }}</p>
+  <p><a class="btn" href="/decouvrir/">{{ T.discover }}</a></p>
+  {% endif %}
+  {% if notice == "wait" %}<p class="note">{{ T.verify_wait }}</p>{% endif %}
+  {% if notice == "resent" %}<p class="note">{{ T.verify_resent }}</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+{% if sent %}
+<section class="card">
+  <h1>{{ T.invite_resend_title }}</h1>
+  <p>{{ T.invite_resend_sent }}</p>
+</section>
+{% else %}
+<form class="card" method="post">{% csrf_token %}
+  <h1>{{ T.invite_resend_title }}</h1>
+  <p>{{ T.invite_resend_help }}</p>
+  <label>{{ T.email }} <input type="email" name="email" required></label>
+  <button class="btn">{{ T.invite_resend_send }}</button>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,121 @@
+<button class="btn danger" type="button" data-block-open>{{ T.block }}</button>
+<div class="block-modal" data-block-modal hidden>
+  <div class="block-card" role="dialog" aria-modal="true" aria-labelledby="block-title-{{ profile_id }}">
+    <div class="row">
+      <h2 id="block-title-{{ profile_id }}">{{ T.block }}</h2>
+      <button class="btn ghost" type="button" data-block-close>Fermer</button>
+    </div>
+    <div data-step="ask">
+      <p>{{ T.block_ask }}</p>
+      <div class="row">
+        <button class="btn ghost" type="button" data-block-cancel>{{ T.block_cancel }}</button>
+        <button class="btn danger" type="button" data-block-confirm>{{ T.block_do }}</button>
+      </div>
+    </div>
+    <div data-step="done" hidden>
+      <p>{{ T.block_done_ask }}</p>
+      <div class="row">
+        <button class="btn" type="button" data-block-report>{{ T.report_choice }}</button>
+        <a class="btn ghost" href="/decouvrir/">{{ T.block_done_btn }}</a>
+      </div>
+    </div>
+    <form data-step="form" hidden action="/signaler/{{ profile_id }}/" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="related" value="Profil #{{ profile_id }}">
+      <label>{{ T.report_reason }}
+        <select name="reason_code" required>
+          <option value="">—</option>
+          {% for code, label in report_reasons %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>{{ T.report_comment }}
+        <textarea name="comment" maxlength="1000"></textarea>
+      </label>
+      <p class="muted">{{ T.reporter_hidden }}</p>
+      <button class="btn" type="submit" data-report-send>{{ T.report_send }}</button>
+    </form>
+    <p class="note" data-block-thanks hidden>{{ T.report_saved }}</p>
+    <p class="error" data-block-error hidden></p>
+  </div>
+</div>
+<noscript>
+  <form method="post" action="/bloquer/{{ profile_id }}/">{% csrf_token %}
+    <p>{{ T.block_ask }}</p>
+    <button class="btn danger" type="submit">{{ T.block_do }}</button>
+  </form>
+</noscript>
+<script>
+(function () {
+  var root = document.currentScript.previousElementSibling;
+  while (root && !root.hasAttribute("data-block-modal")) root = root.previousElementSibling;
+  if (!root || root.dataset.bound) return;
+  root.dataset.bound = "1";
+  var openBtn = root.previousElementSibling;
+  var tokenInput = document.querySelector("input[name=csrfmiddlewaretoken]");
+  var confirmBtn = root.querySelector("[data-block-confirm]");
+  var sendBtn = root.querySelector("[data-report-send]");
+  var busy = false;
+  function show(step) {
+    root.querySelectorAll("[data-step]").forEach(function (node) { node.hidden = node.getAttribute("data-step") !== step; });
+  }
+  function close() {
+    root.hidden = true;
+    if (openBtn) openBtn.focus();
+  }
+  function post(url, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "X-CSRFToken": tokenInput ? tokenInput.value : "", "X-Requested-With": "fetch" },
+      body: body
+    });
+  }
+  function fail() {
+    var err = root.querySelector("[data-block-error]");
+    err.hidden = false;
+    err.textContent = document.body.dataset.lost || "Erreur";
+  }
+  if (openBtn) openBtn.addEventListener("click", function () {
+    root.hidden = false;
+    show("ask");
+    confirmBtn.disabled = false;
+    var first = root.querySelector("[data-step=ask] button");
+    if (first) first.focus();
+  });
+  root.addEventListener("click", function (event) { if (event.target === root) close(); });
+  root.querySelector("[data-block-cancel]").addEventListener("click", close);
+  root.querySelector("[data-block-close]").addEventListener("click", close);
+  document.addEventListener("keydown", function (event) {
+    if (!root.hidden && event.key === "Escape") close();
+  });
+  confirmBtn.addEventListener("click", function () {
+    if (busy) return;
+    busy = true;
+    confirmBtn.disabled = true;
+    var body = new URLSearchParams();
+    if (tokenInput) body.set("csrfmiddlewaretoken", tokenInput.value);
+    post("/bloquer/{{ profile_id }}/", body).then(function (res) {
+      if (!res.ok) throw new Error("block");
+      show("done");
+    }).catch(function () {
+      fail();
+      confirmBtn.disabled = false;
+    }).then(function () { busy = false; });
+  });
+  root.querySelector("[data-block-report]").addEventListener("click", function () { show("form"); });
+  root.querySelector("[data-step=form]").addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (busy) return;
+    busy = true;
+    sendBtn.disabled = true;
+    var form = event.currentTarget;
+    post(form.action, new FormData(form)).then(function (res) {
+      if (!res.ok) throw new Error("report");
+      form.hidden = true;
+      root.querySelector("[data-block-thanks]").hidden = false;
+    }).catch(function () {
+      fail();
+      sendBtn.disabled = false;
+    }).then(function () { busy = false; });
+  });
+})();
+</script>

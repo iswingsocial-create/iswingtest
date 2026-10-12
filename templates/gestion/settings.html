@@ -1,0 +1,63 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Paramètres</h1></header>
+<section class="card">
+  <h2>Quotas d'essai</h2>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="quotas">
+    <label>J'aime par jour <input name="likes" value="{{ likes }}"></label>
+    <label>Messages par match <input name="messages" value="{{ messages_cap }}"></label>
+    <button class="btn" type="submit">Enregistrer</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Permission de modération</h2>
+  <p>Le compte créé par Creer-Admin.bat est superutilisateur : il peut consulter les médias privés. Les autres comptes staff ne le peuvent pas tant que cette case n'est pas cochée. Chaque consultation privée est journalisée et ne rend pas le média visible aux membres.</p>
+  {% if is_super %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="moderate">
+    {% for user in staff_users %}
+    <fieldset>
+      <legend>{{ user.email }}{% if user.is_superuser %} (superutilisateur, tous les droits){% endif %}</legend>
+      {% if user.is_superuser %}
+      <p class="muted">Non modifiable ici.</p>
+      {% else %}
+      <label class="check"><input type="checkbox" name="can_moderate" value="{{ user.id }}" {% if user.can_moderate %}checked{% endif %}> Modération des médias privés</label>
+      <label class="check"><input type="checkbox" name="can_manage_members" value="{{ user.id }}" {% if user.can_manage_members %}checked{% endif %}> Gestion des membres</label>
+      <label class="check"><input type="checkbox" name="can_manage_billing" value="{{ user.id }}" {% if user.can_manage_billing %}checked{% endif %}> Abonnements</label>
+      <label class="check"><input type="checkbox" name="can_manage_comms" value="{{ user.id }}" {% if user.can_manage_comms %}checked{% endif %}> Communications</label>
+      <label class="check"><input type="checkbox" name="can_configure" value="{{ user.id }}" {% if user.can_configure %}checked{% endif %}> Configuration</label>
+      {% endif %}
+    </fieldset>
+    {% endfor %}
+    <button class="btn" type="submit">Enregistrer les permissions</button>
+  </form>
+  {% else %}<p class="muted">Seul un superutilisateur modifie ces cases.</p>{% endif %}
+</section>
+<section class="card">
+  <h2>Courriels en échec</h2>
+  <p class="muted">Un échec n'annule ni un blocage, ni un signalement, ni un avis déjà déposé. Nouvelle tentative ci-dessous. Destinataire des signalements : Info@iswing.live. Aucun média privé n'est joint.</p>
+  {% for mail in failed_mail %}<p>#{{ mail.id }} {{ mail.to_email }} — {{ mail.subject }} — {{ mail.attempts }} essai(s) — {{ mail.last_error }}</p>{% empty %}<p>Aucun échec.</p>{% endfor %}
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="retry_mail"><button class="btn ghost" type="submit">Renvoyer</button></form>
+</section>
+<section class="card">
+  <h2>Textes légaux</h2>
+  <p class="muted">Modifiables ici. La phrase sur l'accès de modération est ajoutée une seule fois si elle manque.</p>
+  {% for page in legal_pages %}
+  <details class="legal-editor">
+    <summary>{{ page.title_fr }}</summary>
+    <form method="post" action="/gestion/legal/{{ page.slug }}/">{% csrf_token %}
+      <label>Titre FR <input name="title_fr" value="{{ page.title_fr }}"></label>
+      <label>Texte FR <textarea name="body_fr" rows="8">{{ page.body_fr }}</textarea></label>
+      <label>Titre EN <input name="title_en" value="{{ page.title_en }}"></label>
+      <label>Texte EN <textarea name="body_en" rows="6">{{ page.body_en }}</textarea></label>
+      <label>Titre ES <input name="title_es" value="{{ page.title_es }}"></label>
+      <label>Texte ES <textarea name="body_es" rows="6">{{ page.body_es }}</textarea></label>
+      <button class="btn" type="submit">Enregistrer la page</button>
+    </form>
+  </details>
+  {% endfor %}
+</section>
+<p><a href="/gestion/profils-test/">Profils de test — générer et importer</a></p>
+<p><a href="/admin/">Administration technique</a></p>
+{% endblock %}
