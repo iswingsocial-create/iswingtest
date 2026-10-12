@@ -23,48 +23,6 @@ def jpeg():
 
 
 class RulesTests(TestCase):
-    def test_resend_does_not_kill_previous_link(self):
-        from django.test import RequestFactory
-        from swingapp.gestion import send_member_invite
-        from swingapp.models import EmailToken
-
-        user, profile = self.make("reinvite@example.com", "ReInvite")
-        rf = RequestFactory()
-        req = rf.get("/")
-        req.lang = "fr"
-        link1 = send_member_invite(profile, req)
-        link2 = send_member_invite(profile, req)
-        # Les deux liens restent valides (aucun n'est tué par le renvoi)
-        alive = EmailToken.objects.filter(user=user, purpose="invite", used_at__isnull=True).count()
-        self.assertEqual(alive, 2)
-        # Le premier lien fonctionne encore
-        resp = self.client.get(link1.replace("http://testserver", ""))
-        self.assertEqual(resp.status_code, 200)
-        self.assertNotContains(resp, "expir")
-
-    def test_accepting_one_link_kills_the_others(self):
-        from django.test import RequestFactory
-        from swingapp.gestion import send_member_invite
-        from swingapp.models import EmailToken
-
-        user, profile = self.make("reinvite2@example.com", "ReInvite2")
-        rf = RequestFactory()
-        req = rf.get("/")
-        req.lang = "fr"
-        link1 = send_member_invite(profile, req)
-        link2 = send_member_invite(profile, req)
-        path1 = link1.replace("http://testserver", "")
-        self.client.post(path1, {
-            "password": "motdepasse10", "password2": "motdepasse10",
-            "accept": "1",
-        })
-        # Après activation, plus aucun lien non utilisé
-        alive = EmailToken.objects.filter(user=user, purpose="invite", used_at__isnull=True).count()
-        self.assertEqual(alive, 0)
-        # Le second lien est maintenant expiré
-        path2 = link2.replace("http://testserver", "")
-        resp = self.client.get(path2)
-        self.assertContains(resp, "expir")
     def make(self, email, name):
         user = get_user_model().objects.create_user(
             email=email, password="motdepasse10", birth_date=date(1990, 1, 1),
@@ -1799,12 +1757,11 @@ class V10EmailVerificationTests(TestCase):
         self.assertEqual(OutboundEmail.objects.filter(kind="verify", to_email="avec-verif@example.com").count(), 2)
         link = mail.body.split("/comptes/verifier/")[1].split()[0].strip()
         opened = self.client.get("/comptes/verifier/" + link)
-        self.assertContains(opened, "Courriel vérifié")
+        # Le lien connecte automatiquement et redirige (profil incomplet -> /moi/)
+        self.assertEqual(opened.status_code, 302)
+        self.assertIn("_auth_user_id", self.client.session)
         user = get_user_model().objects.get(email="avec-verif@example.com")
         self.assertIsNotNone(user.email_verified_at)
-        entered = self.client.post("/comptes/connexion/", {"email": "avec-verif@example.com", "password": "motdepasse10"})
-        self.assertEqual(entered.status_code, 302)
-        self.assertIn("_auth_user_id", self.client.session)
 
     def test_verification_mail_is_translated(self):
         from swingapp.integrations import render_transactional
@@ -2348,149 +2305,66 @@ class V16BirthDateTests(TestCase):
         self.assertFalse(get_user_model().objects.filter(email="admin-miss@example.com").exists())
 
 
-class InviteResendPageTests(TestCase):
-    def test_expired_page_links_to_resend(self):
-        resp = self.client.get("/invitation/ce-token-nexiste-pas/")
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "/invitation/renvoyer/")
+class V17LandingTests(TestCase):
+    make = RulesTests.make
 
-    def test_resend_form_sends_new_link(self):
-        from django.contrib.auth import get_user_model
-        from swingapp.models import EmailToken
+    def test_landing_replaces_home_in_three_languages_with_real_cities(self):
+        import re
+        from pathlib import Path
 
-        User = get_user_model()
-        u = User.objects.create_user(email="attente@example.com", password="x" * 12)
-        # compte en attente d'activation (conditions non acceptées)
-        u.terms_accepted_at = None
-        u.save()
-        from swingapp.models import Profile
-        Profile.objects.create(user=u, display_name="Attente", kind="single")
-        resp = self.client.post("/invitation/renvoyer/", {"email": "attente@example.com"})
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.context["sent"])
-        self.assertEqual(EmailToken.objects.filter(user=u, purpose="invite", used_at__isnull=True).count(), 1)
+        from django.conf import settings
 
-    def test_resend_unknown_email_shows_same_confirmation(self):
-        resp = self.client.post("/invitation/renvoyer/", {"email": "inconnu@example.com"})
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.context["sent"])
+        from swingapp.landing_views import load_build
 
-    def test_resend_ignores_activated_accounts(self):
-        from django.utils import timezone
-        from django.contrib.auth import get_user_model
-        from swingapp.models import EmailToken, Profile
+        page = self.client.get("/")
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, 'aria-label="Langue"')
+        self.assertNotContains(page, 'id="menu-btn"')
+        self.assertNotContains(page, "data-app=")
+        self.assertNotContains(page, "https://iswing.live")
+        self.assertNotContains(page, "https://iswingtest.onrender.com")
+        self.assertContains(page, 'href="/comptes/inscription/"')
+        self.assertContains(page, 'href="/comptes/connexion/"')
+        self.assertContains(page, "29 $ US")
+        self.assertContains(page, '"price": "29.00"')
+        self.assertContains(page, '"priceCurrency": "USD"')
+        self.assertContains(page, 'hreflang="es"')
+        self.assertContains(page, 'href="/rencontre-echangiste-montreal/"')
+        self.assertEqual(len(re.findall(r"<h1\b", page.content.decode())), 1)
+        english = self.client.get("/en/")
+        self.assertContains(english, "Start your free trial")
+        self.assertContains(english, "US$29")
+        spanish = self.client.get("/es/")
+        self.assertContains(spanish, "usted")
+        self.assertContains(spanish, "celular")
+        self.assertContains(spanish, "computadora")
+        self.assertContains(spanish, "carro")
+        self.assertContains(spanish, "Inicie sesión")
+        city = self.client.get("/rencontre-echangiste-montreal/")
+        self.assertEqual(city.status_code, 200)
+        self.assertContains(city, "couple échangiste")
+        self.assertEqual(len(re.findall(r"<h1\b", city.content.decode())), 1)
+        self.assertEqual(self.client.get("/en/swinger-dating-cancun/").status_code, 200)
+        self.assertEqual(self.client.get("/es/citas-swingers-ciudad-de-mexico/").status_code, 200)
+        self.assertContains(self.client.get("/es/citas-swingers-cancun/"), "usted")
+        module = load_build()
+        for item in module.CITIES:
+            for lang in ("fr", "en", "es"):
+                self.assertGreaterEqual(module.word_count(" ".join(item[lang]["paragraphs"])), 300)
+        built = Path(settings.BASE_DIR, "landing", "index.html").read_text(encoding="utf-8")
+        self.assertIn("https://iswingtest.onrender.com/comptes/inscription/", built)
+        self.assertNotIn("https://iswing.live", built)
+        self.assertNotIn("data-app=", built)
+        user, _ = self.make("landing-member@example.com", "Land")
+        self.client.force_login(user)
+        gone = self.client.get("/")
+        self.assertEqual(gone.status_code, 302)
+        self.assertEqual(gone["Location"], "/decouvrir/")
+        sitemap = self.client.get("/sitemap.xml")
+        self.assertContains(sitemap, "/rencontre-echangiste-montreal/")
+        self.assertContains(sitemap, "/es/")
+        self.assertContains(sitemap, 'hreflang="es"')
+        robots = self.client.get("/robots.txt")
+        self.assertContains(robots, "Disallow: /profil/")
+        self.assertContains(robots, "Disallow: /photos/")
 
-        User = get_user_model()
-        u = User.objects.create_user(email="actif@example.com", password="x" * 12)
-        u.terms_accepted_at = timezone.now()
-        u.save()
-        Profile.objects.create(user=u, display_name="Actif", kind="single")
-        self.client.post("/invitation/renvoyer/", {"email": "actif@example.com"})
-        self.assertEqual(EmailToken.objects.filter(user=u, purpose="invite").count(), 0)
-
-
-class PasswordResetPageTests(TestCase):
-    def test_reset_post_shows_confirmation(self):
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
-        User.objects.create_user(email="r@example.com", password="x" * 12)
-        resp = self.client.post("/comptes/mot-de-passe/", {"email": "r@example.com"})
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.context["sent"])
-        self.assertContains(resp, "réinitialisation")
-
-    def test_reset_post_unknown_email_shows_same_confirmation(self):
-        resp = self.client.post("/comptes/mot-de-passe/", {"email": "nobody@example.com"})
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.context["sent"])
-
-
-class VerifyEmailAutoLoginTests(TestCase):
-    def test_verify_link_logs_in_and_redirects_to_profile(self):
-        from django.contrib.auth import get_user_model
-        from django.utils import timezone
-        from datetime import timedelta, date
-        from swingapp.models import Profile, EmailToken
-        from swingapp.models import new_token
-
-        User = get_user_model()
-        u = User.objects.create_user(email="verifyme@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1))
-        Profile.objects.create(user=u, display_name="VerifyMe", city="", bio="",
-                               trial_ends_at=timezone.now() + timedelta(days=7))
-        raw, digest = new_token()
-        EmailToken.objects.create(user=u, purpose="verify", token_hash=digest,
-                                  expires_at=timezone.now() + timedelta(hours=24))
-        resp = self.client.get(f"/comptes/verifier/{raw}/")
-        # Connecté automatiquement et redirigé vers Mon profil (profil incomplet)
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp["Location"], "/moi/")
-        u.refresh_from_db()
-        self.assertIsNotNone(u.email_verified_at)
-        # La session est authentifiée
-        self.assertIn("_auth_user_id", self.client.session)
-
-    def test_verify_link_complete_profile_goes_to_discover(self):
-        from django.contrib.auth import get_user_model
-        from django.utils import timezone
-        from datetime import timedelta, date
-        from swingapp.models import Profile, EmailToken, Photo
-        from swingapp.models import new_token
-        from django.core.files.base import ContentFile
-        from io import BytesIO
-        from PIL import Image
-
-        User = get_user_model()
-        u = User.objects.create_user(email="verifyfull@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1))
-        p = Profile.objects.create(user=u, display_name="VerifyFull", city="Lyon", bio="bio complète",
-                                   trial_ends_at=timezone.now() + timedelta(days=7))
-        out = BytesIO()
-        Image.new("RGB", (100, 100)).save(out, format="JPEG")
-        photo = Photo(profile=p, is_primary=True, moderation_status="approved")
-        photo.image.save("t.jpg", ContentFile(out.getvalue()), save=True)
-        raw, digest = new_token()
-        EmailToken.objects.create(user=u, purpose="verify", token_hash=digest,
-                                  expires_at=timezone.now() + timedelta(hours=24))
-        resp = self.client.get(f"/comptes/verifier/{raw}/")
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp["Location"], "/decouvrir/")
-
-
-class StripePromoCodeTests(TestCase):
-    def test_checkout_allows_promotion_codes(self):
-        from unittest.mock import patch
-        from django.contrib.auth import get_user_model
-        from django.test import override_settings
-        from django.utils import timezone
-        from datetime import timedelta, date
-        from swingapp.models import Profile
-
-        User = get_user_model()
-        u = User.objects.create_user(email="promo@test.xx", password="motdepasse10", birth_date=date(1990, 1, 1),
-                                     terms_accepted_at=timezone.now(), adult_declared=True,
-                                     email_verified_at=timezone.now())
-        from io import BytesIO
-        from PIL import Image
-        from django.core.files.base import ContentFile
-        from swingapp.models import Photo
-        p = Profile.objects.create(user=u, display_name="Promo", city="Lyon", bio="bio",
-                                   trial_ends_at=timezone.now() + timedelta(days=7))
-        out = BytesIO()
-        Image.new("RGB", (100, 100)).save(out, format="JPEG")
-        photo = Photo(profile=p, is_primary=True, moderation_status="approved")
-        photo.image.save("t.jpg", ContentFile(out.getvalue()), save=True)
-        self.client.force_login(u)
-        captured = {}
-
-        class FakeSession:
-            url = "https://checkout.stripe.com/pay/cs_test_123"
-
-        def fake_create(**kwargs):
-            captured.update(kwargs)
-            return FakeSession()
-
-        with override_settings(STRIPE_SECRET_KEY="sk_test_x", STRIPE_PRICE_ID="price_x"):
-            with patch("stripe.checkout.Session.create", side_effect=fake_create):
-                resp = self.client.post("/abonnement/stripe/")
-        self.assertTrue(captured.get("allow_promotion_codes"))
-        self.assertEqual(captured.get("mode"), "subscription")

@@ -185,3 +185,8 @@ Non exécutés : téléphone.
 Exécutés : inscription et ajout de membre avec Jour / Mois / Année ; 30 février refusé ; moins de 18 ans refusé ; date incomplète refusée ; mois en français, anglais et espagnol ; les dates de voyage et la date du partenaire dans Mon profil restent des calendriers. 141 tests Django OK. collectstatic OK. SECURE_PROXY_SSL_HEADER et CSRF_TRUSTED_ORIGINS vérifiés au chargement. Aucune migration. Réglages SMTP non touchés.
 Non exécutés : téléphone.
 
+# Rapport de tests — landing page, 2026-10-12
+
+Exécutés : la page d'accueil Django est la landing (français, anglais, espagnol) ; un membre connecté est renvoyé vers Découverte ; les quatre villes répondent en trois langues ; le prix schéma est 29.00 USD ; le HTML statique de test ne contient pas iswing.live ni data-app ; robots.txt continue d'interdire /profil/ et /photos/. 142 tests Django OK. collectstatic OK. Aucune migration. Réglages SMTP non touchés.
+Non exécutés : téléphone, déploiement Render, validation manuelle sur le testeur schema.org en ligne.
+

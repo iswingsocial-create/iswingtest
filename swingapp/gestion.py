@@ -470,6 +470,7 @@ def send_partner_invite(profile, request):
     partner = getattr(profile, "partner", None)
     if partner is None or not partner.consent_email:
         return ""
+    EmailToken.objects.filter(user=profile.user, purpose="partner", used_at__isnull=True).update(used_at=timezone.now())
     raw, digest = new_token()
     EmailToken.objects.create(
         user=profile.user,
@@ -1051,7 +1052,7 @@ def invite_accept(request, token):
     row = _email_token(token, "invite")
     lang = getattr(request, "lang", "fr")
     if row is None:
-        return render(request, "invite_expired.html", {"title": t(lang, "link_expired"), "body": t(lang, "link_expired_body")})
+        return render(request, "simple.html", {"title": t(lang, "link_expired"), "body": t(lang, "link_expired_body")})
     error = ""
     if request.method == "POST":
         password = request.POST.get("password", "")
@@ -1088,7 +1089,7 @@ def partner_accept(request, token):
     row = _email_token(token, "partner")
     lang = getattr(request, "lang", "fr")
     if row is None:
-        return render(request, "invite_expired.html", {"title": t(lang, "link_expired"), "body": t(lang, "link_expired_body")})
+        return render(request, "simple.html", {"title": t(lang, "link_expired"), "body": t(lang, "link_expired_body")})
     partner = getattr(row.user.profile, "partner", None)
     error = ""
     if request.method == "POST":
@@ -1129,7 +1130,6 @@ def partner_accept(request, token):
                 partner.save()
                 row.used_at = timezone.now()
                 row.save(update_fields=["used_at"])
-                EmailToken.objects.filter(user=row.user, purpose="partner", used_at__isnull=True).exclude(pk=row.pk).update(used_at=timezone.now())
                 from .services import ensure_profile
 
                 ensure_profile(account)
@@ -1149,21 +1149,6 @@ def partner_accept(request, token):
 def invite_hold(request):
     lang = getattr(request, "lang", "fr")
     return render(request, "simple.html", {"title": t(lang, "invite_hold_title"), "body": t(lang, "invite_hold_body")})
-
-
-def invite_resend(request):
-    """Le membre dont le lien d'invitation a expiré peut demander un nouveau lien lui-même."""
-    sent = False
-    if request.method == "POST":
-        sent = True
-        email = (request.POST.get("email") or "").strip()
-        user = User.objects.filter(email__iexact=email).select_related("profile").first()
-        profile = getattr(user, "profile", None) if user else None
-        if user and profile is not None and user.terms_accepted_at is None:
-            latest = EmailToken.objects.filter(user=user, purpose="invite").order_by("-id").first()
-            if not latest or latest.created_at <= timezone.now() - timedelta(minutes=2):
-                send_member_invite(profile, request)
-    return render(request, "invite_resend.html", {"sent": sent})
 
 
 @staff_only

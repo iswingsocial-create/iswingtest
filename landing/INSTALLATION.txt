@@ -1,0 +1,8 @@
+Installation de la landing iSwing — 5 étapes
+
+1. Ouvrez landing/_build/build.py. Laissez MODE = "TEST" tant que le site de test est en ligne. Le jour du lancement, changez uniquement cette ligne pour MODE = "LIVE". Vérifiez PRICE_AMOUNT = "29" et PRICE_CURRENCY = "USD" : ils doivent être identiques, au cent près, au prix Stripe indiqué dans /gestion/.
+2. Depuis la racine du projet : python landing/_build/build.py
+   Cela régénère le dossier landing/ (français, anglais, espagnol, quatre villes) ainsi que static/landing/.
+3. L'application Django sert déjà cette landing comme page d'accueil. Les visiteurs connectés sont renvoyés vers /decouvrir/. Les adresses d'inscription, de connexion et des pages légales passent par les routes Django, pas par une adresse écrite en dur.
+4. Ne remplacez pas le robots.txt de l'application par celui du dossier landing/ tant que le site et l'application sont sur le même domaine. Django publie /robots.txt et /sitemap.xml. Le robots.txt du dossier landing/ ne sert que si le site marketing est séparé (mode LIVE, iswing.live).
+5. Sur Windows, extrayez la mise à jour dans C:\iSwing, choisissez Remplacer, et conservez .env, .venv et data. Lancez Installer.bat, puis Demarrer.bat.

@@ -133,9 +133,9 @@ def _send_token(user, purpose, lang="fr"):
 
 
 def home(request):
-    if request.user.is_authenticated:
-        return redirect("discover")
-    return render(request, "home.html")
+    from .landing_views import render_home
+
+    return render_home(request, "fr")
 
 
 def register(request):
@@ -1858,14 +1858,25 @@ def robots_txt(request):
 
 
 def sitemap_xml(request):
-    base = settings.ISWING_PUBLIC_BASE_URL.rstrip("/")
+    site = settings.ISWING_PUBLIC_BASE_URL.rstrip("/")
+    from .landing_views import sitemap_groups
     from .models import LegalPage
 
-    urls = [base + "/"]
+    body = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+    ]
+    for paths in sitemap_groups():
+        for code in ("fr", "en", "es"):
+            loc = site + paths[code]
+            links = "".join(
+                f'<xhtml:link rel="alternate" hreflang="{lang}" href="{site}{paths[lang]}"/>'
+                for lang in ("fr", "en", "es")
+            )
+            links += f'<xhtml:link rel="alternate" hreflang="x-default" href="{site}{paths["fr"]}"/>'
+            body.append(f"<url><loc>{loc}</loc>{links}</url>")
     for page in LegalPage.objects.all():
-        urls.append(f"{base}/legal/{page.slug}/")
-    body = ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"]
-    body.extend(f"<url><loc>{url}</loc></url>" for url in urls)
+        body.append(f"<url><loc>{site}/legal/{page.slug}/</loc></url>")
     body.append("</urlset>")
     return HttpResponse("\n".join(body), content_type="application/xml")
 

@@ -105,6 +105,17 @@ def ensure_subscription(user):
     return sub
 
 
+def start_trial_at_signup(profile):
+    """Démarre l'essai gratuit dès l'inscription (7 jours par défaut)."""
+    if not profile:
+        return None
+    if profile.trial_ends_at and profile.trial_ends_at > timezone.now():
+        return profile.subscription
+    days = int(SiteSetting.get("trial_days", settings.TRIAL_DAYS))
+    profile.trial_ends_at = timezone.now() + timedelta(days=days)
+    profile.save(update_fields=["trial_ends_at"])
+    return sync_trial(profile)
+
 def sync_trial(profile):
     sub = ensure_subscription(profile.user)
     if profile.validated_at and not profile.trial_ends_at:
@@ -122,18 +133,6 @@ def sync_trial(profile):
         sub.status = "expired"
         sub.save(update_fields=["status", "updated_at"])
     return sub
-
-
-def start_trial_at_signup(profile):
-    """Démarre l'essai gratuit dès l'inscription (7 jours par défaut)."""
-    if not profile:
-        return None
-    if profile.trial_ends_at and profile.trial_ends_at > timezone.now():
-        return profile.subscription
-    days = int(SiteSetting.get("trial_days", settings.TRIAL_DAYS))
-    profile.trial_ends_at = timezone.now() + timedelta(days=days)
-    profile.save(update_fields=["trial_ends_at"])
-    return sync_trial(profile)
 
 
 def is_premium(user):

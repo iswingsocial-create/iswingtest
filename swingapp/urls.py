@@ -3,11 +3,14 @@ from django.urls import path
 from . import config_views
 from . import gestion
 from . import businesses as business_views
+from . import landing_views
 from . import views
 from .testlots import views as testlot_views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("en/", landing_views.render_home, {"lang": "en"}, name="landing_en"),
+    path("es/", landing_views.render_home, {"lang": "es"}, name="landing_es"),
     path("comptes/inscription/", views.register, name="register"),
     path("comptes/connexion/", views.login_view, name="login"),
     path("comptes/deconnexion/", views.logout_view, name="logout"),
@@ -115,7 +118,6 @@ urlpatterns = [
     path("sitemap.xml", views.sitemap_xml, name="sitemap"),
     path("invitation/partenaire/<str:token>/", gestion.partner_accept, name="partner_accept"),
     path("invitation/en-attente/", gestion.invite_hold, name="invite_hold"),
-    path("invitation/renvoyer/", gestion.invite_resend, name="invite_resend"),
     path("invitation/<str:token>/", gestion.invite_accept, name="invite_accept"),
     path("gestion/profils-test/", testlot_views.test_batches, name="test_batches"),
     path("gestion/profils-test/importer/", testlot_views.test_batch_import, name="test_batch_import"),
@@ -130,3 +132,5 @@ urlpatterns = [
     path("sw.js", views.service_worker, name="sw"),
     path("sante/", views.health, name="health"),
 ]
+
+urlpatterns += landing_views.city_paths()
