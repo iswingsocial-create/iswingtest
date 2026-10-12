@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iSwing – swinger dating app for couples and singles</title>
-<meta name="description" content="iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. 7-day free trial, then US$29 per month.">
+<meta name="description" content="iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. A free trial of 7 days, then US$29 per month.">
 <meta name="keywords" content="swinger dating app, swinger couples Montreal, lifestyle dating Quebec, swingers Cancun, Mexico City swingers">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <meta name="rating" content="adult">
@@ -19,7 +19,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="fr_CA"><meta property="og:locale:alternate" content="es_MX">
 <meta property="og:title" content="iSwing – swinger dating app for couples and singles">
-<meta property="og:description" content="iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. 7-day free trial, then US$29 per month.">
+<meta property="og:description" content="iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. A free trial of 7 days, then US$29 per month.">
 <meta property="og:url" content="https://iswingtest.onrender.com/en/">
 <meta property="og:image" content="https://iswingtest.onrender.com/assets/og-image-en.jpg">
 <meta property="og:image:width" content="1200">
@@ -27,7 +27,7 @@
 <meta property="og:image:alt" content="iSwing logo, swinger dating app">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="iSwing – swinger dating app for couples and singles">
-<meta name="twitter:description" content="iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. 7-day free trial, then US$29 per month.">
+<meta name="twitter:description" content="iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. A free trial of 7 days, then US$29 per month.">
 <meta name="twitter:image" content="https://iswingtest.onrender.com/assets/og-image-en.jpg">
 <meta name="twitter:image:alt" content="iSwing logo, swinger dating app">
 <script type="application/ld+json">
@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "The trial lasts 7 days. You can send up to 10 likes per day and 2 messages per match, so you can explore the app before subscribing.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -107,7 +108,7 @@
    "@id": "https://iswingtest.onrender.com/en/#webpage",
    "url": "https://iswingtest.onrender.com/en/",
    "name": "iSwing – swinger dating app for couples and singles",
-   "description": "iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. 7-day free trial, then US$29 per month.",
+   "description": "iSwing is the swinger dating app for open-minded couples and singles in Montréal, Québec City and Mexico. A free trial of 7 days, then US$29 per month.",
    "inLanguage": "en",
    "isPartOf": {
     "@id": "https://iswingtest.onrender.com/#website"
@@ -134,7 +135,7 @@
      "name": "How much does iSwing cost?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "The subscription costs US$29 per month, after a 7-day free trial."
+      "text": "The subscription costs US$29 per month, after a free trial of 7 days."
      }
     },
     {
@@ -239,6 +240,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -262,6 +267,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -299,7 +308,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
    <a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Start your free trial</a>
    <a class="btn ghost" href="https://iswingtest.onrender.com/comptes/connexion/">Log in</a>
   </div>
-  <ul class="badges"><li>7-day free trial</li><li>US$29 / month after</li><li>Couples and singles</li><li>Adults 18+ only</li></ul>
+  <ul class="badges"><li>7 days free trial</li><li>US$29 / month after</li><li>Couples and singles</li><li>Adults 18+ only</li></ul>
  </div>
  <img class="hero-art" src="../assets/hero-rings.svg" alt="Two interlocking purple rings, a symbol of partners meeting" width="480" height="360" fetchpriority="high">
 </section>
@@ -330,20 +339,24 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 <section id="safety" class="card" aria-labelledby="safe-h">
  <h2 id="safe-h">Safety, consent and verification</h2>
  <p class="muted">Freedom does not exist without respect. iSwing is built for meetings between consenting adults.</p>
- <ul class="grid g3" style="list-style:none;padding:0;margin:0"><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 21s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.6-7 10-7 10z"/></svg><h3>Consent first</h3><p>Every exchange depends on the explicit agreement of everyone involved. No means no, online and in person.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><h3>Profile checks</h3><p>Verification measures help limit fake profiles and keep the community genuine.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><h3>Report and block</h3><p>Report inappropriate behaviour or block a profile. Reports are reviewed by the team.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><h3>Discretion</h3><p>Your information stays confidential and you control what you share on your profile.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><h3>Control your photos</h3><p>Choose which photos to show and to whom. No platform can prevent every screenshot.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><h3>Account deletion</h3><p>You can delete your account and your data whenever you want.</p></li></ul>
+ <ul class="grid g3" style="list-style:none;padding:0;margin:0"><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 21s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.6-7 10-7 10z"/></svg><h3>Consent first</h3><p>Every exchange depends on the explicit agreement of everyone involved. No means no, online and in person.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><h3>Profile checks</h3><p>Verification measures help limit fake profiles and keep the community genuine.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><h3>Report and block</h3><p>Report inappropriate behavior or block a profile. Reports are reviewed by the team.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><h3>Discretion</h3><p>Your information stays confidential and you control what you share on your profile.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><h3>Control your photos</h3><p>Choose which photos to show and to whom. No platform can prevent every screenshot.</p></li><li class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><h3>Account deletion</h3><p>You can delete your account and your data whenever you want.</p></li></ul>
 </section>
 <section id="cities" class="card" aria-labelledby="city-h">
  <h2 id="city-h">Swinger dating near you</h2>
  <p class="muted">A swinger couple in Montréal, lifestyle dating in Québec City, a trip to Cancún or life in Mexico City: meet adults who share your interests in your city.</p>
- <ul class="grid g2 g4" style="list-style:none;padding:0;margin:0"><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-montreal/"><img src="../assets/city-montreal.svg" alt="Illustration of Montréal" width="400" height="240" loading="lazy" decoding="async"><span>Montréal<em>Swinger couples in Montréal</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-quebec-city/"><img src="../assets/city-quebec.svg" alt="Illustration of Québec City" width="400" height="240" loading="lazy" decoding="async"><span>Québec City<em>Lifestyle dating in Québec City</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-cancun/"><img src="../assets/city-cancun.svg" alt="Illustration of Cancún" width="400" height="240" loading="lazy" decoding="async"><span>Cancún<em>Swingers in Cancún</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-mexico-city/"><img src="../assets/city-mexico.svg" alt="Illustration of Mexico City" width="400" height="240" loading="lazy" decoding="async"><span>Mexico City<em>Swingers in Mexico City</em></span></a></li></ul>
+ <div class="city-carousel" data-city-carousel>
+  <button type="button" class="city-arrow" data-city-dir="-1" aria-label="Previous cities">‹</button>
+  <ul class="city-track"><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-montreal/"><img src="../assets/city-montreal.svg" alt="Illustration of Montréal" width="400" height="240" loading="lazy" decoding="async"><span>Montréal<em>Swinger couples in Montréal</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-quebec-city/"><img src="../assets/city-quebec.svg" alt="Illustration of Québec City" width="400" height="240" loading="lazy" decoding="async"><span>Québec City<em>Lifestyle dating in Québec City</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-cancun/"><img src="../assets/city-cancun.svg" alt="Illustration of Cancún" width="400" height="240" loading="lazy" decoding="async"><span>Cancún<em>Swingers in Cancún</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/en/swinger-dating-mexico-city/"><img src="../assets/city-mexico.svg" alt="Illustration of Mexico City" width="400" height="240" loading="lazy" decoding="async"><span>Mexico City<em>Swingers in Mexico City</em></span></a></li></ul>
+  <button type="button" class="city-arrow" data-city-dir="1" aria-label="Next cities">›</button>
+ </div>
 </section>
 <section id="faq" class="card" aria-labelledby="faq-h">
  <h2 id="faq-h">Frequently asked questions</h2>
- <details open><summary>What is iSwing?</summary><p>iSwing is a swinger and lifestyle dating app that connects adult couples and singles, in Québec and Mexico.</p></details><details><summary>How much does iSwing cost?</summary><p>The subscription costs US$29 per month, after a 7-day free trial.</p></details><details><summary>What does the free trial include?</summary><p>The trial lasts 7 days. You can send up to 10 likes per day and 2 messages per match, so you can explore the app before subscribing.</p></details><details><summary>Is iSwing only for couples?</summary><p>No. iSwing welcomes swinger couples and singles — women, men and non-binary people — in a respectful setting.</p></details><details><summary>Do I need to be 18?</summary><p>Yes. iSwing is strictly reserved for people aged 18 and over.</p></details><details><summary>Which cities?</summary><p>Search works by city. Pages introduce Montréal, Québec City, Cancún and Mexico City. The community can exist elsewhere too.</p></details><details><summary>How is my privacy protected?</summary><p>You choose which details and photos are visible, you can report or block a member, and you can delete your account.</p></details><details><summary>Can I use it on my phone?</summary><p>Yes. iSwing runs in your phone&#x27;s browser and can be installed on your home screen.</p></details>
+ <details open><summary>What is iSwing?</summary><p>iSwing is a swinger and lifestyle dating app that connects adult couples and singles, in Québec and Mexico.</p></details><details><summary>How much does iSwing cost?</summary><p>The subscription costs US$29 per month, after a free trial of 7 days.</p></details><details><summary>What does the free trial include?</summary><p>The trial lasts 7 days. You can send up to 10 likes per day and 2 messages per match, so you can explore the app before subscribing.</p></details><details><summary>Is iSwing only for couples?</summary><p>No. iSwing welcomes swinger couples and singles — women, men and non-binary people — in a respectful setting.</p></details><details><summary>Do I need to be 18?</summary><p>Yes. iSwing is strictly reserved for people aged 18 and over.</p></details><details><summary>Which cities?</summary><p>Search works by city. Pages introduce Montréal, Québec City, Cancún and Mexico City. The community can exist elsewhere too.</p></details><details><summary>How is my privacy protected?</summary><p>You choose which details and photos are visible, you can report or block a member, and you can delete your account.</p></details><details><summary>Can I use it on my phone?</summary><p>Yes. iSwing runs in your phone&#x27;s browser and can be installed on your home screen.</p></details>
 </section>
 <section class="card cta-band" aria-labelledby="band-h">
  <h2 id="band-h">Ready to explore your desires with confidence?</h2>
- <p class="muted">Join iSwing today. 7 days free, no commitment.</p>
+ <p class="muted">Join iSwing today. 7 free days, no commitment.</p>
  <a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Start your free trial</a>
 </section>
 
@@ -359,6 +372,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

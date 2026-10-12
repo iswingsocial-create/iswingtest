@@ -3,6 +3,7 @@ from django.urls import path
 from . import config_views
 from . import gestion
 from . import businesses as business_views
+from . import landing_admin
 from . import landing_views
 from . import views
 from .testlots import views as testlot_views
@@ -108,6 +109,9 @@ urlpatterns = [
     path("gestion/communications/<int:pk>/", gestion.communication_detail, name="gestion_comm"),
     path("gestion/communications/modele/<int:pk>/", gestion.template_save, name="gestion_template"),
     path("gestion/parametres/", gestion.settings_page, name="gestion_settings"),
+    path("gestion/landing/", landing_admin.landing_page, name="gestion_landing"),
+    path("gestion/landing/ville/nouvelle/", landing_admin.city_edit, name="gestion_landing_city_new"),
+    path("gestion/landing/ville/<int:pk>/", landing_admin.city_edit, name="gestion_landing_city"),
     path("gestion/configuration/", config_views.configuration, name="gestion_config"),
     path("push/cle/", views.push_key, name="push_key"),
     path("push/enregistrer/", views.push_register, name="push_register"),
@@ -131,6 +135,8 @@ urlpatterns = [
     path("manifest.webmanifest", views.manifest, name="manifest"),
     path("sw.js", views.service_worker, name="sw"),
     path("sante/", views.health, name="health"),
+    path("landing-media/<path:name>", landing_views.landing_media, name="landing_media"),
+    path("rencontre-echangiste-<slug:slug>/", landing_views.render_city, {"lang": "fr"}, name="landing_city_fr"),
+    path("en/swinger-dating-<slug:slug>/", landing_views.render_city, {"lang": "en"}, name="landing_city_en"),
+    path("es/citas-swingers-<slug:slug>/", landing_views.render_city, {"lang": "es"}, name="landing_city_es"),
 ]
-
-urlpatterns += landing_views.city_paths()

@@ -736,6 +736,48 @@ class SellerPayout(models.Model):
         constraints = [models.UniqueConstraint(fields=["seller", "period"], name="uniq_seller_period")]
 
 
+class LandingCity(models.Model):
+    """Ville affichée sur la landing. Désactivation seulement : pas de suppression définitive."""
+
+    name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80, unique=True)
+    slug_en = models.SlugField(max_length=80, unique=True)
+    slug_es = models.SlugField(max_length=80, unique=True)
+    image = models.ImageField(upload_to="landing/cities/", blank=True)
+    is_active = models.BooleanField(default=True)
+    position = models.PositiveIntegerField(default=0)
+    name_fr = models.CharField(max_length=80, blank=True)
+    name_en = models.CharField(max_length=80, blank=True)
+    name_es = models.CharField(max_length=80, blank=True)
+    tagline_fr = models.CharField(max_length=160, blank=True)
+    tagline_en = models.CharField(max_length=160, blank=True)
+    tagline_es = models.CharField(max_length=160, blank=True)
+    h1_fr = models.CharField(max_length=180, blank=True)
+    h1_en = models.CharField(max_length=180, blank=True)
+    h1_es = models.CharField(max_length=180, blank=True)
+    title_fr = models.CharField(max_length=180, blank=True)
+    title_en = models.CharField(max_length=180, blank=True)
+    title_es = models.CharField(max_length=180, blank=True)
+    desc_fr = models.TextField(blank=True)
+    desc_en = models.TextField(blank=True)
+    desc_es = models.TextField(blank=True)
+    kw_fr = models.CharField(max_length=240, blank=True)
+    kw_en = models.CharField(max_length=240, blank=True)
+    kw_es = models.CharField(max_length=240, blank=True)
+    body_fr = models.TextField(blank=True)
+    body_en = models.TextField(blank=True)
+    body_es = models.TextField(blank=True)
+    faq_fr = models.JSONField(default=list, blank=True)
+    faq_en = models.JSONField(default=list, blank=True)
+    faq_es = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return self.name
+
+
 def new_token():
     raw = secrets.token_urlsafe(32)
     digest = hashlib.sha256(raw.encode()).hexdigest()

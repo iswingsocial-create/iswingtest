@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "La prueba dura 7 días. Usted puede enviar hasta 10 me gusta por día y 2 mensajes por match, para conocer la aplicación antes de suscribirse.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -239,6 +240,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -262,6 +267,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -294,7 +303,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  <div>
   <span class="eyebrow">Citas liberales · 18+</span>
   <h1 id="h1">La aplicación de citas swingers para parejas y solteros</h1>
-  <p class="lead">iSwing reúne parejas swingers y solteros con mentalidad abierta, de Montreal a Cancún. Primero la discreción, el respeto y el consentimiento. Pruébelo gratis durante 7 días, en su celular, en su computadora o cuando ya estacionó el carro.</p>
+  <p class="lead">iSwing reúne parejas swingers y solteros con mentalidad abierta, de Montreal a Cancún. Primero la discreción, el respeto y el consentimiento. Pruébelo gratis durante 7 días, en su celular o en su computadora.</p>
   <div class="row">
    <a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Comience la prueba gratuita</a>
    <a class="btn ghost" href="https://iswingtest.onrender.com/comptes/connexion/">Inicie sesión</a>
@@ -305,7 +314,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </section>
 <section id="como-funciona" class="card" aria-labelledby="how-h">
  <h2 id="how-h">¿Cómo funciona iSwing?</h2>
- <p class="muted">Tres pasos para unirse a la comunidad, al ritmo de usted.</p>
+ <p class="muted">Tres pasos para unirse a la comunidad, a su ritmo.</p>
  <ol class="grid g3" style="list-style:none;padding:0;margin:0"><li class="step"><span class="num" aria-hidden="true">1</span><h3>Cree su perfil</h3><p>Regístrese solo o en pareja, describa lo que busca, sus límites y la ciudad donde desea conocer personas.</p></li><li class="step"><span class="num" aria-hidden="true">2</span><h3>Descubra y marque me gusta</h3><p>Recorra perfiles de parejas y solteros cerca de usted y marque me gusta en los que le interesen.</p></li><li class="step"><span class="num" aria-hidden="true">3</span><h3>Haga match y escriba</h3><p>Cuando el interés es mutuo, hay match: se abre la mensajería para conocerse con discreción.</p></li></ol>
 </section>
 <section id="precios" class="card" aria-labelledby="price-h">
@@ -334,15 +343,19 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </section>
 <section id="ciudades" class="card" aria-labelledby="city-h">
  <h2 id="city-h">Citas swingers cerca de usted</h2>
- <p class="muted">Una pareja swinger en Montreal, citas liberales en Quebec, un viaje a Cancún o la vida en la Ciudad de México: conozca adultos que comparten sus ganas en su ciudad.</p>
- <ul class="grid g2 g4" style="list-style:none;padding:0;margin:0"><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-montreal/"><img src="../assets/city-montreal.svg" alt="Ilustración de Montreal" width="400" height="240" loading="lazy" decoding="async"><span>Montreal<em>Parejas swingers en Montreal</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-quebec/"><img src="../assets/city-quebec.svg" alt="Ilustración de Quebec" width="400" height="240" loading="lazy" decoding="async"><span>Quebec<em>Citas liberales en Quebec</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-cancun/"><img src="../assets/city-cancun.svg" alt="Ilustración de Cancún" width="400" height="240" loading="lazy" decoding="async"><span>Cancún<em>Swingers en Cancún</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-ciudad-de-mexico/"><img src="../assets/city-mexico.svg" alt="Ilustración de Ciudad de México" width="400" height="240" loading="lazy" decoding="async"><span>Ciudad de México<em>Swingers en la Ciudad de México</em></span></a></li></ul>
+ <p class="muted">Una pareja swinger en Montreal, citas liberales en Quebec, un viaje a Cancún o la vida en la Ciudad de México: conozca adultos que comparten sus deseos en su ciudad.</p>
+ <div class="city-carousel" data-city-carousel>
+  <button type="button" class="city-arrow" data-city-dir="-1" aria-label="Ciudades anteriores">‹</button>
+  <ul class="city-track"><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-montreal/"><img src="../assets/city-montreal.svg" alt="Ilustración de Montreal" width="400" height="240" loading="lazy" decoding="async"><span>Montreal<em>Parejas swingers en Montreal</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-quebec/"><img src="../assets/city-quebec.svg" alt="Ilustración de Quebec" width="400" height="240" loading="lazy" decoding="async"><span>Quebec<em>Citas liberales en Quebec</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-cancun/"><img src="../assets/city-cancun.svg" alt="Ilustración de Cancún" width="400" height="240" loading="lazy" decoding="async"><span>Cancún<em>Swingers en Cancún</em></span></a></li><li><a class="city" href="https://iswingtest.onrender.com/es/citas-swingers-ciudad-de-mexico/"><img src="../assets/city-mexico.svg" alt="Ilustración de Ciudad de México" width="400" height="240" loading="lazy" decoding="async"><span>Ciudad de México<em>Swingers en la Ciudad de México</em></span></a></li></ul>
+  <button type="button" class="city-arrow" data-city-dir="1" aria-label="Ciudades siguientes">›</button>
+ </div>
 </section>
 <section id="faq" class="card" aria-labelledby="faq-h">
  <h2 id="faq-h">Preguntas frecuentes</h2>
  <details open><summary>¿Qué es iSwing?</summary><p>iSwing es una aplicación de citas swingers y liberales que conecta parejas y solteros adultos, en Quebec y en México.</p></details><details><summary>¿Cuánto cuesta iSwing?</summary><p>La suscripción cuesta 29 USD al mes, después de una prueba gratuita de 7 días.</p></details><details><summary>¿Qué incluye la prueba gratuita?</summary><p>La prueba dura 7 días. Usted puede enviar hasta 10 me gusta por día y 2 mensajes por match, para conocer la aplicación antes de suscribirse.</p></details><details><summary>¿iSwing es solo para parejas?</summary><p>No. iSwing recibe parejas swingers y solteros, mujeres, hombres y personas no binarias, en un marco de respeto.</p></details><details><summary>¿Hay que tener 18 años?</summary><p>Sí. iSwing está estrictamente reservado a personas de 18 años o más.</p></details><details><summary>¿En qué ciudades?</summary><p>La búsqueda es por ciudad. Hay páginas de Montreal, Quebec, Cancún y la Ciudad de México. La comunidad también puede existir en otros lugares.</p></details><details><summary>¿Cómo se protege su privacidad?</summary><p>Usted elige la información y las fotos visibles, puede reportar o bloquear a un miembro y puede eliminar su cuenta.</p></details><details><summary>¿Puede usarlo en su celular?</summary><p>Sí. iSwing funciona en el navegador de su celular o de su computadora, y usted puede instalarlo en la pantalla de inicio.</p></details>
 </section>
 <section class="card cta-band" aria-labelledby="band-h">
- <h2 id="band-h">¿Listo para vivir sus ganas, con confianza?</h2>
+ <h2 id="band-h">¿Desea vivir sus deseos con confianza?</h2>
  <p class="muted">Únase a iSwing hoy. 7 días gratis, sin compromiso.</p>
  <a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Comience la prueba gratuita</a>
 </section>
@@ -359,6 +372,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

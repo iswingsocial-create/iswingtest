@@ -190,3 +190,9 @@ Non exécutés : téléphone.
 Exécutés : la page d'accueil Django est la landing (français, anglais, espagnol) ; un membre connecté est renvoyé vers Découverte ; les quatre villes répondent en trois langues ; le prix schéma est 29.00 USD ; le HTML statique de test ne contient pas iswing.live ni data-app ; robots.txt continue d'interdire /profil/ et /photos/. 142 tests Django OK. collectstatic OK. Aucune migration. Réglages SMTP non touchés.
 Non exécutés : téléphone, déploiement Render, validation manuelle sur le testeur schema.org en ligne.
 
+# Rapport de tests — landing v2, contenus dynamiques, 2026-10-12
+
+Exécutés : corrections d'espagnol (usted, deseos, a su ritmo, plus de « carro » sur l'accueil) ; jours d'essai, j'aime et messages lus à chaque page depuis Paramètres, y compris singulier, FAQ et JSON-LD, en trois langues ; onglet /gestion/landing/ avec image principale 960×720 et villes 800×480 recompressées ; ville ajoutée puis masquée (carrousel, pages FR/EN/ES, sitemap) ; URLs historiques conservées (Montréal, Québec City, Cancún, Ciudad de México). Migration additive 0019. 145 tests Django OK. manage.py check OK. makemigrations --check sans écart. collectstatic OK. Réglages SMTP non touchés. Aucun profil existant modifié par la migration.
+Non exécutés : téléphone, déploiement Render.
+
+

@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "La prueba dura 7 días. Usted puede enviar hasta 10 me gusta por día y 2 mensajes por match, para conocer la aplicación antes de suscribirse.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -208,6 +209,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -231,6 +236,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -262,7 +271,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 <article class="card prose">
  <p class="crumbs"><a href="https://iswingtest.onrender.com/es/">iSwing</a> · Montreal</p>
  <h1>Parejas swingers en Montreal: citas discretas entre adultos</h1>
- <p>Una pareja swinger en Montreal suele buscar lo mismo: personas mayores de edad, discretas y claras con lo que desean. iSwing es una aplicación de citas swingers pensada para ese ritmo. Usted crea un perfil individual o de pareja, indica Montreal y recorre adultos que eligieron estar ahí. El Plateau, el Mile-End, Rosemont, Verdun, la Rive-Sud y Laval aparecen a menudo en los perfiles. La búsqueda es por ciudad. Usted no publica una dirección exacta. Nadie necesita su calle para saber si una conversación vale la pena.</p><p>La vida liberal de Montreal no cabe en un solo lugar. Hay quien prefiere una cena tranquila entre semana, quien sale el sábado y quien escribe un buen rato antes de verse. La aplicación no vende boletos ni organiza la fiesta por usted. Sirve para conocerse antes, entre adultos que consienten. Una pareja puede invitar a la segunda persona a confirmar su propio acuerdo con su correo: nadie queda inscrito en lugar de otro. Solteros y solteras, y personas no binarias, son bienvenidos si comparten ese respeto.</p><p>La discreción pesa tanto como la química. Usted decide qué fotos son públicas y cuáles permanecen privadas. Marca me gusta solo si lo desea. El match existe únicamente cuando el interés es mutuo: la mensajería no se abre antes. Usted puede reportar, bloquear, pausar el perfil o eliminar la cuenta. Ninguna plataforma puede impedir todas las capturas de pantalla, e iSwing lo dice en lugar de prometer lo imposible. Para un primer encuentro, un café del centro es más prudente que una dirección privada.</p><p>La prueba gratuita dura siete días. Durante la prueba, cada persona puede enviar hasta diez me gusta por día y dos mensajes por match. Alcanza para ver si la comunidad de Montreal le corresponde, sin suscribirse de inmediato. Después, un solo precio mensual quita esos límites entre sus matches, y usted puede cancelar. Los impuestos dependen de donde usted viva. Las condiciones están escritas en el sitio, no escondidas en un eslogan.</p><p>Para empezar, abra iSwing en el navegador de su celular o de su computadora, cree el perfil y escriba una presentación honesta: lo que busca en Montreal y lo que no quiere. Si usted está de paso por un congreso o un fin de semana, indique Montreal mientras dure el viaje y luego vuelva a su ciudad. Si llega en carro desde Laval, no hace falta poner la hora exacta del puente en el primer mensaje. El consentimiento no es un trámite posterior. Es la condición para que el encuentro siga siendo libre.</p>
+ <p>Una pareja swinger en Montreal suele buscar lo mismo: personas mayores de edad, discretas y claras con lo que desean. iSwing es una aplicación de citas swingers pensada para ese ritmo. Usted crea un perfil individual o de pareja, indica Montreal y recorre adultos que eligieron estar ahí. El Plateau, el Mile-End, Rosemont, Verdun, la Rive-Sud y Laval aparecen a menudo en los perfiles. La búsqueda es por ciudad. Usted no publica una dirección exacta. Nadie necesita su calle para saber si una conversación vale la pena.</p><p>La vida liberal de Montreal no cabe en un solo lugar. Hay quien prefiere una cena tranquila entre semana, quien sale el sábado y quien escribe un buen rato antes de verse. La aplicación no vende boletos ni organiza la fiesta por usted. Sirve para conocerse antes, entre adultos que consienten. Una pareja puede invitar a la segunda persona a confirmar su propio acuerdo con su correo: nadie queda inscrito en lugar de otro. Solteros y solteras, y personas no binarias, son bienvenidos si comparten ese respeto.</p><p>La discreción pesa tanto como la química. Usted decide qué fotos son públicas y cuáles permanecen privadas. Marca me gusta solo si lo desea. El match existe únicamente cuando el interés es mutuo: la mensajería no se abre antes. Usted puede reportar, bloquear, pausar el perfil o eliminar la cuenta. Ninguna plataforma puede impedir todas las capturas de pantalla, e iSwing lo dice en lugar de prometer lo imposible. Para un primer encuentro, un café del centro es más prudente que una dirección privada.</p><p>La prueba gratuita dura 7 días. Durante la prueba, cada persona puede enviar hasta 10 me gusta por día y 2 mensajes por match. Alcanza para ver si la comunidad de Montreal le corresponde, sin suscribirse de inmediato. Después, un solo precio mensual quita esos límites entre sus matches, y usted puede cancelar. Los impuestos dependen de donde usted viva. Las condiciones están escritas en el sitio, no escondidas en un eslogan.</p><p>Para empezar, abra iSwing en el navegador de su celular o de su computadora, cree el perfil y escriba una presentación honesta: lo que busca en Montreal y lo que no quiere. Si usted está de paso por un congreso o un fin de semana, indique Montreal mientras dure el viaje y luego vuelva a su ciudad. Si llega en carro desde Laval, no hace falta poner la hora exacta del puente en el primer mensaje. El consentimiento no es un trámite posterior. Es la condición para que el encuentro siga siendo libre.</p>
  <p><a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Comience la prueba gratuita</a></p>
 </article>
 <section class="card" aria-labelledby="city-faq">
@@ -285,6 +294,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

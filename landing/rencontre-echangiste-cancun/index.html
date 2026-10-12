@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "L'essai dure 7 jours. Vous pouvez envoyer jusqu'à 10 « j'aime » par jour et 2 messages par match, pour découvrir l'application avant de vous abonner.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -208,6 +209,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -231,6 +236,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -262,7 +271,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 <article class="card prose">
  <p class="crumbs"><a href="https://iswingtest.onrender.com/">iSwing</a> · Cancún</p>
  <h1>Swingers à Cancún et sur la Riviera Maya</h1>
- <p>Cancún n&#x27;est pas seulement une carte postale. Des couples et des célibataires y vivent toute l&#x27;année, d&#x27;autres n&#x27;y restent qu&#x27;une semaine entre la zone hôtelière, le centre et Puerto Cancún. iSwing sert à ces deux rythmes. Vous indiquez Cancún comme ville le temps réel de votre présence, pas « pour toujours » si vous repartez dimanche. Une rencontre swinger à Cancún commence mieux quand les dates sont écrites noir sur blanc. Personne n&#x27;aime découvrir au troisième message que l&#x27;autre est déjà à l&#x27;aéroport.</p><p>La Riviera Maya élargit le cercle sans le rendre flou. Playa del Carmen est proche, Tulum l&#x27;est moins qu&#x27;on ne le croit aux heures de pointe, et un trajet n&#x27;est pas une obligation. Dites dans quelle partie de Cancún vous pouvez réellement vous rendre. L&#x27;application ne montre pas votre hôtel et vous ne devriez pas coller un numéro de chambre dans le premier message. Proposez un lieu public : un café du centre, un lobby animé, un endroit où chacun peut partir seul. Le consentement se redit sur place. Il ne se présume pas parce que le profil a plu.</p><p>Les langues se croisent. Beaucoup de membres lisent le français, l&#x27;anglais ou l&#x27;espagnol. Écrire dans la langue que vous parlez vraiment évite les malentendus sur les limites. Un couple échangiste en vacances et un couple qui habite Cancún n&#x27;ont pas le même calendrier : le premier a trois soirs, le second peut proposer la semaine suivante. Les deux sont légitimes si c&#x27;est dit. Les célibataires sont les bienvenus quand ils respectent le cadre du couple, et les couples le sont quand ils ne parlent pas à la place de quelqu&#x27;un qui n&#x27;a pas accepté.</p><p>Les photos de plage sont tentantes et parfois trop précises. Évitez un cliché qui montre le nom de l&#x27;hôtel, le bracelet du tout-inclus ou une chambre identifiable. Gardez le plus personnel en privé. Vous aimez un profil, le match n&#x27;arrive que si l&#x27;autre vous aime aussi, puis la messagerie s&#x27;ouvre. Pendant l&#x27;essai : dix « j&#x27;aime » par jour et deux messages par match. L&#x27;abonnement lève ces plafonds entre vos matchs. Vous pouvez bloquer, signaler ou supprimer le compte même en vacances, depuis le navigateur du téléphone.</p><p>iSwing n&#x27;est pas une agence de voyage et ne réserve ni club ni table. Si une soirée existe, elle appartient à ses organisateurs, pas à cette page. Votre sécurité ne dépend pas d&#x27;un slogan sur le soleil. Elle dépend de dates claires, d&#x27;un lieu public, d&#x27;adultes de 18 ans et plus, et du droit de vous arrêter. Ouvrez l&#x27;application, mettez Cancún seulement pour les jours où vous y êtes, et présentez le voyage tel qu&#x27;il est. La zone hôtelière est longue. Un bon message, lui, peut rester court.</p>
+ <p>Cancún n&#x27;est pas seulement une carte postale. Des couples et des célibataires y vivent toute l&#x27;année, d&#x27;autres n&#x27;y restent qu&#x27;une semaine entre la zone hôtelière, le centre et Puerto Cancún. iSwing sert à ces deux rythmes. Vous indiquez Cancún comme ville le temps réel de votre présence, pas « pour toujours » si vous repartez dimanche. Une rencontre swinger à Cancún commence mieux quand les dates sont écrites noir sur blanc. Personne n&#x27;aime découvrir au troisième message que l&#x27;autre est déjà à l&#x27;aéroport.</p><p>La Riviera Maya élargit le cercle sans le rendre flou. Playa del Carmen est proche, Tulum l&#x27;est moins qu&#x27;on ne le croit aux heures de pointe, et un trajet n&#x27;est pas une obligation. Dites dans quelle partie de Cancún vous pouvez réellement vous rendre. L&#x27;application ne montre pas votre hôtel et vous ne devriez pas coller un numéro de chambre dans le premier message. Proposez un lieu public : un café du centre, un lobby animé, un endroit où chacun peut partir seul. Le consentement se redit sur place. Il ne se présume pas parce que le profil a plu.</p><p>Les langues se croisent. Beaucoup de membres lisent le français, l&#x27;anglais ou l&#x27;espagnol. Écrire dans la langue que vous parlez vraiment évite les malentendus sur les limites. Un couple échangiste en vacances et un couple qui habite Cancún n&#x27;ont pas le même calendrier : le premier a trois soirs, le second peut proposer la semaine suivante. Les deux sont légitimes si c&#x27;est dit. Les célibataires sont les bienvenus quand ils respectent le cadre du couple, et les couples le sont quand ils ne parlent pas à la place de quelqu&#x27;un qui n&#x27;a pas accepté.</p><p>Les photos de plage sont tentantes et parfois trop précises. Évitez un cliché qui montre le nom de l&#x27;hôtel, le bracelet du tout-inclus ou une chambre identifiable. Gardez le plus personnel en privé. Vous aimez un profil, le match n&#x27;arrive que si l&#x27;autre vous aime aussi, puis la messagerie s&#x27;ouvre. Pendant l&#x27;essai : 10 « j&#x27;aime » par jour et 2 messages par match. L&#x27;abonnement lève ces plafonds entre vos matchs. Vous pouvez bloquer, signaler ou supprimer le compte même en vacances, depuis le navigateur du téléphone.</p><p>iSwing n&#x27;est pas une agence de voyage et ne réserve ni club ni table. Si une soirée existe, elle appartient à ses organisateurs, pas à cette page. Votre sécurité ne dépend pas d&#x27;un slogan sur le soleil. Elle dépend de dates claires, d&#x27;un lieu public, d&#x27;adultes de 18 ans et plus, et du droit de vous arrêter. Ouvrez l&#x27;application, mettez Cancún seulement pour les jours où vous y êtes, et présentez le voyage tel qu&#x27;il est. La zone hôtelière est longue. Un bon message, lui, peut rester court.</p>
  <p><a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Commencer l&#x27;essai gratuit</a></p>
 </article>
 <section class="card" aria-labelledby="city-faq">
@@ -285,6 +294,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

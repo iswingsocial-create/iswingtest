@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="{% static 'landing/icon-192.png' %}">
 <link rel="apple-touch-icon" href="{% static 'landing/icon-192.png' %}">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="{% static 'landing/landing.css' %}">
+<link rel="stylesheet" href="{% static 'landing/landing.css' %}?v=24">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="iSwing">
 <meta property="og:locale" content="{{ L.locale }}">
@@ -56,7 +56,7 @@
  </a>
  <nav aria-label="{{ L.nav_label }}">
   {% if not city %}<div class="nav-links">{% for item in L.nav %}<a href="{{ item.href }}">{{ item.label }}</a>{% endfor %}</div>{% endif %}
-  <nav class="langs" aria-label="{{ L.lang_nav_label }}">{% for link in lang_links %}<a class="lang" href="{% url link.name %}" hreflang="{{ link.code }}" lang="{{ link.code }}"{% if link.code == L.lang %} aria-current="true"{% endif %}>{{ link.label }}</a>{% endfor %}</nav>
+  <nav class="langs" aria-label="{{ L.lang_nav_label }}">{% for link in lang_links %}<a class="lang" href="{% if link.args %}{% url link.name link.args.0 %}{% else %}{% url link.name %}{% endif %}" hreflang="{{ link.code }}" lang="{{ link.code }}"{% if link.code == L.lang %} aria-current="true"{% endif %}>{{ link.label }}</a>{% endfor %}</nav>
   <a class="btn sm" href="{% url 'register' %}">{{ L.cta_short }}</a>
  </nav>
 </header>
@@ -73,7 +73,7 @@
  {% for item in city.faqs %}<details{% if item.open %} open{% endif %}><summary>{{ item.q }}</summary><p>{{ item.a }}</p></details>{% endfor %}
 </section>
 <section class="card">
- {% with 'landing/'|add:city.svg as city_img %}<img src="{% static city_img %}" alt="{{ city.alt }}" width="400" height="240">{% endwith %}
+ {% if city.image_url %}<img src="{{ city.image_url }}" alt="{{ city.alt }}" width="800" height="480">{% elif city.svg %}{% with 'landing/'|add:city.svg as city_img %}<img src="{% static city_img %}" alt="{{ city.alt }}" width="400" height="240">{% endwith %}{% endif %}
 </section>
 {% else %}
 <section class="hero" aria-labelledby="h1">
@@ -87,7 +87,11 @@
   </div>
   <ul class="badges">{% for item in L.badges %}<li>{{ item }}</li>{% endfor %}</ul>
  </div>
+ {% if hero_url %}
+ <img class="hero-art" src="{{ hero_url }}" alt="{{ L.hero_alt }}" width="960" height="720" fetchpriority="high">
+ {% else %}
  <img class="hero-art" src="{% static 'landing/hero-rings.svg' %}" alt="{{ L.hero_alt }}" width="480" height="360" fetchpriority="high">
+ {% endif %}
 </section>
 <section id="{{ L.how_id }}" class="card" aria-labelledby="how-h">
  <h2 id="how-h">{{ L.how_h }}</h2>
@@ -121,7 +125,11 @@
 <section id="{{ L.city_id }}" class="card" aria-labelledby="city-h">
  <h2 id="city-h">{{ L.city_h }}</h2>
  <p class="muted">{{ L.city_intro }}</p>
- <ul class="grid g2 g4" style="list-style:none;padding:0;margin:0">{% for card in cards %}<li><a class="city" href="{% url card.url_name %}">{% with 'landing/'|add:card.svg as city_img %}<img src="{% static city_img %}" alt="{{ card.alt }}" width="400" height="240" loading="lazy" decoding="async">{% endwith %}<span>{{ card.name }}<em>{{ card.card }}</em></span></a></li>{% endfor %}</ul>
+ <div class="city-carousel" data-city-carousel>
+  <button type="button" class="city-arrow" data-city-dir="-1" aria-label="{{ L.city_prev }}">‹</button>
+  <ul class="city-track">{% for card in cards %}<li><a class="city" href="{% url card.url_name card.slug %}">{% if card.image_url %}<img src="{{ card.image_url }}" alt="{{ card.alt }}" width="400" height="240" loading="lazy" decoding="async">{% elif card.svg %}{% with 'landing/'|add:card.svg as city_img %}<img src="{% static city_img %}" alt="{{ card.alt }}" width="400" height="240" loading="lazy" decoding="async">{% endwith %}{% endif %}<span>{{ card.name }}<em>{{ card.card }}</em></span></a></li>{% endfor %}</ul>
+  <button type="button" class="city-arrow" data-city-dir="1" aria-label="{{ L.city_next }}">›</button>
+ </div>
 </section>
 <section id="{{ L.faq_id }}" class="card" aria-labelledby="faq-h">
  <h2 id="faq-h">{{ L.faq_h }}</h2>
@@ -140,11 +148,11 @@
  </a>
  <nav aria-label="{{ L.foot_legal }}">{% for item in L.legal %}<a href="{% url 'legal' item.slug %}">{{ item.label }}</a>{% endfor %}</nav>
  <p><span class="age18" aria-hidden="true">18+</span>{{ L.foot_18 }}</p>
- <p>{% for link in lang_links %}<a href="{% url link.name %}" hreflang="{{ link.code }}" lang="{{ link.code }}">{{ link.label }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+ <p>{% for link in lang_links %}<a href="{% if link.args %}{% url link.name link.args.0 %}{% else %}{% url link.name %}{% endif %}" hreflang="{{ link.code }}" lang="{{ link.code }}">{{ link.label }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}</p>
  <p class="small">{{ L.foot_copy }}</p>
 </footer>
 </div>
-<script src="{% static 'landing/gate.js' %}"></script>
+<script src="{% static 'landing/gate.js' %}?v=24"></script>
 {% if stats.ga4 %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ stats.ga4 }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ stats.ga4 }}');</script>{% endif %}
 {% if stats.gtm %}<script>window.dataLayer=window.dataLayer||[];</script><script async src="https://www.googletagmanager.com/gtm.js?id={{ stats.gtm }}"></script>{% endif %}
 {% if pixel.meta %}<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','{{ pixel.meta }}');fbq('track','PageView');</script>{% endif %}

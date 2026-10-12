@@ -1,4 +1,19 @@
 (function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

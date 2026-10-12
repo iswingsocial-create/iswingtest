@@ -73,6 +73,58 @@ def price_label(lang):
     return f"US${amount}"
 
 
+def trial_bundle(trial=None):
+    if trial is None:
+        return 7, 10, 2
+    if isinstance(trial, dict):
+        return int(trial["days"]), int(trial["likes"]), int(trial["messages"])
+    days, likes, messages = trial
+    return int(days), int(likes), int(messages)
+
+
+def trial_tokens(lang, days, likes, messages):
+    days, likes, messages = int(days), int(likes), int(messages)
+    if lang == "fr":
+        days_phrase = "1 jour" if days == 1 else f"{days} jours"
+        days_free = "1 jour gratuit" if days == 1 else f"{days} jours gratuits"
+        likes_per_day = "1 « j'aime » par jour" if likes == 1 else f"{likes} « j'aime » par jour"
+        messages_per_match = "1 message par match" if messages == 1 else f"{messages} messages par match"
+    elif lang == "en":
+        days_phrase = "1 day" if days == 1 else f"{days} days"
+        days_free = "1 free day" if days == 1 else f"{days} free days"
+        likes_per_day = "1 like per day" if likes == 1 else f"{likes} likes per day"
+        messages_per_match = "1 message per match" if messages == 1 else f"{messages} messages per match"
+    else:
+        days_phrase = "1 día" if days == 1 else f"{days} días"
+        days_free = "1 día gratis" if days == 1 else f"{days} días gratis"
+        likes_per_day = "1 me gusta por día" if likes == 1 else f"{likes} me gusta por día"
+        messages_per_match = "1 mensaje por match" if messages == 1 else f"{messages} mensajes por match"
+    return {
+        "days": str(days),
+        "likes": str(likes),
+        "messages": str(messages),
+        "days_phrase": days_phrase,
+        "days_free": days_free,
+        "likes_per_day": likes_per_day,
+        "messages_per_match": messages_per_match,
+        "price": price_label(lang),
+    }
+
+
+def apply_tokens(value, tokens):
+    if isinstance(value, str):
+        for key, repl in tokens.items():
+            value = value.replace("{" + key + "}", str(repl))
+        return value
+    if isinstance(value, list):
+        return [apply_tokens(item, tokens) for item in value]
+    if isinstance(value, tuple):
+        return tuple(apply_tokens(item, tokens) for item in value)
+    if isinstance(value, dict):
+        return {key: apply_tokens(item, tokens) for key, item in value.items()}
+    return value
+
+
 def word_count(text):
     return len(re.findall(r"\S+", text or ""))
 
@@ -136,6 +188,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -159,12 +215,31 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 """
 
 JS = r"""
 (function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}
@@ -190,23 +265,11 @@ JS = r"""
 """
 
 
-def _fill(value, price):
-    if isinstance(value, str):
-        return value.format(price=price)
-    return value
-
-
-def pack(lang):
-    raw = HOME[lang]
-    price = price_label(lang)
-    data = {}
-    for key, value in raw.items():
-        data[key] = value
-    data["title"] = _fill(raw["title"], price)
-    data["desc"] = _fill(raw["desc"], price)
-    data["badges"] = [_fill(item, price) for item in raw["badges"]]
-    data["pro_figure"] = _fill(raw["pro_figure"], price)
-    data["faq"] = [{"q": q, "a": _fill(a, price), "open": index == 0} for index, (q, a) in enumerate(raw["faq"])]
+def pack(lang, trial=None):
+    tokens = trial_tokens(lang, *trial_bundle(trial))
+    raw = apply_tokens(HOME[lang], tokens)
+    data = dict(raw)
+    data["faq"] = [{"q": q, "a": a, "open": index == 0} for index, (q, a) in enumerate(raw["faq"])]
     data["steps"] = [{"n": i + 1, "title": t, "text": d} for i, (t, d) in enumerate(raw["steps"])]
     data["nav"] = [{"href": href, "label": label} for href, label in raw["nav"]]
     data["legal"] = [{"slug": slug, "label": label} for slug, label in raw["legal"]]
@@ -221,11 +284,13 @@ def city_record(key):
     return None
 
 
-def city_pack(lang, key):
+def city_pack(lang, key, trial=None):
     city = city_record(key)
     if city is None or lang not in city:
         return None
-    data = dict(city[lang])
+    tokens = trial_tokens(lang, *trial_bundle(trial))
+    local = apply_tokens(city[lang], tokens)
+    data = dict(local)
     data["key"] = key
     data["svg"] = city["svg"]
     data["path"] = city["paths"][lang]
@@ -262,16 +327,23 @@ def home_paths():
     return {lang: HOME[lang]["path"] for lang in ("fr", "en", "es")}
 
 
-def json_ld(lang, city_key=None, site=None, app=None, asset_root=None):
+def json_ld(lang, city_key=None, site=None, app=None, asset_root=None, trial=None, city=None):
     site = (site or site_url()).rstrip("/")
     app = (app or app_url()).rstrip("/")
     asset_root = (asset_root or (site + "/assets")).rstrip("/")
-    page = pack(lang)
-    city = city_pack(lang, city_key) if city_key else None
+    page = pack(lang, trial)
+    if city is None and city_key:
+        city = city_pack(lang, city_key, trial)
     path = city["path"] if city else page["path"]
     url = site + path
     price = price_amount()
     org = site + "/#organization"
+    offer_text = ""
+    for item in page["faq"]:
+        low = item["a"].lower()
+        if "j'aime" in low or "per day" in low or "por día" in low:
+            offer_text = item["a"]
+            break
     graph = [
         {
             "@type": "Organization",
@@ -304,6 +376,7 @@ def json_ld(lang, city_key=None, site=None, app=None, asset_root=None):
                 "@type": "Offer",
                 "price": price,
                 "priceCurrency": PRICE_CURRENCY,
+                "description": offer_text,
                 "url": app + "/comptes/inscription/",
                 "category": "subscription",
                 "availability": "https://schema.org/InStock",
@@ -538,7 +611,11 @@ def _home_body(page, cards, site, app):
 <section id="{page['city_id']}" class="card" aria-labelledby="city-h">
  <h2 id="city-h">{_e(page['city_h'])}</h2>
  <p class="muted">{_e(page['city_intro'])}</p>
- <ul class="grid g2 g4" style="list-style:none;padding:0;margin:0">{cities}</ul>
+ <div class="city-carousel" data-city-carousel>
+  <button type="button" class="city-arrow" data-city-dir="-1" aria-label="{_e(page['city_prev'])}">‹</button>
+  <ul class="city-track">{cities}</ul>
+  <button type="button" class="city-arrow" data-city-dir="1" aria-label="{_e(page['city_next'])}">›</button>
+ </div>
 </section>
 <section id="{page['faq_id']}" class="card" aria-labelledby="faq-h">
  <h2 id="faq-h">{_e(page['faq_h'])}</h2>

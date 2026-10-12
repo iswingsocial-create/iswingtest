@@ -291,9 +291,7 @@ def resend_verification(request):
 
 def password_reset_request(request):
     dev_link = ""
-    sent = False
     if request.method == "POST":
-        sent = True
         user = User.objects.filter(email__iexact=request.POST.get("email", "").strip()).first()
         if user:
             latest = user.email_tokens.filter(purpose="reset").order_by("-id").first()
@@ -301,7 +299,7 @@ def password_reset_request(request):
                 raw = _send_token(user, "reset", getattr(request, "lang", "fr"))
                 if settings.DEBUG:
                     dev_link = f"/comptes/mot-de-passe/{raw}/"
-    return render(request, "password_reset.html", {"dev_link": dev_link, "sent": sent})
+    return render(request, "password_reset.html", {"dev_link": dev_link})
 
 
 def password_reset_confirm(request, token):

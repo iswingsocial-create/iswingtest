@@ -2338,8 +2338,10 @@ class V17LandingTests(TestCase):
         self.assertContains(spanish, "usted")
         self.assertContains(spanish, "celular")
         self.assertContains(spanish, "computadora")
-        self.assertContains(spanish, "carro")
+        self.assertNotContains(spanish, "carro")
+        self.assertNotContains(spanish, "estacionó")
         self.assertContains(spanish, "Inicie sesión")
+        self.assertContains(self.client.get("/es/citas-swingers-montreal/"), "carro")
         city = self.client.get("/rencontre-echangiste-montreal/")
         self.assertEqual(city.status_code, 200)
         self.assertContains(city, "couple échangiste")
@@ -2367,4 +2369,181 @@ class V17LandingTests(TestCase):
         robots = self.client.get("/robots.txt")
         self.assertContains(robots, "Disallow: /profil/")
         self.assertContains(robots, "Disallow: /photos/")
+
+
+class V18LandingDynamicTests(TestCase):
+    make = RulesTests.make
+    as_staff = RulesTests.as_staff
+
+    def _staff(self, email="landing-admin@example.com"):
+        admin, _ = self.make(email, "Desk")
+        admin.is_staff = True
+        admin.is_superuser = True
+        admin.save()
+        self.as_staff(admin)
+        return admin
+
+    def test_spanish_copy_and_default_trial_phrases(self):
+        es = self.client.get("/es/")
+        self.assertContains(es, "¿Desea vivir sus deseos con confianza?")
+        self.assertContains(es, "comparten sus deseos en su ciudad")
+        self.assertContains(es, "a su ritmo")
+        self.assertContains(es, "durante 7 días")
+        self.assertNotContains(es, "ganas")
+        self.assertNotContains(es, "al ritmo de usted")
+        self.assertNotContains(es, "¿Listo")
+        self.assertContains(es, "10 me gusta por día")
+        self.assertContains(es, "2 mensajes por match")
+        fr = self.client.get("/")
+        self.assertContains(fr, "7 jours")
+        self.assertContains(fr, "10 « j'aime » par jour")
+        self.assertContains(fr, "2 messages par match")
+        self.assertContains(fr, "data-city-carousel")
+        en = self.client.get("/en/")
+        self.assertContains(en, "7 days")
+        self.assertContains(en, "10 likes per day")
+        self.assertContains(en, "2 messages per match")
+
+    def test_settings_update_home_faq_and_jsonld(self):
+        admin = self._staff()
+        res = self.client.post("/gestion/parametres/", {"action": "quotas", "days": "10", "likes": "6", "messages": "1"})
+        self.assertEqual(res.status_code, 302)
+        self.client.logout()
+        fr = self.client.get("/")
+        self.assertContains(fr, "10 jours")
+        self.assertContains(fr, "6 « j'aime » par jour")
+        self.assertContains(fr, "1 message par match")
+        self.assertNotContains(fr, "7 jours")
+        self.assertNotContains(fr, "2 messages par match")
+        en = self.client.get("/en/")
+        self.assertContains(en, "10 days")
+        self.assertContains(en, "6 likes per day")
+        self.assertContains(en, "1 message per match")
+        self.assertNotContains(en, "7 days")
+        es = self.client.get("/es/")
+        self.assertContains(es, "10 días")
+        self.assertContains(es, "6 me gusta por día")
+        self.assertContains(es, "1 mensaje por match")
+        self.assertNotContains(es, "7 días")
+        self.as_staff(admin)
+        self.client.post("/gestion/parametres/", {"action": "quotas", "days": "1", "likes": "1", "messages": "1"})
+        self.client.logout()
+        single = self.client.get("/")
+        self.assertContains(single, "1 jour")
+        self.assertNotContains(single, "1 jours")
+        self.assertContains(single, "1 « j'aime » par jour")
+        self.assertContains(single, "1 message par match")
+        english = self.client.get("/en/")
+        self.assertContains(english, "1 day")
+        self.assertNotContains(english, "1 days")
+        self.assertContains(english, "1 like per day")
+        spanish = self.client.get("/es/")
+        self.assertContains(spanish, "1 día")
+        self.assertNotContains(spanish, "1 días")
+        self.assertContains(spanish, "1 me gusta por día")
+        self.assertContains(spanish, "1 mensaje por match")
+
+    def test_landing_tab_hero_city_and_sitemap(self):
+        import io
+        import tempfile
+        from pathlib import Path
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.test import override_settings
+        from PIL import Image
+
+        from swingapp.models import LandingCity, SiteSetting
+
+        admin = self._staff("landing-desk@example.com")
+        page = self.client.get("/gestion/landing/")
+        self.assertContains(page, "Dimensions optimales : 960 × 720 px (ratio 4:3), JPG ou WebP, max 500 Ko.")
+        self.assertContains(page, "Dimensions optimales : 800 × 480 px (ratio 5:3), JPG ou WebP, max 500 Ko.")
+        self.assertContains(page, "Paramètres")
+        buf = io.BytesIO()
+        Image.new("RGB", (1400, 1050), (30, 10, 60)).save(buf, format="JPEG")
+        upload = SimpleUploadedFile("saison.jpg", buf.getvalue(), content_type="image/jpeg")
+        with tempfile.TemporaryDirectory() as tmp:
+            with override_settings(MEDIA_ROOT=tmp):
+                bad = SimpleUploadedFile("note.svg", b"<svg xmlns='http://www.w3.org/2000/svg'></svg>", content_type="image/svg+xml")
+                refused = self.client.post("/gestion/landing/", {"action": "hero", "image": bad})
+                self.assertEqual(refused.status_code, 302)
+                self.assertFalse(SiteSetting.objects.filter(key="landing_hero_image").exists())
+                saved = self.client.post("/gestion/landing/", {"action": "hero", "image": upload})
+                self.assertEqual(saved.status_code, 302)
+                hero = Path(tmp) / "landing" / "hero.webp"
+                self.assertTrue(hero.is_file())
+                self.assertLessEqual(hero.stat().st_size, 500_000)
+                with Image.open(hero) as picture:
+                    self.assertLessEqual(picture.width, 960)
+                    self.assertLessEqual(picture.height, 720)
+                self.client.logout()
+                home = self.client.get("/")
+                self.assertContains(home, "/landing-media/hero.webp")
+                self.assertContains(home, "anneaux")
+                self.assertNotContains(home, "hero-rings.svg")
+                media = self.client.get("/landing-media/hero.webp")
+                self.assertEqual(media.status_code, 200)
+                self.assertEqual(media["Cache-Control"], "no-cache")
+                self.as_staff(admin)
+                body = "Première phrase de Playa, assez claire pour la page.\n\nDeuxième phrase de Playa, séparée par une ligne vide."
+                photo_buf = io.BytesIO()
+                Image.new("RGB", (1200, 720), (12, 40, 90)).save(photo_buf, format="JPEG")
+                city_photo = SimpleUploadedFile("playa.jpg", photo_buf.getvalue(), content_type="image/jpeg")
+                created = self.client.post("/gestion/landing/ville/nouvelle/", {
+                    "action": "save",
+                    "name": "Playa",
+                    "position": "9",
+                    "is_active": "1",
+                    "title_fr": "Playa FR",
+                    "title_en": "Playa EN",
+                    "title_es": "Playa ES",
+                    "desc_fr": "Description française de Playa.",
+                    "desc_en": "English description of Playa.",
+                    "desc_es": "Descripción en español de Playa.",
+                    "tagline_fr": "Accroche Playa",
+                    "tagline_en": "Playa tagline",
+                    "tagline_es": "Frase Playa",
+                    "body_fr": body,
+                    "body_en": "First Playa paragraph for visitors.\n\nSecond Playa paragraph for visitors.",
+                    "body_es": "Primer párrafo de Playa para usted.\n\nSegundo párrafo de Playa para usted.",
+                    "image": city_photo,
+                })
+                self.assertEqual(created.status_code, 302)
+                self.client.logout()
+                city = LandingCity.objects.get(slug="playa")
+                self.assertEqual(city.slug_en, "playa")
+                self.assertEqual(city.slug_es, "playa")
+                self.assertTrue(city.image.name.startswith("landing/cities/"))
+                stored = Path(tmp) / city.image.name
+                self.assertTrue(stored.is_file())
+                self.assertLessEqual(stored.stat().st_size, 500_000)
+                with Image.open(stored) as picture:
+                    self.assertLessEqual(picture.width, 800)
+                    self.assertLessEqual(picture.height, 480)
+                home = self.client.get("/")
+                self.assertContains(home, "Playa")
+                self.assertContains(home, 'href="/rencontre-echangiste-playa/"')
+                self.assertEqual(self.client.get("/rencontre-echangiste-playa/").status_code, 200)
+                self.assertContains(self.client.get("/rencontre-echangiste-playa/"), "Première phrase de Playa")
+                self.assertEqual(self.client.get("/en/swinger-dating-playa/").status_code, 200)
+                self.assertEqual(self.client.get("/es/citas-swingers-playa/").status_code, 200)
+                self.assertContains(self.client.get("/es/citas-swingers-playa/"), "usted")
+                sitemap = self.client.get("/sitemap.xml")
+                self.assertContains(sitemap, "/rencontre-echangiste-playa/")
+                self.assertContains(sitemap, "/en/swinger-dating-playa/")
+                self.assertContains(sitemap, "/es/citas-swingers-playa/")
+                self.assertContains(sitemap, "/rencontre-echangiste-montreal/")
+                self.assertEqual(self.client.get("/en/swinger-dating-quebec-city/").status_code, 200)
+                self.assertEqual(self.client.get("/es/citas-swingers-ciudad-de-mexico/").status_code, 200)
+                self.as_staff(admin)
+                off = self.client.post(f"/gestion/landing/ville/{city.id}/", {"action": "deactivate"})
+                self.assertEqual(off.status_code, 302)
+                city.refresh_from_db()
+                self.assertFalse(city.is_active)
+                self.client.logout()
+                self.assertNotContains(self.client.get("/"), "rencontre-echangiste-playa")
+                self.assertNotContains(self.client.get("/sitemap.xml"), "playa")
+                self.assertEqual(self.client.get("/rencontre-echangiste-playa/").status_code, 404)
+                self.assertEqual(self.client.get("/en/swinger-dating-montreal/").status_code, 200)
+
 

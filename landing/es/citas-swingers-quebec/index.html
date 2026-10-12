@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "La prueba dura 7 días. Usted puede enviar hasta 10 me gusta por día y 2 mensajes por match, para conocer la aplicación antes de suscribirse.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -208,6 +209,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -231,6 +236,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -262,7 +271,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 <article class="card prose">
  <p class="crumbs"><a href="https://iswingtest.onrender.com/es/">iSwing</a> · Quebec</p>
  <h1>Citas liberales en la ciudad de Quebec para parejas y solteros</h1>
- <p>Las citas swingers en la ciudad de Quebec suelen ser de círculo más pequeño que en Montreal, y por eso la discreción es tan concreta. En el Vieux-Québec, Saint-Roch, Sainte-Foy o Lévis, la gente se cruza. iSwing le permite conocer a alguien sin pegar un anuncio donde todo el mundo se conoce. Usted indica Quebec como ciudad de búsqueda. No publica su dirección, ni el nombre de su trabajo, ni una foto de la puerta de su casa.</p><p>Un encuentro liberal en Quebec puede empezar con un mensaje tranquilo y seguir con un café cerca de la place D&#x27;Youville, o con una caminata cuando el clima acompaña. El invierno no corta las conversaciones: solo las hace más fáciles desde el sillón. La aplicación no promete una multitud. Promete un marco: mayores de 18 años, interés mutuo antes de la mensajería, y el derecho de decir que no sin dar un discurso. La pareja tiene un solo perfil. La segunda persona acepta por sí misma, con su propio correo.</p><p>Si usted es soltero y busca una pareja swinger en Quebec, dígalo con claridad: qué busca, qué no acepta y si desea verse o solo conversar. La pareja debe la misma claridad. Las fotos públicas pueden ser sobrias. Las más personales siguen privadas hasta que usted decida mostrarlas a un match. Reportar y bloquear están disponibles. Eliminar la cuenta también, sin contarle su vida a un desconocido.</p><p>La prueba de siete días sirve para probar ese ritmo local. Diez me gusta por día y dos mensajes por match alcanzan para ver si los perfiles de Quebec, Lévis o Sainte-Foy le hablan. La suscripción posterior es la misma en todas partes: un precio mensual, me gusta y mensajes sin ese tope entre sus matches, y la posibilidad de cancelar. Nada en esta página cambia las reglas del servicio. Las condiciones y la privacidad siguen en las páginas legales de la aplicación.</p><p>Si usted vive en Quebec todo el año, escríbalo. Si sube desde Montreal el fin de semana, ponga las fechas en lugar de dejar creer que siempre está. Los malentendidos nacen ahí, no de la falta de fotos. Abra iSwing en su celular o en su computadora, elija la ciudad y preséntese como le gustaría que le hablen: con límites visibles desde la primera pantalla. El río separa Quebec y Lévis. Un primer mensaje respetuoso no necesita cruzar el puente, ni salir en carro de noche para decirlo.</p>
+ <p>Las citas swingers en la ciudad de Quebec suelen ser de círculo más pequeño que en Montreal, y por eso la discreción es tan concreta. En el Vieux-Québec, Saint-Roch, Sainte-Foy o Lévis, la gente se cruza. iSwing le permite conocer a alguien sin pegar un anuncio donde todo el mundo se conoce. Usted indica Quebec como ciudad de búsqueda. No publica su dirección, ni el nombre de su trabajo, ni una foto de la puerta de su casa.</p><p>Un encuentro liberal en Quebec puede empezar con un mensaje tranquilo y seguir con un café cerca de la place D&#x27;Youville, o con una caminata cuando el clima acompaña. El invierno no corta las conversaciones: solo las hace más fáciles desde el sillón. La aplicación no promete una multitud. Promete un marco: mayores de 18 años, interés mutuo antes de la mensajería, y el derecho de decir que no sin dar un discurso. La pareja tiene un solo perfil. La segunda persona acepta por sí misma, con su propio correo.</p><p>Si usted es soltero y busca una pareja swinger en Quebec, dígalo con claridad: qué busca, qué no acepta y si desea verse o solo conversar. La pareja debe la misma claridad. Las fotos públicas pueden ser sobrias. Las más personales siguen privadas hasta que usted decida mostrarlas a un match. Reportar y bloquear están disponibles. Eliminar la cuenta también, sin contarle su vida a un desconocido.</p><p>La prueba de 7 días sirve para probar ese ritmo local. 10 me gusta por día y 2 mensajes por match alcanzan para ver si los perfiles de Quebec, Lévis o Sainte-Foy le hablan. La suscripción posterior es la misma en todas partes: un precio mensual, me gusta y mensajes sin ese tope entre sus matches, y la posibilidad de cancelar. Nada en esta página cambia las reglas del servicio. Las condiciones y la privacidad siguen en las páginas legales de la aplicación.</p><p>Si usted vive en Quebec todo el año, escríbalo. Si sube desde Montreal el fin de semana, ponga las fechas en lugar de dejar creer que siempre está. Los malentendidos nacen ahí, no de la falta de fotos. Abra iSwing en su celular o en su computadora, elija la ciudad y preséntese como le gustaría que le hablen: con límites visibles desde la primera pantalla. El río separa Quebec y Lévis. Un primer mensaje respetuoso no necesita cruzar el puente, ni salir en carro de noche para decirlo.</p>
  <p><a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Comience la prueba gratuita</a></p>
 </article>
 <section class="card" aria-labelledby="city-faq">
@@ -285,6 +294,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "L'essai dure 7 jours. Vous pouvez envoyer jusqu'à 10 « j'aime » par jour et 2 messages par match, pour découvrir l'application avant de vous abonner.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -208,6 +209,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -231,6 +236,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -262,7 +271,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 <article class="card prose">
  <p class="crumbs"><a href="https://iswingtest.onrender.com/">iSwing</a> · Québec</p>
  <h1>Rencontres libertines à Québec : couples et célibataires</h1>
- <p>L&#x27;échangisme à Québec se vit souvent à plus petite échelle qu&#x27;à Montréal, et c&#x27;est précisément pour cela que la discrétion y est si concrète. Dans le Vieux-Québec, à Saint-Roch, à Sainte-Foy ou à Lévis, les cercles se recoupent. iSwing permet de faire connaissance sans coller une annonce dans un lieu où tout le monde se connaît. Vous indiquez Québec comme ville de recherche. Vous ne publiez pas votre adresse, ni le nom de votre employeur, ni une photo qui montrerait votre porte.</p><p>Une rencontre libertine à Québec peut commencer par un message tranquille, puis un café près de la place D&#x27;Youville ou une marche quand il fait doux. L&#x27;hiver n&#x27;arrête pas les conversations : il les rend juste plus faciles à mener depuis le canapé. L&#x27;application ne promet pas une foule. Elle promet un cadre : adultes de 18 ans et plus, intérêt réciproque avant la messagerie, et le droit de dire non sans se justifier. Un couple garde un seul profil. Le second partenaire accepte lui-même, avec son propre courriel.</p><p>Les célibataires qui rejoignent un couple échangiste à Québec ont intérêt à le dire simplement : ce qu&#x27;ils cherchent, ce qu&#x27;ils refusent, et s&#x27;ils sont là pour une rencontre ou seulement pour discuter. Les couples ont le même devoir de clarté. Les photos publiques peuvent rester sobres. Les photos plus personnelles restent privées jusqu&#x27;à ce que vous décidiez de les montrer à un match. Le signalement et le blocage sont disponibles. La suppression du compte l&#x27;est aussi, sans que vous ayez à raconter votre vie à un inconnu.</p><p>L&#x27;essai de sept jours sert à tester ce rythme local. Dix « j&#x27;aime » par jour et deux messages par match suffisent pour voir si des profils de Québec, de Lévis ou de Sainte-Foy vous parlent. L&#x27;abonnement qui suit est le même partout : un tarif mensuel, des « j&#x27;aime » et des messages sans ce plafond entre vos matchs, résiliation possible. Rien dans cette page ne change les règles du service. Les conditions d&#x27;abonnement et la politique de confidentialité restent les pages légales de l&#x27;application.</p><p>Si vous habitez Québec à l&#x27;année, écrivez-le. Si vous montez de Montréal pour la fin de semaine, dites les dates plutôt que de laisser croire que vous êtes toujours là. Les malentendus viennent souvent de là, pas d&#x27;un manque de photos. Ouvrez iSwing, choisissez la ville, et présentez-vous comme vous aimeriez qu&#x27;on vous parle : avec des limites visibles dès le premier écran. Le fleuve peut séparer Québec et Lévis. Un bon premier message, lui, n&#x27;a pas besoin de traverser le pont pour être respectueux.</p>
+ <p>L&#x27;échangisme à Québec se vit souvent à plus petite échelle qu&#x27;à Montréal, et c&#x27;est précisément pour cela que la discrétion y est si concrète. Dans le Vieux-Québec, à Saint-Roch, à Sainte-Foy ou à Lévis, les cercles se recoupent. iSwing permet de faire connaissance sans coller une annonce dans un lieu où tout le monde se connaît. Vous indiquez Québec comme ville de recherche. Vous ne publiez pas votre adresse, ni le nom de votre employeur, ni une photo qui montrerait votre porte.</p><p>Une rencontre libertine à Québec peut commencer par un message tranquille, puis un café près de la place D&#x27;Youville ou une marche quand il fait doux. L&#x27;hiver n&#x27;arrête pas les conversations : il les rend juste plus faciles à mener depuis le canapé. L&#x27;application ne promet pas une foule. Elle promet un cadre : adultes de 18 ans et plus, intérêt réciproque avant la messagerie, et le droit de dire non sans se justifier. Un couple garde un seul profil. Le second partenaire accepte lui-même, avec son propre courriel.</p><p>Les célibataires qui rejoignent un couple échangiste à Québec ont intérêt à le dire simplement : ce qu&#x27;ils cherchent, ce qu&#x27;ils refusent, et s&#x27;ils sont là pour une rencontre ou seulement pour discuter. Les couples ont le même devoir de clarté. Les photos publiques peuvent rester sobres. Les photos plus personnelles restent privées jusqu&#x27;à ce que vous décidiez de les montrer à un match. Le signalement et le blocage sont disponibles. La suppression du compte l&#x27;est aussi, sans que vous ayez à raconter votre vie à un inconnu.</p><p>L&#x27;essai de 7 jours sert à tester ce rythme local. 10 « j&#x27;aime » par jour et 2 messages par match suffisent pour voir si des profils de Québec, de Lévis ou de Sainte-Foy vous parlent. L&#x27;abonnement qui suit est le même partout : un tarif mensuel, des « j&#x27;aime » et des messages sans ce plafond entre vos matchs, résiliation possible. Rien dans cette page ne change les règles du service. Les conditions d&#x27;abonnement et la politique de confidentialité restent les pages légales de l&#x27;application.</p><p>Si vous habitez Québec à l&#x27;année, écrivez-le. Si vous montez de Montréal pour la fin de semaine, dites les dates plutôt que de laisser croire que vous êtes toujours là. Les malentendus viennent souvent de là, pas d&#x27;un manque de photos. Ouvrez iSwing, choisissez la ville, et présentez-vous comme vous aimeriez qu&#x27;on vous parle : avec des limites visibles dès le premier écran. Le fleuve peut séparer Québec et Lévis. Un bon premier message, lui, n&#x27;a pas besoin de traverser le pont pour être respectueux.</p>
  <p><a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Commencer l&#x27;essai gratuit</a></p>
 </article>
 <section class="card" aria-labelledby="city-faq">
@@ -285,6 +294,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

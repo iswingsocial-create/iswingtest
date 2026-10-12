@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "L'essai dure 7 jours. Vous pouvez envoyer jusqu'à 10 « j'aime » par jour et 2 messages par match, pour découvrir l'application avant de vous abonner.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -208,6 +209,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -231,6 +236,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -262,7 +271,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 <article class="card prose">
  <p class="crumbs"><a href="https://iswingtest.onrender.com/">iSwing</a> · Montréal</p>
  <h1>Couple échangiste à Montréal : rencontres discrètes entre adultes</h1>
- <p>Un couple échangiste à Montréal cherche souvent la même chose : des personnes majeures, discrètes et claires sur leurs envies. iSwing est une application de rencontre échangiste pensée pour ce rythme. Vous créez un profil solo ou un profil de couple, vous indiquez Montréal, puis vous parcourez des adultes qui ont choisi d&#x27;être là. Le Plateau, le Mile-End, Rosemont, Verdun, la Rive-Sud et Laval reviennent souvent dans les profils. La recherche se fait par ville, jamais en publiant une adresse exacte. Personne n&#x27;a besoin de votre rue pour savoir si une conversation vaut la peine.</p><p>La vie libertine montréalaise ne se résume pas à une seule scène. Certaines personnes veulent un souper calme en semaine, d&#x27;autres une sortie le samedi, d&#x27;autres encore un échange épistolaire avant toute rencontre. L&#x27;application ne vend pas de billets et n&#x27;organise pas de soirée à votre place. Elle sert à faire connaissance avant, entre adultes consentants. Un couple peut inviter le second partenaire à confirmer lui-même son accord : personne n&#x27;est inscrit à la place de l&#x27;autre. Les célibataires, femmes, hommes et personnes non binaires, sont les bienvenus s&#x27;ils partagent ce respect.</p><p>La discrétion compte autant que l&#x27;alchimie. Vous décidez quelles photos sont publiques et lesquelles restent privées. Vous aimez un profil seulement si l&#x27;envie est là. Un match n&#x27;existe que lorsque l&#x27;intérêt est réciproque : la messagerie ne s&#x27;ouvre pas avant. Vous pouvez signaler, bloquer, mettre le profil en pause ou supprimer le compte. Aucune plateforme ne peut empêcher toutes les captures d&#x27;écran, et iSwing le dit clairement plutôt que de promettre l&#x27;impossible. Pour un premier rendez-vous, un café ou un bar du centre reste plus sûr qu&#x27;une adresse privée.</p><p>L&#x27;essai gratuit dure sept jours. Pendant l&#x27;essai, chaque personne peut envoyer jusqu&#x27;à dix « j&#x27;aime » par jour et deux messages par match. C&#x27;est assez pour voir si la communauté de Montréal vous correspond, sans abonnement immédiat. Ensuite, un seul tarif mensuel ouvre les « j&#x27;aime » et la messagerie sans ce plafond, entre vos matchs, avec la possibilité de résilier. Les taxes dépendent de votre lieu de résidence. Les conditions d&#x27;abonnement sont écrites sur le site, pas cachées dans un slogan.</p><p>Pour commencer, ouvrez iSwing dans le navigateur de votre téléphone ou de votre ordinateur, créez le profil et rédigez une présentation honnête : ce que vous cherchez à Montréal et ce que vous ne voulez pas. Si vous êtes de passage pour un congrès ou un week-end, indiquez Montréal le temps du séjour, puis revenez à votre ville. Le premier message peut être simple. Le consentement n&#x27;est pas une formalité ajoutée après coup. C&#x27;est la condition pour que la rencontre reste libre, que vous habitiez le Plateau ou que vous arriviez de Laval en fin de journée.</p>
+ <p>Un couple échangiste à Montréal cherche souvent la même chose : des personnes majeures, discrètes et claires sur leurs envies. iSwing est une application de rencontre échangiste pensée pour ce rythme. Vous créez un profil solo ou un profil de couple, vous indiquez Montréal, puis vous parcourez des adultes qui ont choisi d&#x27;être là. Le Plateau, le Mile-End, Rosemont, Verdun, la Rive-Sud et Laval reviennent souvent dans les profils. La recherche se fait par ville, jamais en publiant une adresse exacte. Personne n&#x27;a besoin de votre rue pour savoir si une conversation vaut la peine.</p><p>La vie libertine montréalaise ne se résume pas à une seule scène. Certaines personnes veulent un souper calme en semaine, d&#x27;autres une sortie le samedi, d&#x27;autres encore un échange épistolaire avant toute rencontre. L&#x27;application ne vend pas de billets et n&#x27;organise pas de soirée à votre place. Elle sert à faire connaissance avant, entre adultes consentants. Un couple peut inviter le second partenaire à confirmer lui-même son accord : personne n&#x27;est inscrit à la place de l&#x27;autre. Les célibataires, femmes, hommes et personnes non binaires, sont les bienvenus s&#x27;ils partagent ce respect.</p><p>La discrétion compte autant que l&#x27;alchimie. Vous décidez quelles photos sont publiques et lesquelles restent privées. Vous aimez un profil seulement si l&#x27;envie est là. Un match n&#x27;existe que lorsque l&#x27;intérêt est réciproque : la messagerie ne s&#x27;ouvre pas avant. Vous pouvez signaler, bloquer, mettre le profil en pause ou supprimer le compte. Aucune plateforme ne peut empêcher toutes les captures d&#x27;écran, et iSwing le dit clairement plutôt que de promettre l&#x27;impossible. Pour un premier rendez-vous, un café ou un bar du centre reste plus sûr qu&#x27;une adresse privée.</p><p>L&#x27;essai gratuit dure 7 jours. Pendant l&#x27;essai, chaque personne peut envoyer jusqu&#x27;à 10 « j&#x27;aime » par jour et 2 messages par match. C&#x27;est assez pour voir si la communauté de Montréal vous correspond, sans abonnement immédiat. Ensuite, un seul tarif mensuel ouvre les « j&#x27;aime » et la messagerie sans ce plafond, entre vos matchs, avec la possibilité de résilier. Les taxes dépendent de votre lieu de résidence. Les conditions d&#x27;abonnement sont écrites sur le site, pas cachées dans un slogan.</p><p>Pour commencer, ouvrez iSwing dans le navigateur de votre téléphone ou de votre ordinateur, créez le profil et rédigez une présentation honnête : ce que vous cherchez à Montréal et ce que vous ne voulez pas. Si vous êtes de passage pour un congrès ou un week-end, indiquez Montréal le temps du séjour, puis revenez à votre ville. Le premier message peut être simple. Le consentement n&#x27;est pas une formalité ajoutée après coup. C&#x27;est la condition pour que la rencontre reste libre, que vous habitiez le Plateau ou que vous arriviez de Laval en fin de journée.</p>
  <p><a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Commencer l&#x27;essai gratuit</a></p>
 </article>
 <section class="card" aria-labelledby="city-faq">
@@ -285,6 +294,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

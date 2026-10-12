@@ -118,8 +118,6 @@ class Command(BaseCommand):
             profile.show_online = True
             profile.last_active = timezone.now()
             profile.save()
-            from swingapp.services import sync_trial
-            sync_trial(profile)
             if kind == "couple" and partner_name:
                 Partner.objects.update_or_create(
                     profile=profile,

@@ -5,7 +5,8 @@
   <h2>Quotas d'essai</h2>
   <form method="post">{% csrf_token %}
     <input type="hidden" name="action" value="quotas">
-    <label>J'aime par jour <input name="likes" value="{{ likes }}"></label>
+    <label>Jours d'essai <input name="days" value="{{ days }}" inputmode="numeric"></label>
+    <label>J'aime par jour <input name="likes" value="{{ likes }}" inputmode="numeric"></label>
     <label>Messages par match <input name="messages" value="{{ messages_cap }}"></label>
     <button class="btn" type="submit">Enregistrer</button>
   </form>

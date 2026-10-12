@@ -85,6 +85,7 @@
     "@type": "Offer",
     "price": "29.00",
     "priceCurrency": "USD",
+    "description": "La prueba dura 7 días. Usted puede enviar hasta 10 me gusta por día y 2 mensajes por match, para conocer la aplicación antes de suscribirse.",
     "url": "https://iswingtest.onrender.com/comptes/inscription/",
     "category": "subscription",
     "availability": "https://schema.org/InStock",
@@ -208,6 +209,10 @@ h3{font-size:1.1rem;margin:.2rem 0 .4rem}
 .city:hover{transform:translateY(-2px)}
 .city img{display:block;width:100%;aspect-ratio:5/3;object-fit:cover;background:linear-gradient(135deg,var(--indigo),var(--bg-2))}
 .city span{display:block;padding:.7rem .9rem;font-weight:700}.city span em{display:block;font-style:normal;font-weight:400;font-size:.85rem;color:var(--muted)}
+.city-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.35rem;align-items:center}
+.city-track{display:flex;gap:.9rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;padding:.15rem 0 .35rem;margin:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.city-track > li{flex:0 0 100%;scroll-snap-align:start;min-width:0}
+.city-arrow{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:#07040f;color:var(--text);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 .2rem}
 details{background:#07040f;border:1px solid var(--line);border-radius:14px;padding:.2rem 1rem;margin:0 0 .6rem}
 summary{cursor:pointer;font-weight:700;padding:.75rem 0;min-height:44px}
 details p{margin:0 0 .9rem;color:#ddd3fb}
@@ -231,6 +236,10 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
  .card{padding:2rem}
  .g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
  .price{grid-template-columns:1fr 1fr}
+ .city-track > li{flex-basis:calc((100% - 1.8rem) / 3)}
+}
+@media (min-width:1080px){
+ .city-track > li{flex-basis:calc((100% - 2.7rem) / 4)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </head>
@@ -262,7 +271,7 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 <article class="card prose">
  <p class="crumbs"><a href="https://iswingtest.onrender.com/es/">iSwing</a> · Ciudad de México</p>
  <h1>Citas liberales en la Ciudad de México, barrio por barrio</h1>
- <p>La Ciudad de México es demasiado grande para un anuncio vago. Una pareja liberal en la Condesa no tiene la misma noche que una pareja en Coyoacán, Polanco, la Roma Norte o Del Valle. iSwing le pide una ciudad, no una tachuela sobre su edificio. Escriba el barrio en el texto del perfil. Diga hasta dónde acepta desplazarse. Cruzar la ciudad un viernes por la tarde puede tardar más que el propio encuentro. La claridad sobre la zona evita conversaciones que mueren en el trayecto.</p><p>La discreción en un edificio tiene sus reglas. No publique una vista reconocible desde su balcón, una credencial de acceso o el nombre de una residencia. Las fotos públicas pueden mostrar un ambiente sin mostrar una dirección. Las más personales siguen privadas hasta un match, y solo si usted lo decide. El primer encuentro conviene en un lugar público del barrio que ya nombró. Cada quien debe poder irse por su lado. El consentimiento de las dos personas de una pareja no se negocia a espaldas de una de ellas: la segunda persona confirma su propio acuerdo.</p><p>En la Ciudad de México, muchos solteros prefieren un marco claro antes que una lista infinita de indirectas. Diga si busca una pareja, una persona o ambas, y qué queda fuera. Las parejas tienen el mismo trabajo. iSwing no reemplaza su criterio. Solo impide que la mensajería se abra mientras el interés no sea mutuo. Usted puede bloquear, reportar y eliminar la cuenta. Ninguna aplicación impide todas las capturas de pantalla: parta de ese límite, no de una promesa.</p><p>La prueba de siete días sirve para ver si de verdad hay perfiles en su zona. Diez me gusta por día y dos mensajes por match son los topes de la prueba, los mismos que en el resto. La suscripción mensual los retira entre sus matches. El precio es único, en dólares estadounidenses, y los impuestos dependen de su situación. Esta página no inventa una tarifa local. Solo explica cómo usar la Ciudad de México en una aplicación que también cubre Montreal, Quebec y Cancún.</p><p>Si usted está de paso por trabajo, indique las fechas y el barrio del hotel sin poner el nombre del hotel en la primera línea. Si vive en la ciudad, dígalo, incluso si no pasa de dos estaciones o de un trayecto corto en carro. El tráfico no es un detalle romántico: es la razón por la que «nos vemos en algún lado» no alcanza. Abra iSwing en su celular o en su computadora, elija Ciudad de México y escriba como para alguien que no conoce su calle. La ciudad es bastante grande para que la discreción sea posible, y bastante grande para que el barrio tenga que estar escrito.</p>
+ <p>La Ciudad de México es demasiado grande para un anuncio vago. Una pareja liberal en la Condesa no tiene la misma noche que una pareja en Coyoacán, Polanco, la Roma Norte o Del Valle. iSwing le pide una ciudad, no una tachuela sobre su edificio. Escriba el barrio en el texto del perfil. Diga hasta dónde acepta desplazarse. Cruzar la ciudad un viernes por la tarde puede tardar más que el propio encuentro. La claridad sobre la zona evita conversaciones que mueren en el trayecto.</p><p>La discreción en un edificio tiene sus reglas. No publique una vista reconocible desde su balcón, una credencial de acceso o el nombre de una residencia. Las fotos públicas pueden mostrar un ambiente sin mostrar una dirección. Las más personales siguen privadas hasta un match, y solo si usted lo decide. El primer encuentro conviene en un lugar público del barrio que ya nombró. Cada quien debe poder irse por su lado. El consentimiento de las dos personas de una pareja no se negocia a espaldas de una de ellas: la segunda persona confirma su propio acuerdo.</p><p>En la Ciudad de México, muchos solteros prefieren un marco claro antes que una lista infinita de indirectas. Diga si busca una pareja, una persona o ambas, y qué queda fuera. Las parejas tienen el mismo trabajo. iSwing no reemplaza su criterio. Solo impide que la mensajería se abra mientras el interés no sea mutuo. Usted puede bloquear, reportar y eliminar la cuenta. Ninguna aplicación impide todas las capturas de pantalla: parta de ese límite, no de una promesa.</p><p>La prueba de 7 días sirve para ver si de verdad hay perfiles en su zona. 10 me gusta por día y 2 mensajes por match son los topes de la prueba, los mismos que en el resto. La suscripción mensual los retira entre sus matches. El precio es único, en dólares estadounidenses, y los impuestos dependen de su situación. Esta página no inventa una tarifa local. Solo explica cómo usar la Ciudad de México en una aplicación que también cubre Montreal, Quebec y Cancún.</p><p>Si usted está de paso por trabajo, indique las fechas y el barrio del hotel sin poner el nombre del hotel en la primera línea. Si vive en la ciudad, dígalo, incluso si no pasa de dos estaciones o de un trayecto corto en carro. El tráfico no es un detalle romántico: es la razón por la que «nos vemos en algún lado» no alcanza. Abra iSwing en su celular o en su computadora, elija Ciudad de México y escriba como para alguien que no conoce su calle. La ciudad es bastante grande para que la discreción sea posible, y bastante grande para que el barrio tenga que estar escrito.</p>
  <p><a class="btn lg" href="https://iswingtest.onrender.com/comptes/inscription/">Comience la prueba gratuita</a></p>
 </article>
 <section class="card" aria-labelledby="city-faq">
@@ -285,6 +294,21 @@ details p{margin:0 0 .9rem;color:#ddd3fb}
 </footer>
 </div>
 <script>(function(){
+  var carousel = document.querySelector("[data-city-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".city-track");
+    var buttons = carousel.querySelectorAll("[data-city-dir]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener("click", function(){
+        if (!track) return;
+        var card = track.querySelector("li");
+        var width = card ? card.getBoundingClientRect().width + 14 : track.clientWidth;
+        var dir = Number(this.getAttribute("data-city-dir")) || 1;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({left: width * dir, behavior: reduce ? "auto" : "smooth"});
+      });
+    }
+  }
   var GATE_KEY = "iswing_age_ok";
   var gate = document.getElementById("age-gate"), page = document.getElementById("page");
   var ok = false; try { ok = localStorage.getItem(GATE_KEY) === "1"; } catch (e) {}

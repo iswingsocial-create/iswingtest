@@ -448,8 +448,7 @@ def _store_upload(profile, upload, private, approve, label="Fichier"):
 
 
 def send_member_invite(profile, request):
-    # Les anciens liens restent valides jusqu'à leur échéance (7 jours) ou leur
-    # utilisation : un renvoi ne doit pas invalider le courriel précédent.
+    EmailToken.objects.filter(user=profile.user, purpose="invite", used_at__isnull=True).update(used_at=timezone.now())
     raw, digest = new_token()
     EmailToken.objects.create(
         user=profile.user,
@@ -1001,9 +1000,12 @@ def settings_page(request):
         if action == "quotas":
             likes = _bounded(request.POST.get("likes"), 1, 100)
             messages_cap = _bounded(request.POST.get("messages"), 0, 30)
-            if likes is None or messages_cap is None:
-                messages.error(request, "Quotas refusés. J'aime : nombre de 1 à 100. Messages : nombre de 0 à 30.")
+            days = _bounded(request.POST.get("days"), 1, 30) if "days" in request.POST else True
+            if likes is None or messages_cap is None or days is None:
+                messages.error(request, "Quotas refusés. Jours d'essai : nombre de 1 à 30. J'aime : nombre de 1 à 100. Messages : nombre de 0 à 30.")
             else:
+                if days is not True:
+                    SiteSetting.objects.update_or_create(key="trial_days", defaults={"value": str(days)})
                 SiteSetting.objects.update_or_create(key="trial_daily_likes", defaults={"value": str(likes)})
                 SiteSetting.objects.update_or_create(key="trial_messages_per_match", defaults={"value": str(messages_cap)})
                 AuditLog.objects.create(actor=request.user, action="settings_update", detail="quotas")
@@ -1021,6 +1023,7 @@ def settings_page(request):
         return redirect("gestion_settings")
     return render(request, "gestion/settings.html", {
         "section": "settings",
+        "days": SiteSetting.get("trial_days", "7"),
         "likes": SiteSetting.get("trial_daily_likes", "10"),
         "messages_cap": SiteSetting.get("trial_messages_per_match", "2"),
         "legal_pages": LegalPage.objects.order_by("slug"),
@@ -1079,7 +1082,6 @@ def invite_accept(request, token):
                 profile.save(update_fields=["visibility"])
             row.used_at = timezone.now()
             row.save(update_fields=["used_at"])
-            EmailToken.objects.filter(user=user, purpose="invite", used_at__isnull=True).exclude(pk=row.pk).update(used_at=timezone.now())
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect("edit_profile")
     return render(request, "invitation.html", {"mode": "account", "error": error, "email": row.user.email})
