@@ -247,7 +247,7 @@ def notify(profile, kind, body, url="", code="", params=None):
         code=(code or "")[:40],
         params=json.dumps(params or {}, ensure_ascii=False)[:4000],
     )
-    if kind in ("message", "match", "access_request", "access_ok", "access_no", "team", "reminder"):
+    if kind in ("message", "match", "superlike", "access_request", "access_ok", "access_no", "team", "reminder"):
         try:
             from .integrations import send_push
 
@@ -546,6 +546,62 @@ def _create_like_once(actor, target, client_key):
                 match.closed_at = None
                 match.save(update_fields=["closed_at"])
         return match, False
+
+
+def superlikes_used_this_month(profile):
+    """Nombre de super likes envoyés ce mois-ci (quota gratuit)."""
+    from datetime import date
+    from .models import SuperLike
+    today = date.today()
+    return SuperLike.objects.filter(
+        actor=profile,
+        created_at__year=today.year,
+        created_at__month=today.month,
+    ).count()
+
+
+def superlikes_available(profile):
+    """(gratuits_restants, crédits_achetés). Les gratuits sont utilisés en premier."""
+    free = int(getattr(settings, "SUPERLIKE_MONTHLY_FREE", 3))
+    used = superlikes_used_this_month(profile)
+    free_left = max(0, free - used)
+    credits = max(0, profile.superlike_credits or 0)
+    return free_left, credits
+
+
+class SuperLikeQuotaError(Exception):
+    pass
+
+
+def create_superlike(actor, target):
+    """Crée un super like : vérifie le quota, crée le Like sous-jacent (pour les matchs),
+    notifie le destinataire. Lève SuperLikeQuotaError si quota épuisé."""
+    from .models import SuperLike
+    if actor.id == target.id:
+        raise AccessError("self")
+    if not can_interact_with(actor, target):
+        raise AccessError("blocked")
+    # Déjà super liké ?
+    if SuperLike.objects.filter(actor=actor, target=target).exists():
+        return open_match_between(actor, target), True
+    free_left, credits = superlikes_available(actor)
+    if free_left <= 0 and credits <= 0:
+        raise SuperLikeQuotaError("quota")
+    with transaction.atomic():
+        SuperLike.objects.create(actor=actor, target=target)
+        if free_left <= 0:
+            # Plus de gratuits : consomme un crédit acheté
+            actor.superlike_credits = max(0, (actor.superlike_credits or 0) - 1)
+            actor.save(update_fields=["superlike_credits"])
+    # Un super like compte aussi comme un like (peut créer un match)
+    try:
+        match, _ = create_like(actor, target)
+    except (QuotaError, AccessError):
+        match = open_match_between(actor, target)
+    # Notifie le destinataire (les likes normaux sont silencieux)
+    notify(target, "superlike", actor.display_name, f"/profil/{actor.id}/",
+           code="superlike_received", params={"name": actor.display_name})
+    return match, False
 
 
 def prepare_image(uploaded, crop=None, masks=None, confirm_gif=False):

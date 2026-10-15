@@ -85,7 +85,22 @@
           return;
         }
         if (window.__iswingKeys[slot]) delete window.__iswingKeys[slot];
-        if (action === "like" && result.data.match && !result.data.already) show(ui.match || "");
+        if ((action === "like" || action === "superlike") && result.data.match && !result.data.already) {
+          var modal = document.getElementById("match-modal");
+          if (modal) {
+            modal.hidden = false;
+            var close = document.getElementById("match-modal-close");
+            if (close) close.onclick = function () { modal.hidden = true; };
+            modal.onclick = function (e) { if (e.target === modal) modal.hidden = true; };
+          } else {
+            show(ui.match || "");
+          }
+        }
+        if (action === "superlike") {
+          actionEl.textContent = actionEl.getAttribute("data-superliked-label") || actionEl.textContent;
+          actionEl.disabled = true;
+          actionEl.classList.add("on");
+        }
         if (action === "favorite") {
           var on = !!result.data.on;
           actionEl.setAttribute("aria-pressed", on ? "true" : "false");

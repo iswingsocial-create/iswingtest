@@ -121,6 +121,7 @@ class Profile(models.Model):
     validated_at = models.DateTimeField(null=True, blank=True)
     reminder_step = models.PositiveSmallIntegerField(default=0)
     trial_ends_at = models.DateTimeField(null=True, blank=True)
+    superlike_credits = models.IntegerField(default=0)  # Packs achetés (5 pour 10$), en plus des 3/mois gratuits
     suspended = models.BooleanField(default=False)
     last_active = models.DateTimeField(null=True, blank=True)
     read_receipts = models.BooleanField(default=False)
@@ -290,6 +291,16 @@ class Favorite(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["owner", "target"], name="uniq_fav")]
+
+
+class SuperLike(models.Model):
+    """Super like : notifié au destinataire, quota 3/mois gratuits + crédits achetés."""
+    actor = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="superlikes_sent")
+    target = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="superlikes_received")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["actor", "target"], name="uniq_superlike")]
 
 
 class Block(models.Model):

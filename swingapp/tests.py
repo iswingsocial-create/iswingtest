@@ -886,19 +886,6 @@ class AccessCorrectionTests(TestCase):
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, "Hidden")
 
-    def test_favorites_are_a_list(self):
-        user, me = self.make("fav@example.com", "Fav")
-        _, one = self.make("f1@example.com", "F1")
-        _, two = self.make("f2@example.com", "F2")
-        from swingapp.models import Favorite
-
-        Favorite.objects.create(owner=me, target=one)
-        Favorite.objects.create(owner=me, target=two)
-        self.client.force_login(user)
-        page = self.client.get("/decouvrir/?fav=1")
-        self.assertContains(page, "F1")
-        self.assertContains(page, "F2")
-        self.assertEqual(page.content.count(b"tinder-card"), 0)
 
     def test_totp_code_roundtrip_and_setup_page(self):
         from swingapp.models import new_totp_secret, totp_now, totp_valid
@@ -991,7 +978,7 @@ class V4CorrectionTests(TestCase):
         user, profile = self.make("cible-badge@example.com", "Cible")
         self.client.force_login(viewer)
         trial = self.client.get(f"/profil/{profile.id}/")
-        self.assertContains(trial, 'class="status-badge">Membre essai')
+        self.assertContains(trial, 'class="status-badge big">Membre essai')
         discover = self.client.get("/decouvrir/")
         self.assertContains(discover, 'class="status-badge">Membre essai')
         sub = Subscription.objects.get(user=user)
@@ -1001,14 +988,14 @@ class V4CorrectionTests(TestCase):
         profile.certified = True
         profile.save(update_fields=["certified"])
         paid = self.client.get(f"/profil/{profile.id}/")
-        self.assertContains(paid, 'class="status-badge">Membre<')
+        self.assertContains(paid, 'class="status-badge big">Membre<')
         self.assertContains(paid, "Profil certifié")
         self.assertNotContains(paid, "Membre essai")
         sub.status = "past_due"
         sub.save(update_fields=["status"])
         unpaid = self.client.get(f"/profil/{profile.id}/")
         self.assertNotContains(unpaid, "Profil certifié")
-        self.assertNotContains(unpaid, 'class="status-badge">Membre<')
+        self.assertNotContains(unpaid, 'class="status-badge big">Membre<')
         sub.status = "canceled"
         sub.save(update_fields=["status"])
         self.assertNotContains(self.client.get(f"/profil/{profile.id}/"), "Profil certifié")
@@ -2617,7 +2604,6 @@ class V19GeoTests(TestCase):
         self.assertNotContains(textual, t("fr", "city_not_found"))
 
     def test_closest_profiles_come_first_and_distance_stays_from_the_visitor(self):
-        from swingapp.models import Favorite
         from swingapp.services import approximate_distance, haversine_km
 
         user, viewer = self.make("tri@example.com", "Trieur")
@@ -2646,11 +2632,6 @@ class V19GeoTests(TestCase):
         self.assertNotEqual(visitor_distance, other_distance)
         self.assertContains(closest, visitor_distance)
         self.assertNotContains(closest, other_distance)
-        Favorite.objects.create(owner=viewer, target=laval)
-        Favorite.objects.create(owner=viewer, target=sans)
-        listed = self.client.get("/decouvrir/", {"fav": "1", "lang": "fr"})
-        html = listed.content.decode()
-        self.assertLess(html.find("Lavalois"), html.find("SansLieu"))
 
         viewer.lat, viewer.lng = 45.75, 4.85
         viewer.city = "Lyon"
@@ -3098,3 +3079,94 @@ class SmtpTimeoutTests(TestCase):
         self.assertIsNotNone(conn)
         self.assertGreaterEqual(conn.timeout, 5)
         self.assertLessEqual(conn.timeout, 60)
+
+
+class SuperLikeTests(TestCase):
+    def make(self, email, name):
+        from datetime import date
+        from io import BytesIO
+        from django.core.files.base import ContentFile
+        from PIL import Image
+        user = get_user_model().objects.create_user(
+            email=email, password="motdepasse10", birth_date=date(1990, 1, 1),
+            terms_accepted_at=timezone.now(), adult_declared=True, email_verified_at=timezone.now(),
+        )
+        profile = Profile.objects.create(user=user, display_name=name, city="Lyon", bio="bio",
+                                         validated_at=timezone.now(),
+                                         trial_ends_at=timezone.now() + timedelta(days=7))
+        out = BytesIO()
+        Image.new("RGB", (100, 100)).save(out, format="JPEG")
+        photo = Photo(profile=profile, is_primary=True, moderation_status="approved")
+        photo.image.save("t.jpg", ContentFile(out.getvalue()), save=True)
+        return user, profile
+
+    def test_superlike_notifies_target(self):
+        from swingapp.models import Notice, SuperLike
+        u1, p1 = self.make("sl1@example.com", "SL1")
+        u2, p2 = self.make("sl2@example.com", "SL2")
+        self.client.force_login(u1)
+        resp = self.client.post(f"/actions/superlike/{p2.id}/")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data["ok"])
+        # SuperLike créé
+        self.assertTrue(SuperLike.objects.filter(actor=p1, target=p2).exists())
+        # Like sous-jacent créé (pour les matchs)
+        from swingapp.models import Like
+        self.assertTrue(Like.objects.filter(actor=p1, target=p2).exists())
+        # Notification envoyée
+        self.assertTrue(Notice.objects.filter(profile=p2, kind="superlike").exists())
+
+    def test_superlike_quota_3_per_month(self):
+        from swingapp.models import SuperLike
+        u1, p1 = self.make("slq1@example.com", "SLQ1")
+        self.client.force_login(u1)
+        # 3 super likes OK
+        for i in range(3):
+            _, px = self.make(f"slq-t{i}@example.com", f"SLQT{i}")
+            resp = self.client.post(f"/actions/superlike/{px.id}/")
+            self.assertEqual(resp.status_code, 200, f"superlike {i+1} devrait passer")
+        # 4ème refusé
+        _, px = self.make("slq-t9@example.com", "SLQT9")
+        resp = self.client.post(f"/actions/superlike/{px.id}/")
+        self.assertEqual(resp.status_code, 403)
+        self.assertIn("super", resp.json()["error"].lower())
+
+    def test_superlike_credits_extend_quota(self):
+        u1, p1 = self.make("slc1@example.com", "SLC1")
+        p1.superlike_credits = 5
+        p1.save(update_fields=["superlike_credits"])
+        self.client.force_login(u1)
+        # 3 gratuits + 5 crédits = 8 possibles
+        for i in range(8):
+            _, px = self.make(f"slc-t{i}@example.com", f"SLCT{i}")
+            resp = self.client.post(f"/actions/superlike/{px.id}/")
+            self.assertEqual(resp.status_code, 200, f"superlike {i+1} devrait passer")
+        p1.refresh_from_db()
+        self.assertEqual(p1.superlike_credits, 0)
+        # 9ème refusé
+        _, px = self.make("slc-t9@example.com", "SLCT9")
+        resp = self.client.post(f"/actions/superlike/{px.id}/")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_normal_like_is_silent(self):
+        from swingapp.models import Notice
+        u1, p1 = self.make("nl1@example.com", "NL1")
+        u2, p2 = self.make("nl2@example.com", "NL2")
+        self.client.force_login(u1)
+        resp = self.client.post(f"/actions/like/{p2.id}/")
+        self.assertEqual(resp.status_code, 200)
+        # Aucune notification de like normal
+        self.assertFalse(Notice.objects.filter(profile=p2, kind="like").exists())
+
+    def test_superlike_can_create_match(self):
+        u1, p1 = self.make("sm1@example.com", "SM1")
+        u2, p2 = self.make("sm2@example.com", "SM2")
+        # p2 like p1 d'abord
+        self.client.force_login(u2)
+        self.client.post(f"/actions/like/{p1.id}/")
+        # p1 super like p2 -> match
+        self.client.force_login(u1)
+        resp = self.client.post(f"/actions/superlike/{p2.id}/")
+        data = resp.json()
+        self.assertTrue(data["match"])

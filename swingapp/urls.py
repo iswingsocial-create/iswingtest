@@ -25,6 +25,7 @@ urlpatterns = [
     path("actions/like/<int:pk>/", views.like_view, name="like"),
     path("actions/pass/<int:pk>/", views.pass_view, name="pass"),
     path("actions/favori/<int:pk>/", views.favorite_view, name="favorite"),
+    path("actions/superlike/<int:pk>/", views.superlike_view, name="superlike"),
     path("matchs/", views.matches, name="matches"),
     path("messages/", views.inbox, name="inbox"),
     path("messages/<int:pk>/", views.thread, name="thread"),

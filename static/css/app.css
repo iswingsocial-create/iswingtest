@@ -530,3 +530,15 @@ body[data-theme="nuit"] .g-side { background: #0a0a0a; }
 .lock-count { font-size: 1.15rem; font-weight: 700; margin: 0.6rem 0; }
 .profile-actions { margin-top: 1.4rem; gap: 0.7rem; }
 .profile-actions .btn { flex: 1; padding: 0.85rem; font-size: 1.02rem; }
+
+/* === Super like === */
+.superlike-btn { background: linear-gradient(135deg, #f6c453, #f28c38); border: none; color: #3a2200; font-weight: 800; }
+.superlike-btn:disabled, .superlike-btn.on { opacity: 0.75; }
+.superlike-btn::before { content: "⭐ "; }
+
+/* === Modal match === */
+.modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(0,0,0,0.62); padding: 1.2rem; }
+.modal[hidden] { display: none; }
+.modal-card { background: var(--card, #1a1030); border-radius: 22px; padding: 2rem 1.6rem; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 18px 60px rgba(0,0,0,0.5); }
+.match-card h2 { font-size: 1.7rem; margin: 0 0 0.6rem; }
+.match-card .row { margin-top: 1.2rem; }

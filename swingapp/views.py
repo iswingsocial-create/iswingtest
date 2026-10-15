@@ -38,6 +38,7 @@ from .models import (
     Match,
     Message,
     Notice,
+    SuperLike,
     Partner,
     Pass,
     PaymentEvent,
@@ -65,6 +66,9 @@ from .services import (
     can_view_profile,
     consume_message,
     create_like,
+    create_superlike,
+    superlikes_available,
+    SuperLikeQuotaError,
     ensure_profile,
     find_contact_info,
     haversine_km,
@@ -423,9 +427,6 @@ def discover(request):
         qs = qs.filter(desires__icontains=desire)
     if request.GET.get("recent") == "1":
         qs = qs.filter(last_active__gte=timezone.now() - timedelta(days=7))
-    fav = request.GET.get("fav") == "1"
-    if fav:
-        qs = qs.filter(id__in=Favorite.objects.filter(owner=me).values_list("target_id", flat=True))
     already = set(Like.objects.filter(actor=me).values_list("target_id", flat=True))
     already |= set(Pass.objects.filter(actor=me).values_list("target_id", flat=True))
     try:
@@ -491,12 +492,12 @@ def discover(request):
     for row in Photo.objects.filter(profile__in=qs, is_private=False, moderation_status="approved").exclude(role="certification").order_by("-is_primary", "position", "id"):
         photos.setdefault(row.profile_id, row)
     cards = []
-    limit = 100 if fav else 1
+    limit = 1
     anchor = geo_center if geo_center is not None else ((me_lat, me_lng) if me_lat is not None else None)
     if not city_unknown:
         rows = []
         for profile in qs.order_by("-last_active", "-id"):
-            if profile.id in already and not fav:
+            if profile.id in already:
                 continue
             p_lat, p_lng, p_city = placed(profile)
             sort_km = None
@@ -521,7 +522,7 @@ def discover(request):
                 "badges": badge_labels(profile, lang),
                 "place_city": p_city,
                 "travel_badge": travel_label(profile, lang),
-                "faved": Favorite.objects.filter(owner=me, target=profile).exists() if fav else False,
+                "faved": False,
                 "_active": active.timestamp() if active else 0,
             })
             if anchor is None and len(rows) >= limit:
@@ -531,7 +532,7 @@ def discover(request):
         cards = rows[:limit]
     return render(request, "discover.html", {
         "cards": cards,
-        "list_mode": fav,
+        "list_mode": False,
         "distance_note": distance_note,
         "access_note": note,
         "quota": quota_snapshot(request.user),
@@ -579,11 +580,15 @@ def profile_detail(request, pk):
     liked = Like.objects.filter(actor=me, target=profile).exists()
     faved = Favorite.objects.filter(owner=me, target=profile).exists()
     is_match = bool(open_match_between(me, profile)) if not own else False
-    # Photos publiques pour l'entrelacement : la principale d'abord, puis les autres
-    public_photos = [p for p in photos if not p["photo"].is_private]
-    hero_photo = public_photos[0] if public_photos else None
-    interleave_photos = public_photos[1:3]
-    gallery_photos = public_photos[3:]
+    # Photos pour l'entrelacement : visibles si publiques, ou si propriétaire, ou si accès privé accordé
+    def _can_see(item):
+        if not item["photo"].is_private:
+            return True
+        return own or has_access
+    visible_photos = [p for p in photos if _can_see(p)]
+    hero_photo = visible_photos[0] if visible_photos else None
+    interleave_photos = visible_photos[1:3]
+    gallery_photos = visible_photos[3:]
     return render(request, "profile_detail.html", {
         "profile": profile,
         "photos": photos,
@@ -635,10 +640,28 @@ def like_view(request, pk):
     except AccessError:
         return JsonResponse({"ok": False, "error": t(lang, "blocked_members")}, status=403)
     if not already:
-        notify(target, "like", me.display_name, f"/profil/{me.id}/")
         touch_activity(me)
     snap = quota_snapshot(request.user)
     return JsonResponse({"ok": True, "match": bool(match), "already": already, "liked": True, "likes_left": snap["likes_left"]})
+
+
+@login_required
+@require_POST
+def superlike_view(request, pk):
+    target = get_object_or_404(Profile, pk=pk)
+    me = request.user.profile
+    lang = getattr(request, "lang", "fr")
+    try:
+        match, already = create_superlike(me, target)
+    except SuperLikeQuotaError:
+        return JsonResponse({"ok": False, "error": t(lang, "superlike_quota")}, status=403)
+    except AccessError:
+        return JsonResponse({"ok": False, "error": t(lang, "blocked_members")}, status=403)
+    free_left, credits = superlikes_available(me)
+    return JsonResponse({
+        "ok": True, "match": bool(match), "already": already,
+        "superlikes_free": free_left, "superlikes_credits": credits,
+    })
 
 
 @login_required

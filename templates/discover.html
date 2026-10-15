@@ -74,9 +74,7 @@
       </label>
       <label>km <input name="max_km" value="{{ request.GET.max_km }}" inputmode="numeric"></label>
       <label class="check"><input type="checkbox" name="recent" value="1" {% if request.GET.recent == "1" %}checked{% endif %}> 7 j</label>
-      <label class="check"><input type="checkbox" name="fav" value="1" {% if request.GET.fav == "1" %}checked{% endif %}> {{ T.favorite }}</label>
       <button class="btn" type="submit">{{ T.filters }}</button>
-      <a class="btn ghost" href="/decouvrir/?fav=1">{{ T.favorites_list }}</a>
     </form>
   </details>
 </section>
@@ -84,9 +82,8 @@
 {% if distance_note == "unknown_city" %}<p class="note">{{ T.city_not_found }}</p>{% endif %}
 {% if access_note == "suspended" %}<p class="warn">{{ T.account_suspended }}</p>{% endif %}
 {% if not cards %}<p class="empty discover-empty">{{ T.empty_discover }}</p>{% endif %}
-{% if list_mode and cards %}<p class="muted">{{ T.favorites_list }}</p>{% endif %}
 {% for card in cards %}
-<article class="profile-card{% if not list_mode %} tinder-card{% else %} fav-list{% endif %}">
+<article class="profile-card tinder-card">
   <div class="frame">
     {% if card.photo %}
       {% if card.photo.media_type == "video" %}{% include "player.html" with photo=card.photo %}
@@ -102,6 +99,7 @@
   <div class="row">
     <button class="btn ghost" type="button" data-action="pass" data-id="{{ card.profile.id }}">{{ T.pass }}</button>
     <button class="btn" type="button" data-action="like" data-id="{{ card.profile.id }}" data-liked-label="{{ T.liked }}" {% if not quota.premium and quota.likes_left == 0 %}disabled{% endif %}>{{ T.like }}</button>
+    <button class="btn superlike-btn" type="button" data-action="superlike" data-id="{{ card.profile.id }}" data-superliked-label="{{ T.superliked }}" title="{{ T.superlike }}">{{ T.superlike }}</button>
     <a class="btn ghost" href="/profil/{{ card.profile.id }}/">{{ T.see_profile }}</a>
   </div>
 </article>
