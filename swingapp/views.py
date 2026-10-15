@@ -783,6 +783,8 @@ def inbox(request):
             "avatar": f"/photos/{avatar.id}/?thumb=1" if avatar and can_view_media(request.user, avatar) else "",
             "travel_badge": travel_label(other, lang),
             "is_new": last is None,
+            # Forme de la bulle selon les types de profils : rond (solo-solo), triangle (couple-solo), carré (couple-couple)
+            "bubble_shape": "square" if (me.kind == "couple" and other.kind == "couple") else ("triangle" if (me.kind == "couple" or other.kind == "couple") else "circle"),
         })
     new_matches = [i for i in items if i["is_new"]]
     conversations = [i for i in items if not i["is_new"]]
