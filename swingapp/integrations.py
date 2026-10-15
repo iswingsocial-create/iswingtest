@@ -170,9 +170,7 @@ def test_stripe():
     except Exception as exc:
         import logging
         logging.getLogger("swingapp.stripe").exception("test_stripe failed: %r", exc)
-        # Diagnostic temporaire : afficher l'erreur réelle
-        err = str(exc)[:300] if str(exc) else repr(exc)[:300]
-        return False, f"Le prestataire a refusé la connexion. Détail : {err}"
+        return False, "Le prestataire a refusé la connexion. Aucun paiement n'a été créé."
     kind = "test" if secret.startswith("sk_test") else "production"
     return True, f"Connexion acceptée ({kind}). Aucun paiement réel n'a été créé."
 
