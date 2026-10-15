@@ -24,10 +24,42 @@
       <p>{{ T.per_month }}</p>
       <p>{{ T.plan_premium_items }}</p>
       {% if not journey %}
-      <a class="btn" href="/abonnement/souscrire/">{{ T.subscribe_path }}</a>
+      <form method="post" action="/abonnement/stripe/">{% csrf_token %}
+        <input type="hidden" name="plan" value="monthly">
+        <button class="btn" type="submit">{{ T.subscribe_path }}</button>
+      </form>
       {% endif %}
     </article>
+    {% if has_annual %}
+    <article class="plan plan-highlight">
+      <h2>{{ T.plan_annual|default:"Premium annuel" }}</h2>
+      <p class="price">{{ price_annual }} USD</p>
+      <p>{{ T.per_year|default:"par an" }}</p>
+      <p>{{ T.plan_premium_items }}</p>
+      <p class="note">{{ T.plan_annual_save|default:"2 mois offerts" }}</p>
+      {% if not journey %}
+      <form method="post" action="/abonnement/stripe/">{% csrf_token %}
+        <input type="hidden" name="plan" value="annual">
+        <button class="btn" type="submit">{{ T.subscribe_path }}</button>
+      </form>
+      {% endif %}
+    </article>
+    {% endif %}
   </div>
+  {% if has_pack %}
+  <div class="plans">
+    <article class="plan">
+      <h2>⭐ {{ T.superlike_pack|default:"Pack Super Likes" }}</h2>
+      <p class="price">10 USD</p>
+      <p>{{ T.superlike_pack_desc|default:"5 super likes, utilisables quand tu veux" }}</p>
+      {% if superlike_credits %}<p class="note">{{ T.superlike_credits|default:"Crédits" }} : {{ superlike_credits }}</p>{% endif %}
+      {% if pack_bought %}<p class="note">{{ T.pack_bought|default:"Pack ajouté ! Tes super likes sont crédités." }}</p>{% endif %}
+      <form method="post" action="/abonnement/superlikes/">{% csrf_token %}
+        <button class="btn" type="submit">{{ T.buy|default:"Acheter" }}</button>
+      </form>
+    </article>
+  </div>
+  {% endif %}
   {% if journey %}
   <ol class="steps">
     <li>{{ T.subscribe_step1 }}</li>

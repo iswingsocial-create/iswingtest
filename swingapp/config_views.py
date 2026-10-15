@@ -186,6 +186,10 @@ def _save_stripe(request, action):
         "publishable_live": request.POST.get("publishable_live", "").strip(),
         "price_test": request.POST.get("price_test", "").strip(),
         "price_live": request.POST.get("price_live", "").strip(),
+        "price_annual_test": request.POST.get("price_annual_test", "").strip(),
+        "price_annual_live": request.POST.get("price_annual_live", "").strip(),
+        "price_pack_test": request.POST.get("price_pack_test", "").strip(),
+        "price_pack_live": request.POST.get("price_pack_live", "").strip(),
         "currency": (request.POST.get("currency") or "usd").strip()[:8],
     }
     old_public = public_config(row)

@@ -46,6 +46,7 @@ urlpatterns = [
     path("abonnement/", views.billing, name="billing"),
     path("abonnement/souscrire/", views.subscribe, name="subscribe"),
     path("abonnement/stripe/", views.stripe_checkout, name="stripe_checkout"),
+    path("abonnement/superlikes/", views.buy_superlikes, name="buy_superlikes"),
     path("abonnement/annuler/", views.cancel_subscription, name="cancel_subscription"),
     path("paiements/webhook/", views.payment_webhook, name="payment_webhook"),
     path("parametres/", views.settings_view, name="settings"),

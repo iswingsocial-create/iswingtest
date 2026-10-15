@@ -107,6 +107,8 @@
     <label>Clé API secrète de test — collez sk_test_ ici {% if secret_flags.stripe.secret_test %}(déjà enregistrée){% endif %} <span class="pw-wrap"><input type="password" name="secret_test" autocomplete="new-password" placeholder="sk_test_… inchangé si vide">{% include "_pw_eye.html" %}</span></label>
     <label>Clé publique de test — pk_test_ <input name="publishable_test" value="{{ public.stripe.publishable_test }}" autocomplete="off" placeholder="pk_test_…"></label>
     <label>Identifiant de prix, test — price_ <input name="price_test" value="{{ public.stripe.price_test }}" autocomplete="off" placeholder="price_…"></label>
+    <label>Identifiant de prix annuel, test — price_ <input name="price_annual_test" value="{{ public.stripe.price_annual_test }}" autocomplete="off" placeholder="price_…"></label>
+    <label>Identifiant de prix pack super likes (5 pour 10 $), test — price_ <input name="price_pack_test" value="{{ public.stripe.price_pack_test }}" autocomplete="off" placeholder="price_…"></label>
     <label>Secret de webhook, test — whsec_ {% if secret_flags.stripe.webhook_test %}(déjà enregistré){% endif %} <span class="pw-wrap"><input type="password" name="webhook_test" autocomplete="new-password" placeholder="whsec_… inchangé si vide">{% include "_pw_eye.html" %}</span></label>
     <h2>Production, seulement après accord de Stripe</h2>
     <label>Clé API secrète de production — sk_live_ {% if secret_flags.stripe.secret_live %}(déjà enregistrée){% endif %} <span class="pw-wrap"><input type="password" name="secret_live" autocomplete="new-password" placeholder="sk_live_… inchangé si vide">{% include "_pw_eye.html" %}</span></label>

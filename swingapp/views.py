@@ -1257,17 +1257,55 @@ def billing(request):
     sub = sync_trial(request.user.profile)
     code, _fallback = billing_state(sub)
     lang = getattr(request, "lang", "fr")
+    from .integrations import public_config, get_integration
+    stripe_public = public_config(get_integration("stripe"))
     return render(request, "billing.html", {
         "quota": quota_snapshot(request.user),
         "state": code,
         "bill_label": t(lang, "bill_" + code),
         "billing_source": sub.source,
         "price": settings.MONTHLY_PRICE_USD,
+        "price_annual": "199",
+        "has_annual": bool(stripe_public.get("price_annual_test") or stripe_public.get("price_annual_live")),
+        "has_pack": bool(stripe_public.get("price_pack_test") or stripe_public.get("price_pack_live")),
+        "superlike_credits": request.user.profile.superlike_credits or 0,
         "stripe_ready": _stripe_ready(),
         "paid": request.GET.get("paid"),
         "cancelled": request.GET.get("cancel"),
+        "pack_bought": request.GET.get("pack"),
         "journey": False,
     })
+
+
+@login_required
+def buy_superlikes(request):
+    """Achat d'un pack de 5 super likes (10 USD, paiement unique via Stripe)."""
+    if request.method != "POST":
+        return redirect("billing")
+    if request.user.is_demo:
+        messages.error(request, "Un profil TEST ne peut pas lancer un paiement réel.")
+        return redirect("billing")
+    from .integrations import stripe_values, public_config, get_integration
+    values = stripe_values()
+    mode = values.get("mode") or "test"
+    pack_price = public_config(get_integration("stripe")).get(
+        "price_pack_test" if mode == "test" else "price_pack_live", "")
+    if not values["secret"] or not pack_price:
+        messages.error(request, "Le pack super likes n'est pas configuré.")
+        return redirect("billing")
+    import stripe
+    stripe.api_key = values["secret"]
+    session = stripe.checkout.Session.create(
+        mode="payment",
+        client_reference_id=str(request.user.id),
+        line_items=[{"price": pack_price, "quantity": 1}],
+        success_url=settings.ISWING_PUBLIC_BASE_URL + "/abonnement/?pack=1",
+        cancel_url=settings.ISWING_PUBLIC_BASE_URL + "/abonnement/?cancel=1",
+        metadata={"user_id": str(request.user.id), "type": "superlike_pack"},
+        customer_email=request.user.email,
+        allow_promotion_codes=True,
+    )
+    return redirect(session.url, permanent=False)
 
 
 @login_required
@@ -1296,17 +1334,22 @@ def stripe_checkout(request):
     if request.user.is_demo:
         messages.error(request, "Un profil TEST ne peut pas lancer un paiement réel.")
         return redirect("billing")
-    if not settings.STRIPE_SECRET_KEY or not settings.STRIPE_PRICE_ID:
-        from .integrations import stripe_values
-
-        values = stripe_values()
-        if not values["secret"] or not values["price"]:
-            return redirect("billing")
-        settings_secret = values["secret"]
-        settings_price = values["price"]
+    from .integrations import stripe_values, public_config, get_integration
+    values = stripe_values()
+    if not values["secret"]:
+        return redirect("billing")
+    # Choix du plan : mensuel (défaut) ou annuel
+    plan = request.POST.get("plan", "monthly")
+    stripe_public = public_config(get_integration("stripe"))
+    mode = values.get("mode") or "test"
+    if plan == "annual":
+        settings_price = stripe_public.get("price_annual_test" if mode == "test" else "price_annual_live", "")
     else:
-        settings_secret = settings.STRIPE_SECRET_KEY
-        settings_price = settings.STRIPE_PRICE_ID
+        settings_price = values["price"]
+    if not settings_price:
+        messages.error(request, "Ce plan n'est pas configuré.")
+        return redirect("billing")
+    settings_secret = values["secret"]
     sub = sync_trial(request.user.profile)
     if sub.provider == "stripe" and sub.external_id and sub.status == "active" and sub.current_period_end and sub.current_period_end > timezone.now():
         messages.error(request, "Un abonnement facturé est déjà actif. Aucune seconde souscription n'a été créée.")
@@ -1474,6 +1517,15 @@ def _stripe_webhook(request):
             _finish_payment_event(row, True)
             return JsonResponse({"ok": True, "ignored": "demo"})
         kind = event["type"]
+        # Pack super likes (paiement unique) : crédite 5 super likes
+        if user and kind == "checkout.session.completed":
+            meta = data.get("metadata") or {}
+            if meta.get("type") == "superlike_pack":
+                profile = user.profile
+                profile.superlike_credits = (profile.superlike_credits or 0) + 5
+                profile.save(update_fields=["superlike_credits"])
+                _finish_payment_event(row, True)
+                return JsonResponse({"ok": True, "superlike_pack": True})
         if user and kind in ("checkout.session.completed", "invoice.paid", "customer.subscription.updated"):
             _grant_premium(
                 user,
