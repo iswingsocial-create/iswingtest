@@ -318,12 +318,22 @@ document.querySelectorAll(".ptab").forEach((button) => {
   });
 });
 var open = "";
-if (location.search.indexOf("onglet=medias") >= 0 || location.hash === "#medias" || location.hash === "#photos") open = "medias";
-else if (location.hash === "#bio" || location.hash === "#identite") open = "identite";
-else if (location.hash === "#couple") open = "couple";
-if (open) {
-  const tab = document.querySelector('[data-tab="' + open + '"]');
-  if (tab) tab.click();
+function openTabFromHash() {
+  var open = "";
+  if (location.search.indexOf("onglet=medias") >= 0 || location.hash === "#medias" || location.hash === "#photos") open = "medias";
+  else if (location.hash === "#bio" || location.hash === "#identite") open = "identite";
+  else if (location.hash === "#couple") open = "couple";
+  if (open) {
+    const tab = document.querySelector('[data-tab="' + open + '"]');
+    if (tab) tab.click();
+  }
+  // Scrolle vers l'élément ciblé par l'ancre
+  if (location.hash) {
+    const el = document.querySelector(location.hash);
+    if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+  }
 }
+openTabFromHash();
+window.addEventListener("hashchange", openTabFromHash);
 </script>
 {% endblock %}
