@@ -585,10 +585,10 @@ body[data-theme="nuit"] .g-side { background: #0a0a0a; }
 
 /* === Popup "C'est un match" style Tinder === */
 .tinder-match { text-align: center; padding: 2rem 1.5rem; max-width: 340px; }
-.tinder-match-title { font-size: 2rem; font-style: italic; margin: 0 0 0.4rem; background: linear-gradient(135deg, #fd267d, #ff7854); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.tinder-match-title { font-size: 2rem; font-style: italic; margin: 0 0 0.4rem; background: linear-gradient(135deg, var(--indigo), var(--violet)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .tinder-match-sub { opacity: 0.8; margin: 0 0 1.2rem; }
 .tinder-match-photos { display: flex; justify-content: center; gap: 1.2rem; margin-bottom: 1.5rem; }
-.tinder-match-photo { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 3px solid #fd267d; background: rgba(255,255,255,0.06); }
+.tinder-match-photo { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 3px solid var(--violet); background: rgba(255,255,255,0.06); }
 .tinder-match-photo img { width: 100%; height: 100%; object-fit: cover; }
 .tinder-match-btn { display: block; width: 100%; margin: 0.5rem 0; padding: 0.85rem; border-radius: 12px; font-weight: 700; }
 
