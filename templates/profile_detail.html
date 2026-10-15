@@ -138,8 +138,13 @@
   {% if not own %}
   <div class="row profile-actions">
     {% include "block_modal.html" with profile_id=profile.id %}
+    {% if is_match and open_match %}
+    <a class="btn" href="/messages/{{ open_match.id }}/">💬 {{ T.messages }}</a>
+    <a class="btn ghost" href="/messages/{{ open_match.id }}/#joindre">{{ T.request_private_photo|default:"Demander une photo privée" }}</a>
+    {% else %}
     <button class="btn" type="button" data-action="like" data-id="{{ profile.id }}" data-redirect="/decouvrir/" data-liked-label="{{ T.liked }}" {% if liked %}disabled aria-pressed="true"{% endif %}>{% if liked %}{{ T.liked }}{% else %}{{ T.like }}{% endif %}</button>
     <button class="btn superlike-btn" type="button" data-action="superlike" data-id="{{ profile.id }}" data-superliked-label="{{ T.superliked }}" title="{{ T.superlike }}">{{ T.superlike }}</button>
+    {% endif %}
   </div>
   {% else %}
   <p><a class="btn" href="/moi/?onglet=medias">{{ T.tab_media }}</a></p>

@@ -587,7 +587,8 @@ def profile_detail(request, pk):
     show_intimate = bool(profile.user.prefs_consent) and not profile.hide_desires
     liked = Like.objects.filter(actor=me, target=profile).exists()
     faved = Favorite.objects.filter(owner=me, target=profile).exists()
-    is_match = bool(open_match_between(me, profile)) if not own else False
+    open_match = open_match_between(me, profile) if not own else None
+    is_match = bool(open_match)
     # Photos pour l'entrelacement : visibles si publiques, ou si propriétaire, ou si accès privé accordé
     def _can_see(item):
         if not item["photo"].is_private:
@@ -604,6 +605,7 @@ def profile_detail(request, pk):
         "interleave_photos": interleave_photos,
         "gallery_photos": gallery_photos,
         "is_match": is_match,
+        "open_match": open_match,
         "distance": dist,
         "quota": quota_snapshot(request.user),
         "own": own,
