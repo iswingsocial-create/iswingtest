@@ -788,6 +788,9 @@ def inbox(request):
         })
     new_matches = [i for i in items if i["is_new"]]
     conversations = [i for i in items if not i["is_new"]]
+    # Les conversations les plus récentes en premier
+    conversations.sort(key=lambda i: (i["last"].created_at if i["last"] else timezone.now()), reverse=True)
+    new_matches.sort(key=lambda i: i["match"].created_at, reverse=True)
     return render(request, "inbox.html", {"new_matches": new_matches, "items": conversations})
 
 
@@ -876,7 +879,7 @@ def thread(request, pk):
         "locked": locked,
         "my_photos": me.photos.exclude(role="certification").filter(moderation_status="approved").filter(
             Q(media_type="photo") | Q(processing_status__in=["", "ready"])
-        ).order_by("-is_private", "position", "id"),
+        ).order_by("-id"),
     })
 
 
