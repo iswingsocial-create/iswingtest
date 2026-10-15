@@ -80,6 +80,7 @@ from .services import (
     profile_fields_complete,
     notify,
     notify_report_inbox,
+    open_match_between,
     period_from_stamp,
     poster_for_video,
     prepare_image,
@@ -577,9 +578,19 @@ def profile_detail(request, pk):
     show_intimate = bool(profile.user.prefs_consent) and not profile.hide_desires
     liked = Like.objects.filter(actor=me, target=profile).exists()
     faved = Favorite.objects.filter(owner=me, target=profile).exists()
+    is_match = bool(open_match_between(me, profile)) if not own else False
+    # Photos publiques pour l'entrelacement : la principale d'abord, puis les autres
+    public_photos = [p for p in photos if not p["photo"].is_private]
+    hero_photo = public_photos[0] if public_photos else None
+    interleave_photos = public_photos[1:3]
+    gallery_photos = public_photos[3:]
     return render(request, "profile_detail.html", {
         "profile": profile,
         "photos": photos,
+        "hero_photo": hero_photo,
+        "interleave_photos": interleave_photos,
+        "gallery_photos": gallery_photos,
+        "is_match": is_match,
         "distance": dist,
         "quota": quota_snapshot(request.user),
         "own": own,
