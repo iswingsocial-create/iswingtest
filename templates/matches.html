@@ -2,15 +2,26 @@
 {% block content %}
 <h1>{{ T.matches }}</h1>
 {% if not items %}<p class="empty">{{ T.empty_matches }}</p>{% endif %}
+<div class="match-grid">
 {% for item in items %}
-<article class="card">
-  <h2><a href="/profil/{{ item.other.id }}/">{{ item.other.display_name }}</a>{% if item.other.is_demo %} · TEST{% endif %}{% if item.travel_badge %} <span class="status-badge">{{ item.travel_badge }}</span>{% endif %}</h2>
-  <div class="row">
-    <a class="btn" href="/messages/{{ item.match.id }}/">{{ T.messages }}</a>
-    <form method="post" action="/matchs/{{ item.match.id }}/retirer/">{% csrf_token %}
-      <button class="btn danger" data-confirm="{{ T.unmatch_confirm }}">{{ T.unmatch }}</button>
-    </form>
+<article class="match-card">
+  <a class="match-photo" href="/profil/{{ item.other.id }}/">
+    {% if item.avatar %}
+    <img src="/photos/{{ item.avatar.id }}/?v={{ item.avatar.byte_size }}" alt="{{ item.other.display_name }}" loading="lazy">
+    {% else %}
+    <span class="match-no-photo">?</span>
+    {% endif %}
+  </a>
+  <div class="match-info">
+    <h2><a href="/profil/{{ item.other.id }}/">{{ item.other.display_name }}</a>{% if item.other.is_demo %} · TEST{% endif %}{% if item.travel_badge %} <span class="status-badge">{{ item.travel_badge }}</span>{% endif %}</h2>
+    <div class="row">
+      <a class="btn" href="/messages/{{ item.match.id }}/">{{ T.messages }}</a>
+      <form method="post" action="/matchs/{{ item.match.id }}/retirer/">{% csrf_token %}
+        <button class="btn danger" data-confirm="{{ T.unmatch_confirm }}">{{ T.unmatch }}</button>
+      </form>
+    </div>
   </div>
 </article>
 {% endfor %}
+</div>
 {% endblock %}

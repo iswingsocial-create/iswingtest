@@ -429,6 +429,14 @@ def discover(request):
         qs = qs.filter(last_active__gte=timezone.now() - timedelta(days=7))
     already = set(Like.objects.filter(actor=me).values_list("target_id", flat=True))
     already |= set(Pass.objects.filter(actor=me).values_list("target_id", flat=True))
+    already |= set(SuperLike.objects.filter(actor=me).values_list("target_id", flat=True))
+    # Les matchs actifs ne doivent jamais réapparaître en Découverte
+    matched_ids = set(
+        Match.objects.filter(closed_at__isnull=True, profile_a=me).values_list("profile_b_id", flat=True)
+    ) | set(
+        Match.objects.filter(closed_at__isnull=True, profile_b=me).values_list("profile_a_id", flat=True)
+    )
+    already |= matched_ids
     try:
         min_age = int(request.GET.get("min_age") or 18)
         max_age = int(request.GET.get("max_age") or 99)
@@ -702,10 +710,18 @@ def matches(request):
     if me.kind == "business":
         return redirect("/entreprises/moi/")
     lang = getattr(request, "lang", "fr")
-    items = [
-        {"match": match, "other": match.other(me), "travel_badge": travel_label(match.other(me), lang)}
-        for match in _open_matches(me).select_related("profile_a", "profile_b")
-    ]
+    items = []
+    for match in _open_matches(me).select_related("profile_a", "profile_b"):
+        other = match.other(me)
+        avatar = other.photos.filter(is_primary=True, moderation_status="approved").first()
+        if avatar is None or not can_view_media(request.user, avatar):
+            avatar = other.photos.filter(is_private=False, moderation_status="approved").order_by("-is_primary", "position", "id").first()
+        items.append({
+            "match": match,
+            "other": other,
+            "travel_badge": travel_label(other, lang),
+            "avatar": avatar,
+        })
     return render(request, "matches.html", {"items": items})
 
 
@@ -738,8 +754,11 @@ def inbox(request):
             "unread": unread,
             "avatar": f"/photos/{avatar.id}/?thumb=1" if avatar and can_view_media(request.user, avatar) else "",
             "travel_badge": travel_label(other, lang),
+            "is_new": last is None,
         })
-    return render(request, "inbox.html", {"items": items})
+    new_matches = [i for i in items if i["is_new"]]
+    conversations = [i for i in items if not i["is_new"]]
+    return render(request, "inbox.html", {"new_matches": new_matches, "items": conversations})
 
 
 def _match_for(profile, pk):
@@ -815,9 +834,11 @@ def thread(request, pk):
             msg.shared_photo_url = f"/photos/{msg.photo_id}/"
             msg.shared_photo_thumb = f"/photos/{msg.photo_id}/?thumb=1" if msg.photo.thumb else msg.shared_photo_url
         msg.has_contact = bool(find_contact_info(msg.body))
+    other_avatar = avatar_by_profile.get(other.id, "")
     return render(request, "thread.html", {
         "match": match,
         "other": other,
+        "other_avatar": other_avatar,
         "thread_messages": thread_messages,
         "last_msg_id": thread_messages[-1].id if thread_messages else 0,
         "quota": quota_snapshot(request.user, match),

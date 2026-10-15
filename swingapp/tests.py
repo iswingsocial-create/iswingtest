@@ -1895,9 +1895,16 @@ class V12CoupleCardTests(TestCase):
         self.assertIn("Marc " + chr(38) + "amp; Eve", page.content.decode())
         self.assertContains(page, "couple coquin")
         self.assertNotContains(page, "couple coquin (Eve)")
+        # Les matchs actifs sont exclus de Découverte : on ferme le match pour vérifier l'affichage
+        match.closed_at = timezone.now()
+        match.save(update_fields=["closed_at"])
         deck = self.client.get("/decouvrir/")
         self.assertEqual(deck.content.count("couple coquin".encode()), 1)
         self.assertEqual(Profile.objects.filter(display_name="couple coquin").count(), 1)
+        # Et on vérifie l'exclusion : avec le match rouvert, le profil disparaît de Découverte
+        match.closed_at = None
+        match.save(update_fields=["closed_at"])
+        self.assertNotContains(self.client.get("/decouvrir/"), "couple coquin")
         self.client.force_login(eve)
         mine = self.client.get("/moi/")
         self.assertContains(mine, "couple coquin (Eve)")
