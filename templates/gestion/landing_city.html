@@ -1,0 +1,57 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>{% if city %}Modifier {{ city.name }}{% else %}Nouvelle ville{% endif %}</h1></header>
+<p><a href="/gestion/landing/">Retour à la landing</a></p>
+<section class="card">
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    <input type="hidden" name="action" value="save">
+    <label>Nom <input name="name" value="{{ form.name }}" required></label>
+    <label>Slug (généré à partir du nom si vide) <input name="slug" value="{{ form.slug }}"></label>
+    <label>Segment d'URL anglais <input name="slug_en" value="{{ form.slug_en }}"></label>
+    <label>Segment d'URL espagnol <input name="slug_es" value="{{ form.slug_es }}"></label>
+    <p class="muted">Adresses : /rencontre-echangiste-…/ · /en/swinger-dating-…/ · /es/citas-swingers-…/ Ne changez pas les segments des villes déjà publiées.</p>
+    <label>Ordre <input name="position" value="{{ form.position }}" inputmode="numeric"></label>
+    <label class="check"><input type="checkbox" name="is_active" value="1" {% if form.is_active %}checked{% endif %}> Active dans le carrousel et le sitemap</label>
+    <p>{{ city_hint }}</p>
+    <label>Photo JPG ou WebP <input type="file" name="image" accept="image/jpeg,image/png,image/webp"></label>
+    <h2>Français</h2>
+    <label>Nom affiché <input name="name_fr" value="{{ form.name_fr }}"></label>
+    <label>Accroche <input name="tagline_fr" value="{{ form.tagline_fr }}"></label>
+    <label>Titre de page <input name="h1_fr" value="{{ form.h1_fr }}"></label>
+    <label>Titre SEO <input name="title_fr" value="{{ form.title_fr }}" required></label>
+    <label>Meta description <textarea name="desc_fr" rows="3" required>{{ form.desc_fr }}</textarea></label>
+    <label>Deux paragraphes au minimum, séparés par une ligne vide <textarea name="body_fr" rows="8" required>{{ form.body_fr }}</textarea></label>
+    <h2>Anglais</h2>
+    <label>Display name <input name="name_en" value="{{ form.name_en }}"></label>
+    <label>Tagline <input name="tagline_en" value="{{ form.tagline_en }}"></label>
+    <label>Page title <input name="h1_en" value="{{ form.h1_en }}"></label>
+    <label>SEO title <input name="title_en" value="{{ form.title_en }}" required></label>
+    <label>Meta description <textarea name="desc_en" rows="3" required>{{ form.desc_en }}</textarea></label>
+    <label>At least two paragraphs, separated by a blank line <textarea name="body_en" rows="8" required>{{ form.body_en }}</textarea></label>
+    <h2>Espagnol</h2>
+    <label>Nombre visible <input name="name_es" value="{{ form.name_es }}"></label>
+    <label>Frase <input name="tagline_es" value="{{ form.tagline_es }}"></label>
+    <label>Título de la página <input name="h1_es" value="{{ form.h1_es }}"></label>
+    <label>Título SEO <input name="title_es" value="{{ form.title_es }}" required></label>
+    <label>Meta descripción <textarea name="desc_es" rows="3" required>{{ form.desc_es }}</textarea></label>
+    <label>Dos párrafos como mínimo, separados por una línea en blanco <textarea name="body_es" rows="8" required>{{ form.body_es }}</textarea></label>
+    <button class="btn" type="submit">Enregistrer</button>
+  </form>
+</section>
+{% if city %}
+<section class="card">
+  {% if city.is_active %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="deactivate">
+    <button class="btn ghost" type="submit">Désactiver cette ville</button>
+  </form>
+  <p class="muted">La ville disparaît du carrousel et du sitemap. Elle n'est pas supprimée.</p>
+  {% else %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="activate">
+    <button class="btn" type="submit">Réactiver cette ville</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

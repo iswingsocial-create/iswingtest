@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% block title %}iSwing · {{ title }}{% endblock %}
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="/brand/css/admin-iswing.css">
+<link rel="icon" href="/brand/icons/icon-192.png">
+<style>
+  body, #container { background:#000; color:#f4f1ff; }
+  #header { background:linear-gradient(90deg,#5030e0,#9060f0); color:#fff; padding:.7rem 1rem; }
+  #site-name a { color:#fff; font-weight:700; display:flex; align-items:center; gap:.55rem; text-decoration:none; }
+  #site-name img { width:32px; height:32px; border-radius:50%; background:#000; }
+  .theme-toggle { display:none !important; }
+  #user-tools, #user-tools a, .iswing-admin-links a { color:#fff; }
+  .iswing-admin-links a { margin-right:1rem; font-weight:700; }
+  #content, .module, #nav-sidebar, .login { background:#0a0614; color:#f4f1ff; }
+  .module h2, .module caption { background:#24143f; color:#fff; }
+  a { color:#d8c8ff; }
+  input, select, textarea { background:#07040f; color:#fff; border:1px solid rgba(144,96,240,.4); }
+  .button, input[type=submit] { background:#5030e0; }
+  div.breadcrumbs { background:#120c1c; color:#d8c8ff; }
+</style>
+{% endblock %}
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">
+    <img src="/brand/icons/logo.png" alt="">
+    iSwing
+  </a>
+</div>
+{% endblock %}
+{% block nav-global %}
+<div class="iswing-admin-links">
+  <a href="/">Voir le site</a>
+  <a href="/gestion/">Gestion métier</a>
+</div>
+{% endblock %}

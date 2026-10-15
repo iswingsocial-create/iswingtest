@@ -1,0 +1,29 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Tableau de bord</h1></header>
+<div class="kpis">
+  <article><strong>{{ stats.members }}</strong><span>Membres</span></article>
+  <article><strong>{{ stats.real }}</strong><span>Comptes réels</span></article>
+  <article><strong>{{ stats.demos }}</strong><span>Profils TEST</span></article>
+  <article><strong>{{ stats.trials }}</strong><span>Essais</span></article>
+  <article><strong>{{ stats.active }}</strong><span>Abonnements actifs</span></article>
+  <article><strong>{{ stats.pending_photos }}</strong><span>Médias en attente</span></article>
+  <article><strong>{{ stats.reports }}</strong><span>Signalements nouveaux</span></article>
+  <article><strong>{{ stats.invites }}</strong><span>Invitations en attente</span></article>
+  <article><strong>{{ stats.failed_mail }}</strong><span>Courriels en échec</span></article>
+  <article><strong>{{ stats.failed_campaigns }}</strong><span>Envois en échec</span></article>
+</div>
+<p class="row">
+  <a class="btn" href="/gestion/membres/ajouter/">Ajouter un membre</a>
+  <a class="btn ghost" href="/gestion/signalements/">Signalements</a>
+  <a class="btn ghost" href="/gestion/medias/?status=pending">Médias en attente</a>
+  <a class="btn ghost" href="/gestion/communications/">Envois</a>
+  <a class="btn ghost" href="/gestion/profils-test/">Profils TEST</a>
+</p>
+<section class="card">
+  <h2>Derniers signalements</h2>
+  {% for report in reports %}
+  <p><a href="/gestion/signalements/{{ report.id }}/">n°{{ report.id }}</a> — {{ report.target.display_name }} — {{ report.reason }} <span class="muted">{{ report.created_at }}</span></p>
+  {% empty %}<p>Aucun signalement.</p>{% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,27 @@
+<fieldset class="birth-fields">
+  <legend>{{ legend }}</legend>
+  <label>{{ T.birth_day }}
+    <select name="{{ name }}_day"{% if required %} required{% endif %}>
+      <option value="">—</option>
+      {% for n in birth_days %}
+      <option value="{{ n }}"{% if selected_day == n|stringformat:"s" %} selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>{{ T.birth_month }}
+    <select name="{{ name }}_month"{% if required %} required{% endif %}>
+      <option value="">—</option>
+      {% for num, label in birth_months %}
+      <option value="{{ num }}"{% if selected_month == num %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>{{ T.birth_year }}
+    <select name="{{ name }}_year"{% if required %} required{% endif %}>
+      <option value="">—</option>
+      {% for y in birth_years %}
+      <option value="{{ y }}"{% if selected_year == y|stringformat:"s" %} selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</fieldset>

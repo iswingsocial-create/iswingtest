@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ L.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page_title }}</title>
+<meta name="description" content="{{ page_desc }}">
+<meta name="keywords" content="{{ page_kw }}">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="rating" content="adult">
+<meta name="theme-color" content="#5030e0">
+<link rel="canonical" href="{{ canonical }}">
+{% for alt in alternates %}<link rel="alternate" hreflang="{{ alt.code }}" href="{{ alt.href }}">
+{% endfor %}
+<link rel="icon" type="image/png" sizes="192x192" href="{% static 'landing/icon-192.png' %}">
+<link rel="apple-touch-icon" href="{% static 'landing/icon-192.png' %}">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="{% static 'landing/landing.css' %}?v=24">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="iSwing">
+<meta property="og:locale" content="{{ L.locale }}">
+{% for loc in L.og_alternates %}<meta property="og:locale:alternate" content="{{ loc }}">
+{% endfor %}
+<meta property="og:title" content="{{ page_title }}">
+<meta property="og:description" content="{{ page_desc }}">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:image" content="{{ og_image }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ L.og_alt }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page_title }}">
+<meta name="twitter:description" content="{{ page_desc }}">
+<meta name="twitter:image" content="{{ og_image }}">
+<meta name="twitter:image:alt" content="{{ L.og_alt }}">
+<script type="application/ld+json">{{ json_ld|safe }}</script>
+</head>
+<body>
+<div id="age-gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" aria-describedby="gate-text" hidden>
+ <div class="gate-box">
+  <img src="{% static 'landing/logo-80.webp' %}" alt="" width="64" height="64">
+  <h2 id="gate-title"><span class="age18" aria-hidden="true">18+</span>{{ L.gate_title }}</h2>
+  <p id="gate-text" class="muted">{{ L.gate_text }}</p>
+  <div class="row">
+   <button type="button" id="age-yes" class="btn">{{ L.gate_yes }}</button>
+   <a class="btn ghost" href="{{ leave_url }}" rel="nofollow">{{ L.gate_no }}</a>
+  </div>
+ </div>
+</div>
+<div id="page">
+<a class="skip" href="#main">{{ L.skip }}</a>
+<header class="top">
+ <a class="brand" href="{% url home_url_name %}" aria-label="iSwing">
+  <img src="{% static 'landing/logo-80.webp' %}" alt="iSwing" width="40" height="40"><span>iSwing</span>
+ </a>
+ <nav aria-label="{{ L.nav_label }}">
+  {% if not city %}<div class="nav-links">{% for item in L.nav %}<a href="{{ item.href }}">{{ item.label }}</a>{% endfor %}</div>{% endif %}
+  <nav class="langs" aria-label="{{ L.lang_nav_label }}">{% for link in lang_links %}<a class="lang" href="{% if link.args %}{% url link.name link.args.0 %}{% else %}{% url link.name %}{% endif %}" hreflang="{{ link.code }}" lang="{{ link.code }}"{% if link.code == L.lang %} aria-current="true"{% endif %}>{{ link.label }}</a>{% endfor %}</nav>
+  <a class="btn sm" href="{% url 'register' %}">{{ L.cta_short }}</a>
+ </nav>
+</header>
+<main id="main">
+{% if city %}
+<article class="card prose">
+ <p class="crumbs"><a href="{% url home_url_name %}">iSwing</a> · {{ city.name }}</p>
+ <h1>{{ city.h1 }}</h1>
+ {% for para in city.paragraphs %}<p>{{ para }}</p>{% endfor %}
+ <p><a class="btn lg" href="{% url 'register' %}">{{ L.cta_main }}</a></p>
+</article>
+<section class="card" aria-labelledby="city-faq">
+ <h2 id="city-faq">{{ L.faq_h }}</h2>
+ {% for item in city.faqs %}<details{% if item.open %} open{% endif %}><summary>{{ item.q }}</summary><p>{{ item.a }}</p></details>{% endfor %}
+</section>
+<section class="card">
+ {% if city.image_url %}<img src="{{ city.image_url }}" alt="{{ city.alt }}" width="800" height="480">{% elif city.svg %}{% with 'landing/'|add:city.svg as city_img %}<img src="{% static city_img %}" alt="{{ city.alt }}" width="400" height="240">{% endwith %}{% endif %}
+</section>
+{% else %}
+<section class="hero" aria-labelledby="h1">
+ <div>
+  <span class="eyebrow">{{ L.eyebrow }}</span>
+  <h1 id="h1">{{ L.h1 }}</h1>
+  <p class="lead">{{ L.lead }}</p>
+  <div class="row">
+   <a class="btn lg" href="{% url 'register' %}">{{ L.cta_main }}</a>
+   <a class="btn ghost" href="{% url 'login' %}">{{ L.cta_login }}</a>
+  </div>
+  <ul class="badges">{% for item in L.badges %}<li>{{ item }}</li>{% endfor %}</ul>
+ </div>
+ {% if hero_url %}
+ <img class="hero-art" src="{{ hero_url }}" alt="{{ L.hero_alt }}" width="960" height="720" fetchpriority="high">
+ {% else %}
+ <img class="hero-art" src="{% static 'landing/hero-rings.svg' %}" alt="{{ L.hero_alt }}" width="480" height="360" fetchpriority="high">
+ {% endif %}
+</section>
+<section id="{{ L.how_id }}" class="card" aria-labelledby="how-h">
+ <h2 id="how-h">{{ L.how_h }}</h2>
+ <p class="muted">{{ L.how_intro }}</p>
+ <ol class="grid g3" style="list-style:none;padding:0;margin:0">{% for step in L.steps %}<li class="step"><span class="num" aria-hidden="true">{{ step.n }}</span><h3>{{ step.title }}</h3><p>{{ step.text }}</p></li>{% endfor %}</ol>
+</section>
+<section id="{{ L.price_id }}" class="card" aria-labelledby="price-h">
+ <h2 id="price-h">{{ L.price_h }}</h2>
+ <p class="muted">{{ L.price_intro }}</p>
+ <div class="price">
+  <article class="plan" aria-labelledby="plan-trial">
+   <h3 id="plan-trial">{{ L.trial_name }}</h3>
+   <p class="amount">{{ L.trial_figure }} <small>{{ L.trial_period }}</small></p>
+   <ul>{% for item in L.trial_items %}<li>{{ item }}</li>{% endfor %}</ul>
+   <a class="btn ghost" href="{% url 'register' %}">{{ L.trial_cta }}</a>
+  </article>
+  <article class="plan pro" aria-labelledby="plan-pro">
+   <h3 id="plan-pro">{{ L.pro_name }}</h3>
+   <p class="amount">{{ L.pro_figure }} <small>{{ L.pro_period }}</small></p>
+   <ul>{% for item in L.pro_items %}<li>{{ item }}</li>{% endfor %}</ul>
+   <a class="btn" href="{% url 'register' %}">{{ L.pro_cta }}</a>
+  </article>
+ </div>
+ <p class="small muted">{{ L.price_note }} <a href="{% url 'legal' 'abonnements' %}">{{ L.price_note_link }}</a>.</p>
+</section>
+<section id="{{ L.safe_id }}" class="card" aria-labelledby="safe-h">
+ <h2 id="safe-h">{{ L.safe_h }}</h2>
+ <p class="muted">{{ L.safe_intro }}</p>
+ <ul class="grid g3" style="list-style:none;padding:0;margin:0">{% for feat in L.feats %}<li class="feat">{{ feat.icon|safe }}<h3>{{ feat.title }}</h3><p>{{ feat.text }}</p></li>{% endfor %}</ul>
+</section>
+<section id="{{ L.city_id }}" class="card" aria-labelledby="city-h">
+ <h2 id="city-h">{{ L.city_h }}</h2>
+ <p class="muted">{{ L.city_intro }}</p>
+ <div class="city-carousel" data-city-carousel>
+  <button type="button" class="city-arrow" data-city-dir="-1" aria-label="{{ L.city_prev }}">‹</button>
+  <ul class="city-track">{% for card in cards %}<li><a class="city" href="{% url card.url_name card.slug %}">{% if card.image_url %}<img src="{{ card.image_url }}" alt="{{ card.alt }}" width="400" height="240" loading="lazy" decoding="async">{% elif card.svg %}{% with 'landing/'|add:card.svg as city_img %}<img src="{% static city_img %}" alt="{{ card.alt }}" width="400" height="240" loading="lazy" decoding="async">{% endwith %}{% endif %}<span>{{ card.name }}<em>{{ card.card }}</em></span></a></li>{% endfor %}</ul>
+  <button type="button" class="city-arrow" data-city-dir="1" aria-label="{{ L.city_next }}">›</button>
+ </div>
+</section>
+<section id="{{ L.faq_id }}" class="card" aria-labelledby="faq-h">
+ <h2 id="faq-h">{{ L.faq_h }}</h2>
+ {% for item in L.faq %}<details{% if item.open %} open{% endif %}><summary>{{ item.q }}</summary><p>{{ item.a }}</p></details>{% endfor %}
+</section>
+<section class="card cta-band" aria-labelledby="band-h">
+ <h2 id="band-h">{{ L.band_h }}</h2>
+ <p class="muted">{{ L.band_p }}</p>
+ <a class="btn lg" href="{% url 'register' %}">{{ L.cta_main }}</a>
+</section>
+{% endif %}
+</main>
+<footer class="site-foot">
+ <a class="brand" href="{% url home_url_name %}" style="justify-content:center" aria-label="iSwing">
+  <img src="{% static 'landing/logo-80.webp' %}" alt="iSwing" width="40" height="40" loading="lazy" decoding="async"><span>iSwing</span>
+ </a>
+ <nav aria-label="{{ L.foot_legal }}">{% for item in L.legal %}<a href="{% url 'legal' item.slug %}">{{ item.label }}</a>{% endfor %}</nav>
+ <p><span class="age18" aria-hidden="true">18+</span>{{ L.foot_18 }}</p>
+ <p>{% for link in lang_links %}<a href="{% if link.args %}{% url link.name link.args.0 %}{% else %}{% url link.name %}{% endif %}" hreflang="{{ link.code }}" lang="{{ link.code }}">{{ link.label }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+ <p class="small">{{ L.foot_copy }}</p>
+</footer>
+</div>
+<script src="{% static 'landing/gate.js' %}?v=24"></script>
+{% if stats.ga4 %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ stats.ga4 }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ stats.ga4 }}');</script>{% endif %}
+{% if stats.gtm %}<script>window.dataLayer=window.dataLayer||[];</script><script async src="https://www.googletagmanager.com/gtm.js?id={{ stats.gtm }}"></script>{% endif %}
+{% if pixel.meta %}<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','{{ pixel.meta }}');fbq('track','PageView');</script>{% endif %}
+</body>
+</html>

@@ -1,0 +1,40 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Landing</h1></header>
+<section class="card">
+  <h2>Image principale</h2>
+  <p>{{ hero_hint }}</p>
+  {% if hero_set %}<p class="muted">Une image est déjà en ligne. Un nouvel envoi la remplace. L'attribut alt reste traduit.</p>{% else %}<p class="muted">Sans image, la page d'accueil garde le visuel des deux anneaux.</p>{% endif %}
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    <input type="hidden" name="action" value="hero">
+    <label>Fichier JPG ou WebP <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required></label>
+    <button class="btn" type="submit">Enregistrer l'image</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Villes</h2>
+  <p>{{ city_hint }}</p>
+  <p><a class="btn" href="/gestion/landing/ville/nouvelle/">Ajouter une ville</a></p>
+  {% if cities %}
+  <table>
+    <thead><tr><th>Photo</th><th>Nom</th><th>Ordre</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+    {% for item in cities %}
+    <tr>
+      <td>{% if item.thumb %}<img src="{{ item.thumb }}" alt="" width="80" height="48">{% else %}<span class="muted">Illustration</span>{% endif %}</td>
+      <td>{{ item.row.name }}</td>
+      <td>{{ item.row.position }}</td>
+      <td>{% if item.row.is_active %}Active{% else %}Masquée{% endif %}</td>
+      <td><a href="/gestion/landing/ville/{{ item.row.id }}/">Modifier</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>Aucune ville pour le moment.</p>{% endif %}
+</section>
+<section class="card">
+  <h2>Rappel</h2>
+  <p>La landing utilise en ce moment {{ days }} jour{% if days != 1 %}s{% endif %} d'essai, {{ likes }} j'aime par jour, {{ messages_cap }} message{% if messages_cap != 1 %}s{% endif %} par match, et le prix {{ price }} ({{ price_amount }} {{ price_currency }}).</p>
+  <p>Ces trois quotas se modifient dans <a href="/gestion/parametres/">Paramètres</a>. Cette carte est en lecture seule. Le prix suit le tarif de l'application, le même que l'abonnement.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card" id="thread" data-match="{{ match.id }}" data-after="{{ last_msg_id }}" data-contact-notice="{{ T.contact_notice }}">
+  <h1><a href="/profil/{{ other.id }}/">{{ other.display_name }}</a></h1>
+  {% if quota.premium %}<p id="msgs-left" data-premium="1">{{ T.premium }}</p>{% else %}
+  <p id="msgs-left" data-left="{{ quota.messages_left }}">{{ T.quota_msgs }} : <strong>{{ quota.messages_left }}</strong></p>
+  {% if quota.messages_left == 0 %}<p class="warn" id="msgs-done">{{ T.quota_msgs_done }}</p>{% endif %}
+  {% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <div id="log">
+    {% for msg in thread_messages %}
+    <div class="msg{% if msg.sender_id == user.profile.id %} mine{% endif %}">
+      {% if msg.avatar_url %}<img class="avatar" src="{{ msg.avatar_url }}" alt="" loading="lazy">{% endif %}
+      <div class="bubble">
+        <span class="who">{{ msg.author_label|default:msg.sender.display_name }}</span>
+        {% if msg.body %}<p class="body">{{ msg.body }}</p>{% endif %}
+        {% if msg.shared_photo_thumb %}<a class="shared-photo" href="{{ msg.shared_photo_url }}"><img src="{{ msg.shared_photo_thumb }}" alt="" loading="lazy"></a>{% endif %}
+        {% if msg.has_contact and msg.sender_id == user.profile.id %}<p class="contact-note">{{ T.contact_notice }}</p>{% endif %}
+        {% if msg.read_at and user.profile.read_receipts %}<span class="read">{{ T.read_mark }}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% if locked %}<p class="warn">{{ T.thread_locked }}</p>{% else %}
+  <form method="post" id="send-form">{% csrf_token %}
+    <input type="hidden" name="client_key" id="client-key">
+    <label>{{ T.message_label }} <textarea name="body" maxlength="2000"></textarea></label>
+    <fieldset class="attach">
+      <legend>{{ T.attach_private }}</legend>
+      <div class="attach-grid">
+        <label class="attach-item none">
+          <input type="radio" name="photo" value="" checked>
+          <span>{{ T.attach_none }}</span>
+        </label>
+        {% for photo in my_photos %}
+        <label class="attach-item">
+          <input type="radio" name="photo" value="{{ photo.id }}">
+          <img src="/photos/{{ photo.id }}/?thumb=1" alt="{{ photo.title|default:T.photo_private }}">
+          <span>{% if photo.title %}{{ photo.title }}{% elif photo.is_private %}{{ T.photo_private }}{% else %}{{ T.photo_public }}{% endif %}</span>
+        </label>
+        {% empty %}<p class="muted">{{ T.no_private_media }}</p>{% endfor %}
+      </div>
+    </fieldset>
+    <button class="btn" type="submit" {% if not quota.premium and quota.messages_left == 0 %}disabled{% endif %}>{{ T.send }}</button>
+    <p><a href="/moi/?onglet=medias">{{ T.manage_media }}</a></p>
+  </form>
+  {% endif %}
+  {% include "block_modal.html" with profile_id=other.id %}
+</section>
+{% endblock %}

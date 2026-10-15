@@ -1,0 +1,7 @@
+Installation iSwing — landing v2, 5 étapes
+
+1. Sur Windows, extrayez cette mise à jour dans C:\iSwing, choisissez Remplacer, et conservez .env, .venv et data. Lancez Installer.bat, puis Demarrer.bat. La migration ajoute les villes sans effacer les profils ni les réglages SMTP.
+2. Ouvrez /gestion/parametres/. Le champ « Jours d'essai » (1 à 30, défaut 7) se règle avec les j'aime par jour et les messages par match. La page d'accueil, la FAQ et le JSON-LD suivent tout de suite, en français, anglais et espagnol.
+3. Ouvrez /gestion/landing/. La carte « Image principale » remplace le visuel du haut (960 × 720 px, JPG ou WebP, 500 Ko ; le site redimensionne si besoin). La carte « Villes » ajoute, modifie ou masque une ville (800 × 480 px). Rien n'est supprimé définitivement.
+4. Le prix affiché reste celui de l'application (29 USD). La carte « Rappel » de l'onglet Landing le montre et renvoie vers Paramètres pour l'essai. Ne changez MODE dans landing/_build/build.py que le jour du passage de TEST à LIVE.
+5. Vérifiez en navigation privée : l'accueil, une page ville, puis le sitemap. Un membre connecté est renvoyé vers /decouvrir/. Ne remplacez pas le robots.txt Django par celui du dossier landing/.

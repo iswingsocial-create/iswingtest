@@ -1,0 +1,52 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Factures</h1></header>
+{% if not seller %}
+<form method="post" class="card cfg-grid">{% csrf_token %}
+  <input type="hidden" name="action" value="pay-settings">
+  <label>Fournisseur
+    <select name="provider">
+      <option value="manual" {% if provider != "stripe" %}selected{% endif %}>Manuel</option>
+      <option value="stripe" {% if provider == "stripe" %}selected{% endif %}>Stripe</option>
+    </select>
+  </label>
+  <label>Devise <input name="currency" value="{{ currency }}" maxlength="8"></label>
+  <label>Clé secrète Stripe {% if secret_set %}(déjà enregistrée){% endif %}
+    <span class="pw-wrap"><input type="password" name="stripe_secret" autocomplete="new-password" placeholder="inchangée si vide">{% include "_pw_eye.html" %}</span>
+  </label>
+  <label>Taux de commission (%) <input name="commission_rate" value="{{ rate }}"></label>
+  <button class="btn" type="submit">Enregistrer</button>
+</form>
+{% endif %}
+{% for invoice in rows %}
+<article class="card">
+  <p>{{ invoice.business.profile.display_name }} · {{ invoice.kind }} · {{ invoice.amount }} · {{ invoice.status }}
+    {% if invoice.sold_by %} · {{ invoice.sold_by.email }}{% endif %}</p>
+  {% if invoice.payment_url %}<p><a href="{{ invoice.payment_url }}">{{ invoice.payment_url }}</a>
+    <button type="button" class="btn ghost" data-copy="{{ invoice.payment_url }}">Copier</button></p>{% endif %}
+  {% if invoice.status == "due" %}
+  <form method="post" action="/gestion/entreprises/factures/{{ invoice.id }}/lien/">{% csrf_token %}
+    <button class="btn" type="submit">Créer un lien de paiement</button>
+  </form>
+  {% endif %}
+  {% if invoice.payment_url %}
+  <form method="post" action="/gestion/entreprises/factures/{{ invoice.id }}/courriel/">{% csrf_token %}
+    <button class="btn ghost" type="submit">Envoyer par courriel</button>
+  </form>
+  {% endif %}
+  {% if invoice.status == "due" and not seller %}
+  <form method="post" action="/gestion/entreprises/factures/{{ invoice.id }}/payee/">{% csrf_token %}
+    <button class="btn ghost" type="submit">Marquer payée</button>
+  </form>
+  {% endif %}
+</article>
+{% empty %}<p>Aucune facture.</p>{% endfor %}
+<script>
+document.querySelectorAll("[data-copy]").forEach(function (button) {
+  button.addEventListener("click", function () {
+    var value = button.getAttribute("data-copy") || "";
+    if (navigator.clipboard) navigator.clipboard.writeText(value);
+  });
+});
+</script>
+{% endblock %}

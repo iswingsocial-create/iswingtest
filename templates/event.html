@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="card">
+  <h1>{{ event.title }}</h1>
+  <p><a href="/entreprises/{{ biz.profile_id }}/">{{ biz.profile.display_name }}</a>
+    {% if badge %}<span class="status-badge">{{ T.biz_verified }}</span>{% endif %}</p>
+  <p>{{ category }} · {{ event.city }} · {{ event.place }}</p>
+  <p>{{ T.event_when }} : {{ event.starts_at }} — {{ event.ends_at }}</p>
+  <p>{{ event.description }}</p>
+  {% if event.practical %}<h2>{{ T.event_practical }}</h2><p>{{ event.practical }}</p>{% endif %}
+  {% if event.price_note %}<p>{{ T.event_prices }} : {{ event.price_note }}</p>{% endif %}
+  {% if event.ticket_url %}<p><a href="{{ event.ticket_url }}">{{ T.biz_tickets }}</a></p>{% endif %}
+  <p class="muted">{{ T.ticketing_external }}</p>
+  <div class="gallery">{% for photo in photos %}<img src="/entreprises/fichier/event/{{ photo.id }}/" alt="">{% endfor %}</div>
+  {% if full %}<p class="warn">{{ T.event_full }}</p>{% endif %}
+  {% if mine %}<p class="note">{{ mine.status }}</p>{% endif %}
+  <form method="post" action="/evenements/{{ event.id }}/inscription/" class="row">{% csrf_token %}
+    <label class="check"><input type="checkbox" name="anonymous" value="1"> {{ T.event_anonymous }}</label>
+    <button class="btn ghost" name="status" value="interested" type="submit">{{ T.event_interested }}</button>
+    <button class="btn" name="status" value="going" type="submit">{{ T.event_going }}</button>
+  </form>
+</article>
+{% endblock %}

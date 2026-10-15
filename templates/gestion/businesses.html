@@ -1,0 +1,49 @@
+{% extends "gestion/base.html" %}
+{% block content %}
+<header class="g-head"><h1>Entreprises</h1>
+  <a class="btn ghost" href="/gestion/entreprises/factures/">Factures</a>
+</header>
+{% if not seller %}
+<form method="post" class="card cfg-grid">{% csrf_token %}
+  <input type="hidden" name="action" value="settings">
+  <label class="check"><input type="checkbox" name="businesses_enabled" value="1" {% if enabled %}checked{% endif %}> Activer le module Entreprises</label>
+  <label class="check"><input type="checkbox" name="ticketing_enabled" value="1" {% if ticketing %}checked{% endif %}> Préparer la billetterie (sans encaissement)</label>
+  <p class="muted">La vente de billets et la commission ne sont pas branchées. Ce réglage ne fait qu'ouvrir la page d'attente. Aucun paiement n'est créé.</p>
+  <p class="muted">Vente opérationnelle : {% if sale_ready %}oui{% else %}non{% endif %}.</p>
+  <label>Prix de l'abonnement entreprise (centimes, interne) <input name="business_plan_price" value="{{ plan_price }}"></label>
+  <label>Prix d'un push (centimes, interne) <input name="business_push_price" value="{{ push_price }}"></label>
+  <button class="btn" type="submit">Enregistrer</button>
+</form>
+{% endif %}
+{% for biz in rows %}
+<article class="card">
+  <h2>{{ biz.profile.display_name }}</h2>
+  <p>{{ biz.profile.user.email }} · {{ biz.category }} · plan {{ biz.plan_status }} · {% if biz.verified %}vérifiée{% else %}non vérifiée{% endif %}</p>
+  {% if not seller %}
+  <form method="post" class="row">{% csrf_token %}
+    <input type="hidden" name="action" value="plan">
+    <input type="hidden" name="business" value="{{ biz.id }}">
+    <select name="plan_status">
+      <option value="none">Aucun</option>
+      <option value="active" {% if biz.plan_status == "active" %}selected{% endif %}>Actif</option>
+      <option value="unpaid" {% if biz.plan_status == "unpaid" %}selected{% endif %}>Impayé</option>
+      <option value="canceled" {% if biz.plan_status == "canceled" %}selected{% endif %}>Annulé</option>
+    </select>
+    <input type="date" name="plan_until" value="{{ biz.plan_until|date:'Y-m-d' }}">
+    <button class="btn" type="submit">Abonnement</button>
+  </form>
+  {% endif %}
+  {% for doc in biz.documents.all %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="doc">
+    <input type="hidden" name="document" value="{{ doc.id }}">
+    <p>Justificatif {{ doc.status }} <a href="/entreprises/fichier/doc/{{ doc.id }}/">ouvrir</a></p>
+    <input name="note" placeholder="motif de refus">
+    <button class="btn" name="decision" value="approve" type="submit">Approuver</button>
+    <button class="btn ghost" name="decision" value="refuse" type="submit">Refuser</button>
+  </form>
+  {% endfor %}
+  <ul>{% for invoice in biz.invoices.all %}<li>{{ invoice.kind }} · {{ invoice.amount }} · {{ invoice.status }} · {{ invoice.note }}</li>{% endfor %}</ul>
+</article>
+{% empty %}<p>Aucun compte entreprise.</p>{% endfor %}
+{% endblock %}

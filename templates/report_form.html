@@ -1,0 +1,10 @@
+<form class="report-form" method="post" action="/signaler/{{ profile_id }}/">{% csrf_token %}
+  <label>{{ T.report }}
+    <select name="reason_code" required>
+      <option value="">—</option>
+      {% for code, label in report_reasons %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>{{ T.report_comment }} <textarea name="comment" maxlength="1000"></textarea></label>
+  <button class="btn ghost" type="submit">{{ T.report }}</button>
+</form>

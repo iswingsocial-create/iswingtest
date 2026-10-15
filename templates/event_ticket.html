@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ event.title }}</h1>
+  <p>{{ T.ticketing_standby }}</p>
+  {% if event.ticket_url %}<p><a href="{{ event.ticket_url }}">{{ T.biz_tickets }}</a></p>{% endif %}
+</section>
+{% endblock %}

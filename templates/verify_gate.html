@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>{{ T.verify_gate_title }}</h1>
+  <p>{{ T.verify_gate_body }}</p>
+  <p class="muted">{{ email }}</p>
+  <form method="post" action="/comptes/verifier/renvoyer/">{% csrf_token %}
+    <input type="hidden" name="email" value="{{ email }}">
+    <button class="btn" type="submit">{{ T.verify_resend }}</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="card" method="post">{% csrf_token %}
+  <h1>{{ T.twofa_title }}</h1>
+  {% if error %}<p class="error">{{ T.twofa_bad }}</p>{% endif %}
+  {% if needs_setup %}
+  <p>Première ouverture : ajoutez ce secret dans une application d'authentification (6 chiffres, 30 secondes), puis recopiez le code.</p>
+  <p>Compte : {{ otp_email }}</p>
+  <p>Secret : <strong>{{ pending_secret }}</strong></p>
+  {% endif %}
+  {% if current_code %}<p>Code actuel{% if needs_setup %} (aussi valable pour confirmer tout de suite){% else %} — affiché seulement en installation locale{% endif %} : <strong>{{ current_code }}</strong></p>{% endif %}
+  <label>{{ T.twofa_code }} <input name="code" inputmode="numeric" autocomplete="one-time-code" required></label>
+  <button class="btn">{{ T.twofa_ok }}</button>
+</form>
+{% endblock %}
