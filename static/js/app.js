@@ -88,6 +88,14 @@
         if ((action === "like" || action === "superlike") && result.data.match && !result.data.already) {
           var modal = document.getElementById("match-modal");
           if (modal) {
+            var meImg = document.getElementById("match-modal-me");
+            var otherImg = document.getElementById("match-modal-other");
+            var sub = document.getElementById("match-modal-sub");
+            var sendBtn = document.getElementById("match-modal-send");
+            if (meImg) meImg.src = result.data.my_avatar || "";
+            if (otherImg) otherImg.src = result.data.other_avatar || "";
+            if (sub && result.data.other_name) sub.textContent = (ui.matchWith || "C'est un match avec {name} !").replace("{name}", result.data.other_name);
+            if (sendBtn && result.data.match_id) sendBtn.href = "/messages/" + result.data.match_id + "/";
             modal.hidden = false;
             var close = document.getElementById("match-modal-close");
             if (close) close.onclick = function () { modal.hidden = true; };

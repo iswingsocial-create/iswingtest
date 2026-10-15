@@ -582,3 +582,17 @@ body[data-theme="nuit"] .g-side { background: #0a0a0a; }
 /* === Icône caméra barrée (ne rien joindre) === */
 .attach-item.none .no-photo-icon { display: flex; align-items: center; justify-content: center; width: 100%; height: 72px; border: 2px dashed var(--line); border-radius: 12px; opacity: 0.55; }
 .attach-item.none input:checked + .no-photo-icon { border-color: var(--violet); opacity: 1; background: rgba(91,47,214,0.08); }
+
+/* === Popup "C'est un match" style Tinder === */
+.tinder-match { text-align: center; padding: 2rem 1.5rem; max-width: 340px; }
+.tinder-match-title { font-size: 2rem; font-style: italic; margin: 0 0 0.4rem; background: linear-gradient(135deg, #fd267d, #ff7854); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.tinder-match-sub { opacity: 0.8; margin: 0 0 1.2rem; }
+.tinder-match-photos { display: flex; justify-content: center; gap: 1.2rem; margin-bottom: 1.5rem; }
+.tinder-match-photo { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 3px solid #fd267d; background: rgba(255,255,255,0.06); }
+.tinder-match-photo img { width: 100%; height: 100%; object-fit: cover; }
+.tinder-match-btn { display: block; width: 100%; margin: 0.5rem 0; padding: 0.85rem; border-radius: 12px; font-weight: 700; }
+
+/* === Bulles de matchs plus petites === */
+.match-bubble { width: 56px; }
+.match-bubble img, .bubble-fallback { width: 52px; height: 52px; }
+.bubble-name { max-width: 56px; }

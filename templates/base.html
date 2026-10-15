@@ -12,7 +12,7 @@
   <link rel="icon" href="/brand/icons/icon-192.png?v={{ brand_stamp }}">
   <link rel="stylesheet" href="/brand/css/app.css">
 </head>
-<body data-theme="{{ theme|default:'violet' }}" data-refused="{{ T.action_refused }}" data-lost="{{ T.connection_lost }}" data-geodenied="{{ T.geo_denied }}" data-match="{{ T.match_sentence }}" data-liked="{{ T.liked }}" data-already="{{ T.already_liked }}" data-citynone="{{ T.city_none }}">
+<body data-theme="{{ theme|default:'violet' }}" data-refused="{{ T.action_refused }}" data-lost="{{ T.connection_lost }}" data-geodenied="{{ T.geo_denied }}" data-match="{{ T.match_sentence }}" data-match-with="{{ T.match_with }}" data-liked="{{ T.liked }}" data-already="{{ T.already_liked }}" data-citynone="{{ T.city_none }}">
   <div hidden>{% csrf_token %}</div>
   <header class="top">
     {% if user.is_authenticated %}
@@ -76,13 +76,15 @@
   {% if stats.gtm %}<script>window.dataLayer=window.dataLayer||[];</script><script async src="https://www.googletagmanager.com/gtm.js?id={{ stats.gtm }}"></script>{% endif %}
   {% if pixel.meta %}<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','{{ pixel.meta }}');fbq('track','PageView');</script>{% endif %}
   <div id="match-modal" class="modal" hidden>
-    <div class="modal-card match-card">
-      <h2>{{ T.match_title|default:"C'est un match !" }}</h2>
-      <p>{{ T.match_sentence }}</p>
-      <div class="row">
-        <a class="btn" href="/matchs/">{{ T.match_cta|default:"Voir mes matchs" }}</a>
-        <button class="btn ghost" type="button" id="match-modal-close">{{ T.close|default:"Fermer" }}</button>
+    <div class="modal-card tinder-match">
+      <h2 class="tinder-match-title">{{ T.match_title|default:"C'est un match !" }}</h2>
+      <p class="tinder-match-sub" id="match-modal-sub">{{ T.match_sentence }}</p>
+      <div class="tinder-match-photos">
+        <span class="tinder-match-photo"><img id="match-modal-me" src="" alt=""></span>
+        <span class="tinder-match-photo"><img id="match-modal-other" src="" alt=""></span>
       </div>
+      <a class="btn tinder-match-btn" id="match-modal-send" href="/matchs/">💬 {{ T.send_message|default:"Envoyer un message" }}</a>
+      <button class="btn ghost tinder-match-btn" type="button" id="match-modal-close">{{ T.keep_playing|default:"Continuer" }}</button>
     </div>
   </div>
 </body>

@@ -650,7 +650,21 @@ def like_view(request, pk):
     if not already:
         touch_activity(me)
     snap = quota_snapshot(request.user)
-    return JsonResponse({"ok": True, "match": bool(match), "already": already, "liked": True, "likes_left": snap["likes_left"]})
+    resp = {"ok": True, "match": bool(match), "already": already, "liked": True, "likes_left": snap["likes_left"]}
+    if match:
+        resp["match_id"] = match.id
+        resp["other_name"] = target.display_name
+        avatar = target.photos.filter(is_primary=True, moderation_status="approved").first()
+        if avatar is None:
+            avatar = target.photos.filter(is_private=False, moderation_status="approved").order_by("-is_primary", "position", "id").first()
+        if avatar and can_view_media(request.user, avatar):
+            resp["other_avatar"] = f"/photos/{avatar.id}/?thumb=1"
+        my_avatar = me.photos.filter(is_primary=True, moderation_status="approved").first()
+        if my_avatar is None:
+            my_avatar = me.photos.filter(is_private=False, moderation_status="approved").order_by("-is_primary", "position", "id").first()
+        if my_avatar:
+            resp["my_avatar"] = f"/photos/{my_avatar.id}/?thumb=1"
+    return JsonResponse(resp)
 
 
 @login_required
@@ -666,10 +680,24 @@ def superlike_view(request, pk):
     except AccessError:
         return JsonResponse({"ok": False, "error": t(lang, "blocked_members")}, status=403)
     free_left, credits = superlikes_available(me)
-    return JsonResponse({
+    resp = {
         "ok": True, "match": bool(match), "already": already,
         "superlikes_free": free_left, "superlikes_credits": credits,
-    })
+    }
+    if match:
+        resp["match_id"] = match.id
+        resp["other_name"] = target.display_name
+        avatar = target.photos.filter(is_primary=True, moderation_status="approved").first()
+        if avatar is None:
+            avatar = target.photos.filter(is_private=False, moderation_status="approved").order_by("-is_primary", "position", "id").first()
+        if avatar and can_view_media(request.user, avatar):
+            resp["other_avatar"] = f"/photos/{avatar.id}/?thumb=1"
+        my_avatar = me.photos.filter(is_primary=True, moderation_status="approved").first()
+        if my_avatar is None:
+            my_avatar = me.photos.filter(is_private=False, moderation_status="approved").order_by("-is_primary", "position", "id").first()
+        if my_avatar:
+            resp["my_avatar"] = f"/photos/{my_avatar.id}/?thumb=1"
+    return JsonResponse(resp)
 
 
 @login_required
