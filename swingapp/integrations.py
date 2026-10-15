@@ -167,7 +167,9 @@ def test_stripe():
 
         stripe.api_key = secret
         stripe.Balance.retrieve()
-    except Exception:
+    except Exception as exc:
+        import logging
+        logging.getLogger("swingapp.stripe").exception("test_stripe failed: %r", exc)
         return False, "Le prestataire a refusé la connexion. Aucun paiement n'a été créé."
     kind = "test" if secret.startswith("sk_test") else "production"
     return True, f"Connexion acceptée ({kind}). Aucun paiement réel n'a été créé."
