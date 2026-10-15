@@ -120,56 +120,68 @@
 
   <section class="ppanel" data-panel="medias" id="photos" hidden>
     <p class="muted">{{ T.media_public_means }} <a href="/legal/medias/">{{ T.footer_media }}</a></p>
-    <form class="card media-block" method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
-      <h2>{{ T.add_photo }}</h2>
-      <p class="muted">{{ T.photo_type_help }}</p>
-      <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif,image/*" required data-crop>
-      <label>{{ T.media_title }} <input name="title" maxlength="80" placeholder="{{ T.media_title }}"></label>
-      <input type="hidden" name="masks" id="masks-json" value="[]">
-      <label class="check"><input type="checkbox" name="confirm_gif" value="1"> <span>{{ T.gif_keep }}</span></label>
-      <div class="photo-choice">
-        <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
-        <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
-      </div>
-      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
-      <button class="btn" type="submit">{{ T.add_photo }}</button>
-    </form>
-    <form class="card media-block" id="video-upload" method="post" action="/moi/photos/" enctype="multipart/form-data"
-      data-chunk-fail="{{ T.upload_chunk_fail }}"
-      data-done-bg="{{ T.upload_done_bg }}"
-      data-choose-video="{{ T.upload_choose_video }}"
-      data-net-error="{{ T.upload_net_error }}"
-      data-canceled="{{ T.upload_canceled }}"
-      data-sending="{{ T.upload_sending }}">{% csrf_token %}
-      <h2>{{ T.add_video }}</h2>
-      <input type="hidden" name="kind" value="video">
-      <p class="muted">{{ T.video_help }} {{ T.video_chunks }}</p>
-      <input type="file" name="file" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.mts,.m2ts" required>
-      <label>{{ T.media_title }} <input name="title" maxlength="80" placeholder="{{ T.media_title }}"></label>
-      <div class="photo-choice">
-        <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
-        <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
-      </div>
-      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
-      <button class="btn" type="submit">{{ T.add_video }}</button>
-      <div id="video-progress" hidden>
-        <progress id="video-bar" max="100" value="0"></progress>
-        <p id="video-progress-label"></p>
-        <button type="button" class="btn ghost" id="video-cancel">{{ T.media_undo }}</button>
-        <button type="button" class="btn ghost" id="video-retry" hidden>{{ T.media_retry }}</button>
-      </div>
-    </form>
-    <form class="card media-block" method="post" action="/moi/certification/" enctype="multipart/form-data">{% csrf_token %}
-      <h2>{{ T.cert_title }}</h2>
-      <p class="muted">{{ T.cert_help }}</p>
-      {% if badges %}<p class="badges">{% for label in badges %}<span class="status-badge">{{ label }}</span>{% endfor %}</p>{% endif %}
-      {% if cert_status == "pending" %}<p class="note">{{ T.cert_pending }}</p>
-      {% elif cert_status == "approved" %}<p class="note">{{ T.cert_approved }}</p>
-      {% elif cert_status == "refused" %}<p class="note">{{ T.cert_refused }}</p>{% endif %}
-      <input type="file" name="image" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif" required>
-      <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
-      <button class="btn" type="submit">{{ T.cert_send }}</button>
-    </form>
+    <details class="upload-accordion" open>
+      <summary>📷 {{ T.add_photo }}</summary>
+      <form class="media-block" method="post" action="/moi/photos/" enctype="multipart/form-data">{% csrf_token %}
+        <label class="upload-drop">
+          <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif,image/*" required data-crop hidden>
+          <span class="upload-btn">📷 {{ T.choose_photo|default:"Choisir une photo" }}</span>
+          <span class="upload-name" data-name></span>
+        </label>
+        <input type="hidden" name="masks" id="masks-json" value="[]">
+        <div class="photo-choice">
+          <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
+          <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
+        </div>
+        <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
+        <button class="btn" type="submit">{{ T.add_photo }}</button>
+      </form>
+    </details>
+    <details class="upload-accordion">
+      <summary>🎬 {{ T.add_video }}</summary>
+      <form class="media-block" id="video-upload" method="post" action="/moi/photos/" enctype="multipart/form-data"
+        data-chunk-fail="{{ T.upload_chunk_fail }}"
+        data-done-bg="{{ T.upload_done_bg }}"
+        data-choose-video="{{ T.upload_choose_video }}"
+        data-net-error="{{ T.upload_net_error }}"
+        data-canceled="{{ T.upload_canceled }}"
+        data-sending="{{ T.upload_sending }}">{% csrf_token %}
+        <input type="hidden" name="kind" value="video">
+        <label class="upload-drop">
+          <input type="file" name="file" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.mts,.m2ts" required hidden>
+          <span class="upload-btn">🎬 {{ T.choose_video|default:"Choisir une vidéo" }}</span>
+          <span class="upload-name" data-name></span>
+        </label>
+        <div class="photo-choice">
+          <label class="chip"><input type="radio" name="visibility" value="public" checked> <span>{{ T.public_photo }}</span></label>
+          <label class="chip"><input type="radio" name="visibility" value="private"> <span>{{ T.private_photo }}</span></label>
+        </div>
+        <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
+        <button class="btn" type="submit">{{ T.add_video }}</button>
+        <div id="video-progress" hidden>
+          <progress id="video-bar" max="100" value="0"></progress>
+          <p id="video-progress-label"></p>
+          <button type="button" class="btn ghost" id="video-cancel">{{ T.media_undo }}</button>
+          <button type="button" class="btn ghost" id="video-retry" hidden>{{ T.media_retry }}</button>
+        </div>
+      </form>
+    </details>
+    <details class="upload-accordion">
+      <summary>✅ {{ T.cert_title }}</summary>
+      <form class="media-block" method="post" action="/moi/certification/" enctype="multipart/form-data">{% csrf_token %}
+        {% if badges %}<p class="badges">{% for label in badges %}<span class="status-badge">{{ label }}</span>{% endfor %}</p>{% endif %}
+        {% if cert_status == "pending" %}<p class="note">{{ T.cert_pending }}</p>
+        {% elif cert_status == "approved" %}<p class="note">{{ T.cert_approved }}</p>
+        {% elif cert_status == "refused" %}<p class="note">{{ T.cert_refused }}</p>{% endif %}
+        <label class="upload-drop">
+          <input type="file" name="image" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.avif,.tif,.tiff,.bmp,.gif" required hidden>
+          <span class="upload-btn">✅ {{ T.choose_photo|default:"Choisir une photo" }}</span>
+          <span class="upload-name" data-name></span>
+        </label>
+        <label class="check"><input type="checkbox" name="media_rights" value="1" required> <span>{{ T.media_one_consent }}</span></label>
+        <button class="btn" type="submit">{{ T.cert_send }}</button>
+      </form>
+    </details>
     <div class="gallery">
       {% for photo in profile.photos.all %}
       {% if photo.role != "certification" %}

@@ -452,3 +452,14 @@
     });
   });
 })();
+
+/* Affiche le nom du fichier choisi dans les accordéons d'upload */
+(function () {
+  document.addEventListener("change", function (e) {
+    var input = e.target;
+    if (!input.matches('.upload-drop input[type="file"]')) return;
+    var drop = input.closest(".upload-drop");
+    var name = drop && drop.querySelector("[data-name]");
+    if (name) name.textContent = input.files.length ? input.files[0].name : "";
+  });
+})();
