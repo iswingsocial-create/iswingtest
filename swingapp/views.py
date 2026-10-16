@@ -1527,13 +1527,14 @@ def payment_webhook(request):
             sub.status = "expired"
             sub.current_period_end = timezone.now()
             sub.save()
-    except Exception:
+    except Exception as e:
         import traceback
         import logging
         logging.getLogger(__name__).exception("Erreur webhook Stripe")
-        print("WEBHOOK STRIPE ERROR:", traceback.format_exc())
+        err = traceback.format_exc()
+        print("WEBHOOK STRIPE ERROR:", err)
         _finish_payment_event(row, False)
-        return JsonResponse({"ok": False}, status=500)
+        return JsonResponse({"ok": False, "debug_error": str(e)[:200]}, status=500)
     _finish_payment_event(row, True)
     return JsonResponse({"ok": True})
 
@@ -1613,13 +1614,13 @@ def _stripe_webhook(request):
             sub.status = "expired"
             sub.current_period_end = timezone.now()
             sub.save()
-    except Exception:
+    except Exception as e:
         import traceback
         import logging
         logging.getLogger(__name__).exception("Erreur webhook Stripe")
         print("WEBHOOK STRIPE ERROR:", traceback.format_exc())
         _finish_payment_event(row, False)
-        return JsonResponse({"ok": False}, status=500)
+        return JsonResponse({"ok": False, "debug_error": str(e)[:200]}, status=500)
     _finish_payment_event(row, True)
     return JsonResponse({"ok": True})
 
