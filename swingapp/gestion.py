@@ -628,6 +628,13 @@ def member_detail(request, pk):
                 messages.error(request, "Indiquez un motif avant de supprimer.")
                 return redirect("gestion_member", pk=pk)
             AuditLog.objects.create(actor=request.user, action="staff_member", target=str(pk), detail="delete", reason=reason)
+            # Si banni : le courriel reste bloqué pour toute réinscription future
+            if request.POST.get("ban_email") == "1" and profile.user.email:
+                from .models import BannedEmail
+                BannedEmail.objects.get_or_create(
+                    email__iexact=profile.user.email,
+                    defaults={"email": profile.user.email, "reason": reason[:200]},
+                )
             profile.user.delete()
             return redirect("gestion_members")
         AuditLog.objects.create(actor=request.user, action="staff_member", target=str(pk), detail=action[:80], reason=reason)

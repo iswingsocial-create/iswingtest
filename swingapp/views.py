@@ -153,7 +153,9 @@ def register(request):
     form = RegisterForm(request.POST or None, lang=getattr(request, "lang", "fr"))
     error = ""
     if request.method == "POST" and form.is_valid():
-        if User.objects.filter(email__iexact=form.cleaned_data["email"]).exists():
+        from .models import BannedEmail
+        email = form.cleaned_data["email"]
+        if User.objects.filter(email__iexact=email).exists() or BannedEmail.objects.filter(email__iexact=email).exists():
             error = "email"
         else:
             pending = Partner.objects.filter(

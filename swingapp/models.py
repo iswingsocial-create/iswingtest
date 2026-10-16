@@ -789,6 +789,17 @@ class LandingCity(models.Model):
         return self.name
 
 
+class BannedEmail(models.Model):
+    """Courriels bannis : bloquent toute réinscription, même après suppression du compte."""
+
+    email = models.EmailField(unique=True)
+    reason = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email
+
+
 def new_token():
     raw = secrets.token_urlsafe(32)
     digest = hashlib.sha256(raw.encode()).hexdigest()
