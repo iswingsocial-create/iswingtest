@@ -122,12 +122,31 @@
       var max = 800;
       canvas.width = Math.min(max, img.naturalWidth || img.width);
       canvas.height = Math.max(1, Math.round(canvas.width * (img.naturalHeight || img.height) / (img.naturalWidth || img.width)));
-      tools.hidden = false;
-      draw();
+      // Affiche le choix : upload simple ou masquer
+      var choice = document.getElementById("mask-choice");
+      var cropActions = document.querySelector(".crop-actions");
+      if (choice) choice.hidden = false;
+      if (cropActions) cropActions.hidden = true;
       URL.revokeObjectURL(url);
     };
     img.src = url;
   };
+  bind("choice-upload", function () {
+    // Upload simple : pas de masque, ferme tout
+    masks.length = 0;
+    write();
+    var choice = document.getElementById("mask-choice");
+    if (choice) choice.hidden = true;
+    var modal = document.getElementById("cropper");
+    if (modal) modal.hidden = true;
+  });
+  bind("choice-mask", function () {
+    // Masquer : affiche les outils de masquage
+    var choice = document.getElementById("mask-choice");
+    if (choice) choice.hidden = true;
+    tools.hidden = false;
+    draw();
+  });
   canvas.addEventListener("pointerdown", function (event) {
     var rect = canvas.getBoundingClientRect();
     var px = (event.clientX - rect.left) * (canvas.width / rect.width);

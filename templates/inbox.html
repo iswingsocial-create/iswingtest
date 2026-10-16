@@ -5,10 +5,12 @@
 <h2 class="inbox-section">{{ T.matches }}</h2>
 <div class="match-bubbles">
   {% for item in new_matches %}
-  <a class="match-bubble shape-{{ item.bubble_shape }}" href="/messages/{{ item.match.id }}/" title="{{ item.other.display_name }}">
+  <a class="match-bubble shape-{{ item.bubble_shape }}" href="/profil/{{ item.other.id }}/" title="{{ item.other.display_name }}">
     {% if item.avatar %}<img src="{{ item.avatar }}" alt="{{ item.other.display_name }}">{% else %}<span class="bubble-fallback">?</span>{% endif %}
     <span class="bubble-name">{{ item.other.display_name }}</span>
+    {% if item.travel_badge %}<span class="bubble-travel">{{ item.travel_badge }}</span>{% endif %}
   </a>
+  <a href="/messages/{{ item.match.id }}/" class="bubble-msg" aria-label="Messages">💬</a>
   {% endfor %}
 </div>
 {% endif %}

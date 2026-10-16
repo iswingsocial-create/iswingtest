@@ -42,6 +42,7 @@
       <a href="/moi/"{% if name == "edit_profile" %} aria-current="page"{% endif %}>{{ T.profile }}{% if session_label %} · {{ session_label }}{% endif %}</a>
       <a href="/abonnement/"{% if name == "billing" or name == "subscribe" or name == "stripe_checkout" or name == "cancel_subscription" %} aria-current="page"{% endif %}>{{ T.billing }}</a>
       <a href="/parametres/"{% if name == "settings" or name == "export" or name == "delete_account" or name == "logout_others" %} aria-current="page"{% endif %}>{{ T.settings }}</a>
+      <form action="/comptes/deconnexion/" method="post" style="display:inline">{% csrf_token %}<button type="submit" class="nav-logout">{{ T.logout|default:"Déconnexion" }}</button></form>
       {% if businesses_on %}
       <a href="/entreprises/"{% if name == "business_list" or name == "business_page" %} aria-current="page"{% endif %}>{{ T.nav_businesses }}</a>
       <a href="/evenements/"{% if name == "event_list" or name == "event_page" %} aria-current="page"{% endif %}>{{ T.nav_events }}</a>
