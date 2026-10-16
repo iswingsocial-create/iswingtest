@@ -1272,7 +1272,9 @@ def _stripe_ready():
 def _grant_premium(user, external_id, period_end=None, customer_id="", provider="stripe"):
     if user.is_demo:
         return None
-    sub = sync_trial(user.profile)
+    from .models import Profile
+    profile, _ = Profile.objects.get_or_create(user=user, defaults={"display_name": (user.email or "").split("@")[0][:40]})
+    sub = sync_trial(profile)
     sub.status = "active"
     sub.provider = provider or sub.provider
     sub.source = "provider"
@@ -1534,7 +1536,7 @@ def payment_webhook(request):
         err = traceback.format_exc()
         print("WEBHOOK STRIPE ERROR:", err)
         _finish_payment_event(row, False)
-        return JsonResponse({"ok": False, "debug_error": str(e)[:200]}, status=500)
+        return JsonResponse({"ok": False}, status=500)
     _finish_payment_event(row, True)
     return JsonResponse({"ok": True})
 
@@ -1596,13 +1598,17 @@ def _stripe_webhook(request):
                 provider="stripe",
             )
         if user and kind == "invoice.payment_failed":
-            sub = sync_trial(user.profile)
+            from .models import Profile
+            profile, _ = Profile.objects.get_or_create(user=user, defaults={"display_name": (user.email or "").split("@")[0][:40]})
+            sub = sync_trial(profile)
             sub.status = "past_due"
             sub.provider = "stripe"
             sub.source = "provider"
             sub.save(update_fields=["status", "provider", "source", "updated_at"])
         if user and kind == "customer.subscription.deleted":
-            sub = sync_trial(user.profile)
+            from .models import Profile
+            profile, _ = Profile.objects.get_or_create(user=user, defaults={"display_name": (user.email or "").split("@")[0][:40]})
+            sub = sync_trial(profile)
             sub.status = "canceled"
             sub.cancel_at_period_end = True
             end = period_from_stamp(data.get("current_period_end"))
@@ -1610,7 +1616,9 @@ def _stripe_webhook(request):
                 sub.current_period_end = end
             sub.save(update_fields=["status", "cancel_at_period_end", "current_period_end", "updated_at"])
         if user and kind == "charge.refunded":
-            sub = sync_trial(user.profile)
+            from .models import Profile
+            profile, _ = Profile.objects.get_or_create(user=user, defaults={"display_name": (user.email or "").split("@")[0][:40]})
+            sub = sync_trial(profile)
             sub.status = "expired"
             sub.current_period_end = timezone.now()
             sub.save()
@@ -1620,7 +1628,7 @@ def _stripe_webhook(request):
         logging.getLogger(__name__).exception("Erreur webhook Stripe")
         print("WEBHOOK STRIPE ERROR:", traceback.format_exc())
         _finish_payment_event(row, False)
-        return JsonResponse({"ok": False, "debug_error": str(e)[:200]}, status=500)
+        return JsonResponse({"ok": False}, status=500)
     _finish_payment_event(row, True)
     return JsonResponse({"ok": True})
 
