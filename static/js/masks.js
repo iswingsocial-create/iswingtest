@@ -188,6 +188,14 @@
     var modal = document.getElementById("cropper");
     if (modal) modal.hidden = true;
   });
+  bind("mask-skip", function () {
+    // Continuer sans masque : vide les masques et ferme
+    masks.length = 0;
+    write();
+    tools.hidden = true;
+    var modal = document.getElementById("cropper");
+    if (modal) modal.hidden = true;
+  });
   ["mask-size", "mask-rot", "mask-strength"].forEach(function (id) {
     var node = document.getElementById(id);
     if (!node) return;
