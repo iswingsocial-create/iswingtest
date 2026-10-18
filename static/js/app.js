@@ -131,7 +131,7 @@
           actionEl.classList.add("on");
           var next = actionEl.getAttribute("data-redirect");
           if (next) {
-            var wait = result.data.match && !result.data.already ? 1500 : 400;
+            var wait = result.data.match && !result.data.already ? 25000 : 400;
             window.setTimeout(function () { window.location.assign(next); }, wait);
           }
         }
