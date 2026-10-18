@@ -14,6 +14,11 @@ ORIENTATIONS = [
     ("bi", "bi"),
     ("pan", "pan"),
     ("queer", "queer"),
+    ("bicurious", "bicurious"),
+    ("heteroflexible", "heteroflexible"),
+    ("homoflexible", "homoflexible"),
+    ("asexual", "asexual"),
+    ("demisexual", "demisexual"),
 ]
 
 SEEKING = [
